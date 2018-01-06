@@ -51,7 +51,7 @@ namespace ActivityScheduler
                 List<CamperRequests> camperRequestsList = new List<CamperRequests>(camperRequestsEnumerator);
                 return camperRequestsList;
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
                 using (LineWrappingTextWriter writer = LineWrappingTextWriter.ForConsoleError())
                 {
