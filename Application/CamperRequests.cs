@@ -18,25 +18,26 @@ namespace ActivityScheduler
             public CamperRequestsMap()
             {
                 int index = 0;
-                Map(m => m.LastName).Index(index++);
-                Map(m => m.FirstName).Index(index++);
+                int camperIndex = index;
+                Map(m => m.Camper).ConvertUsing(row => new Camper { LastName = row.GetField(camperIndex),
+                    FirstName = row.GetField(camperIndex + 1) });
+                index += 2;
                 Map(m => m.CabinMate).Index(index++);
-                Map(m => m.Activity1).Index(index++);
-                Map(m => m.Activity2).Index(index++);
-                Map(m => m.Activity3).Index(index++);
-                Map(m => m.Activity4).Index(index++);
+                int activityIndex = index;
+                Map(m => m.ActivityRequests).ConvertUsing(row => new List<string> {
+                    row.GetField(activityIndex),
+                    row.GetField(activityIndex + 1),
+                    row.GetField(activityIndex + 2),
+                    row.GetField(activityIndex + 3)
+                });
+                index += 4;
                 Map(m => m.AlternateActivity).Index(index++);
             }
         }
 
-        public static int NumberOfActivities = 4;
-        public String LastName { get; set; }
-        public String FirstName { get; set; }
+        public Camper Camper { get; set; }
         public String CabinMate { get; set; }
-        public String Activity1 { get; set; }
-        public String Activity2 { get; set; }
-        public String Activity3 { get; set; }
-        public String Activity4 { get; set; }
+        public List<String> ActivityRequests { get; set; }
         public String AlternateActivity { get; set; }
 
         public static List<CamperRequests> ReadCamperRequests(String csvFilePath)
