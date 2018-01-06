@@ -51,11 +51,11 @@ namespace ActivityScheduler
                 List<CamperRequests> camperRequestsList = new List<CamperRequests>(camperRequestsEnumerator);
                 return camperRequestsList;
             }
-            catch (FileNotFoundException)
+            catch (FileNotFoundException e)
             {
                 using (LineWrappingTextWriter writer = LineWrappingTextWriter.ForConsoleError())
                 {
-                    writer.WriteLine("Could not open input file {0}", csvFilePath);
+                    writer.WriteLine("Could not open input file {0}", e.FileName);
                     writer.WriteLine();
                 }
             }
