@@ -1,0 +1,2 @@
+﻿Here is a header that does not get parsed.
+Here is some junk text that should fail the parse.

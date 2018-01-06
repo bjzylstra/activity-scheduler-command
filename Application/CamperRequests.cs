@@ -7,7 +7,7 @@ using System.IO;
 
 namespace ActivityScheduler
 {
-    class CamperRequests
+    public class CamperRequests
     {
         public sealed class CamperRequestsMap : ClassMap<CamperRequests>
         {
