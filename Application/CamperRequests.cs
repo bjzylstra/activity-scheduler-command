@@ -7,6 +7,10 @@ using System.IO;
 
 namespace ActivityScheduler
 {
+    /// <summary>
+    /// Represents the activity and cabin placement requests
+    /// for a camper. LastName/FirstName is the 'KEY' for the record.
+    /// </summary>
     public class CamperRequests
     {
         public sealed class CamperRequestsMap : ClassMap<CamperRequests>
@@ -55,7 +59,7 @@ namespace ActivityScheduler
             {
                 using (LineWrappingTextWriter writer = LineWrappingTextWriter.ForConsoleError())
                 {
-                    writer.WriteLine("Could not open input file {0}", e.FileName);
+                    writer.WriteLine("Could not open Camper CSV file {0}", e.FileName);
                     writer.WriteLine();
                 }
             }

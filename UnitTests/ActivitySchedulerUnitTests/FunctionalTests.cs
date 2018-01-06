@@ -7,6 +7,8 @@ namespace ActivitySchedulerUnitTests
     [TestClass]
     public class FunctionalTests
     {
+        private const String CommandLineFormat = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll -c {0} -a {1}";
+
         [TestMethod]
         public void FunctionalTest_CommandLineIncomplete_ErrorMessage()
         {
@@ -16,8 +18,8 @@ namespace ActivitySchedulerUnitTests
             String errors;
             int exitCode = ExecuteConsoleApplication(command, out output, out errors);
 
-            // Assert
-            AssertStringContains(errors, "The required argument 'InputCSV' was not supplied.");
+            // Assert - some kind of error about arguments
+            AssertStringContains(errors, "argument");
             // Ookii print usage to console is not getting along with NET Core.
             // Works directly from command line but fails in launched as a process.
             // Accept any negative exit code.
@@ -25,26 +27,44 @@ namespace ActivitySchedulerUnitTests
         }
 
         [TestMethod]
-        public void FunctionalTest_InputNotFound_ErrorMessage()
+        public void FunctionalTest_ActivitiesNotFound_ErrorMessage()
         {
             // Act
-            var command = String.Format(@"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll -i {0}",
-                "NoData.csv");
+            var command = String.Format(CommandLineFormat,
+                 "\"..\\..\\..\\Skills Test Data.csv\"",
+                 "NoData.xml");
             String output;
             String errors;
             int exitCode = ExecuteConsoleApplication(command, out output, out errors);
 
             // Assert
             Assert.AreEqual(-2, exitCode, "exitcode");
-            AssertStringContains(errors, "Could not open input file");
+            AssertStringContains(errors, "Could not open Activity Definitions file");
+        }
+
+        [TestMethod]
+        public void FunctionalTest_CamperRequestsNotFound_ErrorMessage()
+        {
+            // Act
+            var command = String.Format(CommandLineFormat,
+                "NoData.csv",
+                "..\\..\\..\\Activities.xml");
+            String output;
+            String errors;
+            int exitCode = ExecuteConsoleApplication(command, out output, out errors);
+
+            // Assert
+            Assert.AreEqual(-2, exitCode, "exitcode");
+            AssertStringContains(errors, "Could not open Camper CSV file");
         }
 
         [TestMethod]
         public void FunctionalTest_ValidInput_GenerateOutput()
         {
             // Act
-            var command = String.Format(@"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll -i {0}",
-                "\"..\\..\\..\\Skills Test Data.csv\"");
+            var command = String.Format(CommandLineFormat,
+                "\"..\\..\\..\\Skills Test Data.csv\"",
+                "..\\..\\..\\Activities.xml");
             String output;
             String errors;
             int exitCode = ExecuteConsoleApplication(command, out output, out errors);
@@ -53,6 +73,7 @@ namespace ActivitySchedulerUnitTests
             Assert.AreEqual(0, exitCode, "exitcode");
             Assert.AreEqual(String.Empty, errors, "Errors");
             AssertStringContains(output, "Found 98 campers");
+            AssertStringContains(output, "Found 9 activity definitions");
         }
 
         /// <summary>

@@ -4,10 +4,16 @@ using System.ComponentModel;
 
 namespace ActivityScheduler
 {
+    /// <summary>
+    /// Ookii definition for the command line parameters.
+    /// </summary>
     class ProgramArguments
     {
-        [CommandLineArgument(IsRequired = true), Alias("i"), Description("Path to a CSV file describing the camper activity requests")]
-        public String InputCSV { get; set; }
+        [CommandLineArgument(IsRequired = true), Alias("c"), Description("Path to a CSV file describing the camper activity requests")]
+        public String CamperRequestsPath { get; set; }
+
+        [CommandLineArgument(IsRequired = true), Alias("a"), Description("Path to the XML file with the activity definitions")]
+        public String ActivityDefinitionsPath { get; set; }
 
         [CommandLineArgument, Alias("?"), Description("Displays this help message.")]
         public bool Help { get; set; }

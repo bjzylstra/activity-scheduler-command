@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!--
+  * Archery can take up to 16, 12 is better
+  * Canoeing can take up to 12
+  * Crafts can take up to 12
+  * Creation Exploration can take any number
+  * Extreme Water Sports can take up to 14
+  * Horsemanship can take up to 14
+  * Splash can take any number
+  * Team Sports can take any number (over 7)
+  * Wall Climbing can take 10 – 12
+-->
+<ArrayOfActivityDefinition xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ActivityDefinition>
+    <Name>Archery</Name>
+    <MinimumCapacity>0</MinimumCapacity>
+    <MaximumCapacity>16</MaximumCapacity>
+    <OptimalCapacity>12</OptimalCapacity>
+  </ActivityDefinition>
+  <ActivityDefinition>
+    <Name>Canoeing</Name>
+    <MinimumCapacity>0</MinimumCapacity>
+    <MaximumCapacity>12</MaximumCapacity>
+    <OptimalCapacity>12</OptimalCapacity>
+  </ActivityDefinition>
+  <ActivityDefinition>
+    <Name>Crafts</Name>
+    <MinimumCapacity>0</MinimumCapacity>
+    <MaximumCapacity>12</MaximumCapacity>
+    <OptimalCapacity>12</OptimalCapacity>
+  </ActivityDefinition>
+  <ActivityDefinition>
+    <Name>Creation Exploration</Name>
+    <MinimumCapacity>0</MinimumCapacity>
+    <MaximumCapacity>2147483647</MaximumCapacity>
+    <OptimalCapacity>12</OptimalCapacity>
+  </ActivityDefinition>
+  <ActivityDefinition>
+    <Name>Extreme Water Sports</Name>
+    <MinimumCapacity>0</MinimumCapacity>
+    <MaximumCapacity>14</MaximumCapacity>
+    <OptimalCapacity>14</OptimalCapacity>
+  </ActivityDefinition>
+  <ActivityDefinition>
+    <Name>Horsemanship</Name>
+    <MinimumCapacity>0</MinimumCapacity>
+    <MaximumCapacity>14</MaximumCapacity>
+    <OptimalCapacity>14</OptimalCapacity>
+  </ActivityDefinition>
+  <ActivityDefinition>
+    <Name>Splash</Name>
+    <MinimumCapacity>0</MinimumCapacity>
+    <MaximumCapacity>2147483647</MaximumCapacity>
+    <OptimalCapacity>14</OptimalCapacity>
+  </ActivityDefinition>
+  <ActivityDefinition>
+    <Name>Team Sports</Name>
+    <MinimumCapacity>8</MinimumCapacity>
+    <MaximumCapacity>2147483647</MaximumCapacity>
+    <OptimalCapacity>14</OptimalCapacity>
+  </ActivityDefinition>
+  <ActivityDefinition>
+    <Name>Wall Climbing</Name>
+    <MinimumCapacity>0</MinimumCapacity>
+    <MaximumCapacity>12</MaximumCapacity>
+    <OptimalCapacity>10</OptimalCapacity>
+  </ActivityDefinition>
+</ArrayOfActivityDefinition>
