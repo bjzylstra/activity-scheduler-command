@@ -11,6 +11,28 @@ namespace ActivitySchedulerUnitTests
         private const String BadContentFileLocation = @"..\..\..\Bogus.csv";
         private const String GoodFileLocation = @"..\..\..\Activities.xml";
         private const String NonExistentFileLocation = @"NoSuchDirectory\NoSuchFile.xml";
+        public static List<ActivityDefinition> DefaultActivityDefinitions = new List<ActivityDefinition>{
+            new ActivityDefinition { Name = "Archery", MaximumCapacity = 16, OptimalCapacity = 12 },
+            new ActivityDefinition { Name = "Canoeing", MaximumCapacity = 12, OptimalCapacity = 12 },
+            new ActivityDefinition { Name = "Crafts", MaximumCapacity = 12, OptimalCapacity = 12 },
+            new ActivityDefinition { Name = "Creation Exploration", MaximumCapacity = int.MaxValue, OptimalCapacity = 12 },
+            new ActivityDefinition { Name = "Extreme Water Sports", MaximumCapacity = 14, OptimalCapacity = 14 },
+            new ActivityDefinition { Name = "Horsemanship", MaximumCapacity = 14, OptimalCapacity = 14 },
+            new ActivityDefinition { Name = "Splash (beach activities)", MaximumCapacity = int.MaxValue, OptimalCapacity = 14 },
+            new ActivityDefinition { Name = "Team Sports", MaximumCapacity = int.MaxValue, OptimalCapacity = 14, MinimumCapacity = 8 },
+            new ActivityDefinition { Name = "Wall Climbing", MaximumCapacity = 12, OptimalCapacity = 10 }
+        };
+
+        public static List<ActivityDefinition> IncompleteActivityDefinitions = new List<ActivityDefinition>{
+            new ActivityDefinition { Name = "Archery", MaximumCapacity = 16, OptimalCapacity = 12 },
+            new ActivityDefinition { Name = "Canoeing", MaximumCapacity = 12, OptimalCapacity = 12 },
+            new ActivityDefinition { Name = "Crafts", MaximumCapacity = 12, OptimalCapacity = 12 },
+            new ActivityDefinition { Name = "Creation Exploration", MaximumCapacity = int.MaxValue, OptimalCapacity = 12 },
+            new ActivityDefinition { Name = "Extreme Water Sports", MaximumCapacity = 14, OptimalCapacity = 14 },
+            new ActivityDefinition { Name = "Horsemanship", MaximumCapacity = 14, OptimalCapacity = 14 },
+            new ActivityDefinition { Name = "Team Sports", MaximumCapacity = int.MaxValue, OptimalCapacity = 14, MinimumCapacity = 8 },
+            new ActivityDefinition { Name = "Wall Climbing", MaximumCapacity = 12, OptimalCapacity = 10 }
+        };
 
         [TestMethod]
         public void ReadActivityDefinitions_fileNotFound_returnsNull()
@@ -40,18 +62,7 @@ namespace ActivitySchedulerUnitTests
 
             // Assert
             Assert.IsNotNull(activityDefinitions, "Return from ReadActivityDefinitions");
-            List<ActivityDefinition> expectedActivityDefinitions = new List<ActivityDefinition>{
-                new ActivityDefinition { Name = "Archery", MaximumCapacity = 16, OptimalCapacity = 12 },
-                new ActivityDefinition { Name = "Canoeing", MaximumCapacity = 12, OptimalCapacity = 12 },
-                new ActivityDefinition { Name = "Crafts", MaximumCapacity = 12, OptimalCapacity = 12 },
-                new ActivityDefinition { Name = "Creation Exploration", MaximumCapacity = int.MaxValue, OptimalCapacity = 12 },
-                new ActivityDefinition { Name = "Extreme Water Sports", MaximumCapacity = 14, OptimalCapacity = 14 },
-                new ActivityDefinition { Name = "Horsemanship", MaximumCapacity = 14, OptimalCapacity = 14 },
-                new ActivityDefinition { Name = "Splash", MaximumCapacity = int.MaxValue, OptimalCapacity = 14 },
-                new ActivityDefinition { Name = "Team Sports", MaximumCapacity = int.MaxValue, OptimalCapacity = 14, MinimumCapacity = 8 },
-                new ActivityDefinition { Name = "Wall Climbing", MaximumCapacity = 12, OptimalCapacity = 10 }
-            };
-            AssertListsEqual(expectedActivityDefinitions, activityDefinitions);
+            AssertListsEqual(DefaultActivityDefinitions, activityDefinitions);
         }
 
         /// <summary>

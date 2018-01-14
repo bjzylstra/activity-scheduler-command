@@ -76,6 +76,22 @@ namespace ActivitySchedulerUnitTests
             AssertStringContains(output, "Found 9 activity definitions");
         }
 
+        [TestMethod]
+        public void FunctionalTest_RequestUnknownActivity_ErrorMessage()
+        {
+            // Act
+            var command = String.Format(CommandLineFormat,
+                "\"..\\..\\..\\Skills Test Data.csv\"",
+                "..\\..\\..\\IncompleteActivities.xml");
+            String output;
+            String errors;
+            int exitCode = ExecuteConsoleApplication(command, out output, out errors);
+
+            // Assert
+            Assert.AreEqual(-2, exitCode, "exitcode");
+            AssertStringContains(errors, "Camper 'A, 1' requested unknown activity: 'Splash (beach activities)'");
+        }
+
         /// <summary>
         /// Assert that a string has a specified substring
         /// </summary>

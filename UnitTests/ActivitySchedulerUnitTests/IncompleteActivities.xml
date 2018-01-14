@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+﻿<?xml version="1.0"?>
 <!--
   * Archery can take up to 16, 12 is better
   * Canoeing can take up to 12
@@ -45,12 +45,6 @@
     <Name>Horsemanship</Name>
     <MinimumCapacity>0</MinimumCapacity>
     <MaximumCapacity>14</MaximumCapacity>
-    <OptimalCapacity>14</OptimalCapacity>
-  </ActivityDefinition>
-  <ActivityDefinition>
-    <Name>Splash (beach activities)</Name>
-    <MinimumCapacity>0</MinimumCapacity>
-    <MaximumCapacity>2147483647</MaximumCapacity>
     <OptimalCapacity>14</OptimalCapacity>
   </ActivityDefinition>
   <ActivityDefinition>

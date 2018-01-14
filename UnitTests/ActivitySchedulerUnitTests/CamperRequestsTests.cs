@@ -15,17 +15,19 @@ namespace ActivitySchedulerUnitTests
         public void ReadCamperRequests_fileNotFound_returnsNull()
         {
             // Act
-            var camperRequests = CamperRequests.ReadCamperRequests(NonExistentFileLocation);
+            var camperRequests = CamperRequests.ReadCamperRequests(NonExistentFileLocation,
+                ActivityDefinitionTests.DefaultActivityDefinitions);
 
             // Assert
             Assert.IsNull(camperRequests, "Return from ReadCamperRequests");
         }
 
         [TestMethod]
-        public void ReadCamperRequests_invalidInput_returnsNull()
+        public void ReadCamperRequests_invalidRequestFile_returnsNull()
         {
             // Act
-            var camperRequests = CamperRequests.ReadCamperRequests(BadContentFileLocation);
+            var camperRequests = CamperRequests.ReadCamperRequests(BadContentFileLocation,
+                ActivityDefinitionTests.DefaultActivityDefinitions);
 
             // Assert
             Assert.IsNull(camperRequests, "Return from ReadCamperRequests");
@@ -35,12 +37,23 @@ namespace ActivitySchedulerUnitTests
         public void ReadCamperRequests_validInput_loadsList()
         {
             // Act
-            var camperRequests = CamperRequests.ReadCamperRequests(GoodFileLocation);
+            var camperRequests = CamperRequests.ReadCamperRequests(GoodFileLocation,
+                ActivityDefinitionTests.DefaultActivityDefinitions);
 
             // Assert
             Assert.IsNotNull(camperRequests, "Return from ReadCamperRequests");
             Assert.AreEqual(98, camperRequests.Count, "Number of camper requests");
         }
 
+        [TestMethod]
+        public void ReadCamperRequests_UnknownActivity_returnsNull()
+        {
+            // Act
+            var camperRequests = CamperRequests.ReadCamperRequests(GoodFileLocation,
+                ActivityDefinitionTests.IncompleteActivityDefinitions);
+
+            // Assert
+            Assert.IsNull(camperRequests, "Return from ReadCamperRequests");
+        }
     }
 }

@@ -48,7 +48,7 @@
     <OptimalCapacity>14</OptimalCapacity>
   </ActivityDefinition>
   <ActivityDefinition>
-    <Name>Splash</Name>
+    <Name>Splash (beach activities)</Name>
     <MinimumCapacity>0</MinimumCapacity>
     <MaximumCapacity>2147483647</MaximumCapacity>
     <OptimalCapacity>14</OptimalCapacity>

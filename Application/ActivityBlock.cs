@@ -7,11 +7,13 @@ namespace ActivityScheduler
     /// </summary>
     public class ActivityBlock
     {
+        public static int MaximumTimeSlots = 4;
+
         public ActivityDefinition ActivityDefinition { get; set; }
         /// <summary>
-        /// What block of the day.
+        /// What time of the day.
         /// </summary>
-        public int BlockNumber { get; set; }
+        public int TimeSlot { get; set; }
 
         private List<Camper> _assignedCampers = new List<Camper>();
         /// <summary>
