@@ -3,9 +3,23 @@
 namespace ActivityScheduler
 {
     /// <summary>
+    /// Public methods on an interface to support mocking.
+    /// </summary>
+    public interface IActivityBlock
+    {
+        ActivityDefinition ActivityDefinition { get; set; }
+
+        int TimeSlot { get; set; }
+
+        List<Camper> AssignedCampers { get; }
+
+        bool TryAddCamper(Camper camper);
+    }
+
+    /// <summary>
     /// An instance of an activity definition assigned to specific time block
     /// </summary>
-    public class ActivityBlock
+    public class ActivityBlock : IActivityBlock
     {
         public static int MaximumTimeSlots = 4;
 

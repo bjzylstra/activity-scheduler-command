@@ -17,11 +17,12 @@ namespace ActivityScheduler
         public int MaximumCapacity { get; set; }
         public int OptimalCapacity { get; set; }
 
-        private List<ActivityBlock> _scheduledBlocks = new List<ActivityBlock>();
+        private List<IActivityBlock> _scheduledBlocks = new List<IActivityBlock>();
         /// <summary>
         /// Return a copy of the scheduled blocks for reading only.
         /// </summary>
-        public List<ActivityBlock> ScheduledBlocks { get { return new List<ActivityBlock>(_scheduledBlocks); } }
+        [XmlIgnore]
+        public List<IActivityBlock> ScheduledBlocks { get { return new List<IActivityBlock>(_scheduledBlocks); } }
 
         private Boolean[] _isAvailableBlocks;
 
@@ -139,9 +140,9 @@ namespace ActivityScheduler
         /// </summary>
         /// <param name="slotNumber">Time slot to create the block in</param>
         /// <returns>Activity block if it could be created. Otherwise null.</returns>
-        private ActivityBlock TryCreateBlock(int slotNumber)
+        private IActivityBlock TryCreateBlock(int slotNumber)
         {
-            ActivityBlock createdBlock = null;
+            IActivityBlock createdBlock = null;
             if (_isAvailableBlocks[slotNumber])
             {
                 createdBlock = new ActivityBlock()

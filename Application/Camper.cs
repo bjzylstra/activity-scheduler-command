@@ -12,8 +12,8 @@ namespace ActivityScheduler
         public String FirstName { get; set; }
 
         private Boolean[] _isAvailableBlocks;
-        private List<ActivityBlock> _scheduledBlocks = new List<ActivityBlock>();
-        public List<ActivityBlock> ScheduledBlocks { get { return _scheduledBlocks; } }
+        private List<IActivityBlock> _scheduledBlocks = new List<IActivityBlock>();
+        public List<IActivityBlock> ScheduledBlocks { get { return _scheduledBlocks; } }
 
         /// <summary>
         /// Default constructor. Set up the available blocks.
@@ -57,7 +57,7 @@ namespace ActivityScheduler
         /// </summary>
         /// <param name="block">Block to assign</param>
         /// <returns>true if the block was assigned</returns>
-        public Boolean TryAssignBlock(ActivityBlock block)
+        public Boolean TryAssignBlock(IActivityBlock block)
         {
             Boolean mayAssign = block != null
                 && _isAvailableBlocks[block.TimeSlot];
