@@ -4,6 +4,7 @@ using System.Diagnostics;
 
 namespace ActivitySchedulerUnitTests
 {
+    [TestCategory("Functional")]
     [TestClass]
     public class FunctionalTests
     {

@@ -17,6 +17,19 @@ namespace ActivityScheduler
         public int MaximumCapacity { get; set; }
         public int OptimalCapacity { get; set; }
 
+        private List<ActivityBlock> _scheduledBlocks = new List<ActivityBlock>();
+        /// <summary>
+        /// Return a copy of the scheduled blocks for reading only.
+        /// </summary>
+        public List<ActivityBlock> ScheduledBlocks { get { return new List<ActivityBlock>(_scheduledBlocks); } }
+
+        private Boolean[] _isAvailableBlocks;
+
+        /// <summary>
+        /// Read the activity definition XML file to generate a list of activity definitions
+        /// </summary>
+        /// <param name="xmlPath">Path to the activity definition XML file</param>
+        /// <returns>List of activity defintions found in the file. Returns null if unsuccessful</returns>
         public static List<ActivityDefinition> ReadActivityDefinitions(String xmlPath)
         {
             try
@@ -46,5 +59,101 @@ namespace ActivityScheduler
             }
             return null;
         }
+
+        /// <summary>
+        /// Default constructor required for serialization.
+        /// </summary>
+        public ActivityDefinition()
+        {
+            _isAvailableBlocks = new Boolean[ActivityBlock.MaximumTimeSlots];
+            for (int i = 0; i < ActivityBlock.MaximumTimeSlots; i++)
+            {
+                _isAvailableBlocks[i] = true;
+            }
+        }
+
+        /// <summary>
+        /// Constructor for testing that pre-allocates slots
+        /// </summary>
+        /// <param name="usedSlots">Slot numbers to pre-allocate</param>
+        public ActivityDefinition(int[] usedSlots) : this()
+        {
+            foreach (var usedSlot in usedSlots)
+            {
+                if (usedSlot >= 0 && usedSlot < ActivityBlock.MaximumTimeSlots)
+                {
+                    _isAvailableBlocks[usedSlot] = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Try to assign the camper to a new activity block for the activity.
+        /// </summary>
+        /// <param name="camper">Camper to assign</param>
+        /// <param name="activityDefinition">Activity to assign to</param>
+        /// <returns>true if the camper was assigned</returns>
+        public bool TryAssignCamperToNewActivityBlock(Camper camper)
+        {
+            // Go through the campers unused slots and try to create to create
+            // an activity block.
+            Boolean didAssignCamper = false;
+            for (int slotNumber = 0; slotNumber < ActivityBlock.MaximumTimeSlots && !didAssignCamper; slotNumber++)
+            {
+                if (camper.IsAvailableInTimeSlot(slotNumber))
+                {
+                    var newActivityBlock = TryCreateBlock(slotNumber);
+                    didAssignCamper = camper.TryAssignBlock(newActivityBlock);
+                }
+            }
+
+            return didAssignCamper;
+        }
+
+        /// <summary>
+        /// Try to assign a camper to existing blocks of the activity.
+        /// </summary>
+        /// <param name="camper">Camper to assign</param>
+        /// <param name="limitByOptimal">Do not exceed optimal capacity</param>
+        /// <returns>true if the camper was assigned</returns>
+        public bool TryAssignCamperToExistingActivityBlock(Camper camper, Boolean limitByOptimal)
+        {
+            bool didAssign = false;
+
+            int capacity = (limitByOptimal) ? OptimalCapacity : MaximumCapacity;
+            var firstFitBlock = _scheduledBlocks.Find(
+                b => camper.IsAvailableInTimeSlot(b.TimeSlot)
+                && b.AssignedCampers.Count < capacity);
+
+            if (firstFitBlock != null)
+            {
+                // If this assign fails something is wrong because it was checked in the find.
+                didAssign = camper.TryAssignBlock(firstFitBlock);
+            }
+
+            return didAssign;
+        }
+
+        /// <summary>
+        /// Try to create a block in the specified slot.
+        /// </summary>
+        /// <param name="slotNumber">Time slot to create the block in</param>
+        /// <returns>Activity block if it could be created. Otherwise null.</returns>
+        private ActivityBlock TryCreateBlock(int slotNumber)
+        {
+            ActivityBlock createdBlock = null;
+            if (_isAvailableBlocks[slotNumber])
+            {
+                createdBlock = new ActivityBlock()
+                {
+                    TimeSlot = slotNumber,
+                    ActivityDefinition = this
+                };
+                _scheduledBlocks.Add(createdBlock);
+                _isAvailableBlocks[slotNumber] = false;
+            }
+            return createdBlock;
+        }
+
     }
 }

@@ -14,30 +14,51 @@ namespace ActivityScheduler
         /// Schedule a set of camper requests into a list of ActivityBlocks
         /// </summary>
         /// <param name="camperRequestList">List of camper requests</param>
-        /// <param name="activityDefinitions">List of activity definitions</param>
-        /// <returns></returns>
-        public static List<ActivityBlock> ScheduleActivities(
-            List<CamperRequests> camperRequestList, 
-            List<ActivityDefinition> activityDefinitions)
+        /// <returns>true if all the campers could be scheduled</returns>
+        public static Boolean ScheduleActivities(List<CamperRequests> camperRequestList)
         {
-            var scheduledActivities = new List<ActivityBlock>();
-            var activityDefinitionByName = activityDefinitions.ToDictionary(ad => ad.Name, ad => ad);
-
             foreach (var camperRequest in camperRequestList)
             {
-                // Schedule the requested activities for a camper.
+                var camper = camperRequest.Camper;
+
+                // First schedule any activities that already have blocks allocated.
+                List<ActivityDefinition> newBlockActivities = new List<ActivityDefinition>();
                 foreach (var activityRequest in camperRequest.ActivityRequests)
                 {
-                    // Get the activity definition.
+                    if (activityRequest.TryAssignCamperToExistingActivityBlock(camper, true))
+                    {
+                        // No block exists, need to create one after all activities with
+                        // existing blocks are done.
+                        newBlockActivities.Add(activityRequest);
+                    }
+                }
 
-                    // Check if there is an existing block with room.
-                    // If not create a block in the next time slot. 
-                    // If too many blocks use the alternate instead (if the alternate is full then oversubscribed).
-                    // Assign the camper to the block.
+                // Try to create new blocks and allocate the camper.
+                List<ActivityDefinition> noFitActivities = new List<ActivityDefinition>();
+                foreach (var activityRequest in newBlockActivities)
+                {
+                    if (!activityRequest.TryAssignCamperToNewActivityBlock(camper))
+                    {
+                        noFitActivities.Add(activityRequest);
+                    }
+                }
+
+                // If all activities were placed - continue with next camper
+                if (noFitActivities.Count == 0) continue;
+
+                // If there are more than no fit activity, fail.
+                if (noFitActivities.Count > 1) return false;
+
+                // Try the alternate.
+                if (!camperRequest.AlternateActivity.TryAssignCamperToExistingActivityBlock(camper, true)
+                    && !camperRequest.AlternateActivity.TryAssignCamperToNewActivityBlock(camper))
+                {
+                    // Alternate did not fit. FAIL
+                    return false;
                 }
             }
-
-            return scheduledActivities;
+            return true;
         }
     }
+
 }
