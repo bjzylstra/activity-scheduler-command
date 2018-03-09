@@ -15,3 +15,4 @@ Execute with dotnet
 # Coverage
 cd UnitTests\ActivitySchedulerUnitTests
 dotnet build /t:coverage
+Report is in file://UnitTests/ActivitySchedulerUnitTests/coverage/index.html
