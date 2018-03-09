@@ -1,12 +1,12 @@
 ﻿using ActivityScheduler;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace ActivitySchedulerUnitTests
 {
-    [TestClass]
+    [TestFixture]
     public class ActivityBlockTests
     {
-        [TestMethod]
+        [Test]
         public void TryAddCamper_ActivityHasRoom_Success()
         {
             // Arrange - Activity with room for 1 and a camper
@@ -24,7 +24,7 @@ namespace ActivitySchedulerUnitTests
             Assert.AreEqual(1, activityBlock.AssignedCampers.Count, "Number of assigned campers");
         }
 
-        [TestMethod]
+        [Test]
         public void TryAddCamper_ActivityHasNoRoom_Failure()
         {
             // Arrange - Activity with room for 1 and a camper

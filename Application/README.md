@@ -11,3 +11,7 @@ Usage: ActivityScheduler.dll -InputCSV <String> [-Help]
         Displays this help message. Alias: -?.
 
 Execute with dotnet
+
+# Coverage
+cd UnitTests\ActivitySchedulerUnitTests
+dotnet build /t:coverage
