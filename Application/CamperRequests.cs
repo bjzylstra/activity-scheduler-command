@@ -1,6 +1,5 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
-using Ookii.CommandLine;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -108,38 +107,26 @@ namespace ActivityScheduler
             }
             catch (FileNotFoundException e)
             {
-                using (LineWrappingTextWriter writer = LineWrappingTextWriter.ForConsoleError())
-                {
-                    writer.WriteLine("Could not open Camper CSV file {0}", e.FileName);
-                    writer.WriteLine();
-                }
+                Console.Error.WriteLine("Could not open Camper CSV file {0}", e.FileName);
             }
             catch (CsvHelperException e)
             {
-                using (LineWrappingTextWriter writer = LineWrappingTextWriter.ForConsoleError())
+                KeyNotFoundException keyNotFoundException = e.InnerException as KeyNotFoundException;
+                if (keyNotFoundException != null)
                 {
-                    KeyNotFoundException keyNotFoundException = e.InnerException as KeyNotFoundException;
-                    if (keyNotFoundException != null)
-                    {
-                        writer.WriteLine("Error parsing input file {0}: {1}", csvFilePath,
-                            keyNotFoundException.Message);
-                    }
-                    else
-                    {
-                        writer.WriteLine("Exception parsing input file {0}: {1}", csvFilePath,
-                            e.Message);
-                    }
-                    writer.WriteLine();
+                    Console.Error.WriteLine("Error parsing input file {0}: {1}", csvFilePath,
+                        keyNotFoundException.Message);
+                }
+                else
+                {
+                    Console.Error.WriteLine("Exception parsing input file {0}: {1}", csvFilePath,
+                        e.Message);
                 }
             }
             catch (Exception e)
             {
-                using (LineWrappingTextWriter writer = LineWrappingTextWriter.ForConsoleError())
-                {
-                    writer.WriteLine("Exception parsing input file {0}: {1}", csvFilePath,
-                        e.Message);
-                    writer.WriteLine();
-                }
+                Console.Error.WriteLine("Exception parsing input file {0}: {1}", csvFilePath,
+                    e.Message);
             }
 
             return null;

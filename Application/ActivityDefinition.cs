@@ -1,5 +1,4 @@
-﻿using Ookii.CommandLine;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
@@ -43,20 +42,12 @@ namespace ActivityScheduler
             }
             catch (FileNotFoundException e)
             {
-                using (LineWrappingTextWriter writer = LineWrappingTextWriter.ForConsoleError())
-                {
-                    writer.WriteLine("Could not open Activity Definitions file {0}", e.FileName);
-                    writer.WriteLine();
-                }
+                Console.Error.WriteLine("Could not open Activity Definitions file {0}", e.FileName);
             }
             catch (Exception e)
             {
-                using (LineWrappingTextWriter writer = LineWrappingTextWriter.ForConsoleError())
-                {
-                    writer.WriteLine("Exception parsing input file {0}: {1}", xmlPath,
+                Console.Error.WriteLine("Exception parsing input file {0}: {1}", xmlPath,
                         e.Message);
-                    writer.WriteLine();
-                }
             }
             return null;
         }

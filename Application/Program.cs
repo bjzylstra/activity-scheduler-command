@@ -1,31 +1,44 @@
-﻿using System;
+﻿using CommandLine;
+using System;
 
 namespace ActivityScheduler
 {
     class Program
     {
-        static int Main(string[] args)
+        class Options
         {
-            var programArguments = ProgramArguments.Create(args);
+            [Option('c', "CamperRequestsPath", Required = true, HelpText = "Path to a CSV file describing the camper activity requests")]
+            public String CamperRequestsPath { get; set; }
 
-            if (programArguments == null) return -1;
+            [Option('a', "ActivityDefinitionsPath", Required = true, HelpText = "Path to the XML file with the activity definitions")]
+            public String ActivityDefinitionsPath { get; set; }
+        }
 
-            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(programArguments.ActivityDefinitionsPath);
+        static void Main(string[] args)
+        {
 
-            if (activityDefinitions == null) return -2;
+            Parser.Default.ParseArguments<Options>(args).WithParsed(opts =>
+            {
+                var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(opts.ActivityDefinitionsPath);
 
-            Console.WriteLine("Found {0} activity definitions in the file: {1}",
-                activityDefinitions.Count, programArguments.ActivityDefinitionsPath);
+                if (activityDefinitions == null) Environment.Exit(-2);
 
-            var camperRequestsList = CamperRequests.ReadCamperRequests(programArguments.CamperRequestsPath,
-                activityDefinitions);
+                Console.WriteLine("Found {0} activity definitions in the file: {1}",
+                    activityDefinitions.Count, opts.ActivityDefinitionsPath);
 
-            if (camperRequestsList == null) return -2;
+                var camperRequestsList = CamperRequests.ReadCamperRequests(opts.CamperRequestsPath,
+                    activityDefinitions);
 
-            Console.WriteLine("Found {0} campers in the file: {1}",
-                camperRequestsList.Count, programArguments.CamperRequestsPath);
+                if (camperRequestsList == null) Environment.Exit(-2);
 
-            return 0;
+                Console.WriteLine("Found {0} campers in the file: {1}",
+                    camperRequestsList.Count, opts.CamperRequestsPath);
+
+                Environment.Exit(0);
+            }).WithNotParsed(opts =>
+            {
+                Environment.Exit(-1);
+            });
         }
     }
 }

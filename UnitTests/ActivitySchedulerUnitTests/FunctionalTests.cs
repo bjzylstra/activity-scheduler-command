@@ -20,7 +20,7 @@ namespace ActivitySchedulerUnitTests
             int exitCode = ExecuteConsoleApplication(command, out output, out errors);
 
             // Assert - some kind of error about arguments
-            AssertStringContains(errors, "argument");
+            AssertStringContains(errors, "Required option");
             // Ookii print usage to console is not getting along with NET Core.
             // Works directly from command line but fails in launched as a process.
             // Accept any negative exit code.
