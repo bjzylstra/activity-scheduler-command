@@ -25,7 +25,7 @@ namespace ActivityScheduler
                 List<ActivityDefinition> newBlockActivities = new List<ActivityDefinition>();
                 foreach (var activityRequest in camperRequest.ActivityRequests)
                 {
-                    if (activityRequest.TryAssignCamperToExistingActivityBlock(camper, true))
+                    if (!activityRequest.TryAssignCamperToExistingActivityBlock(camper, true))
                     {
                         // No block exists, need to create one after all activities with
                         // existing blocks are done.
@@ -50,8 +50,9 @@ namespace ActivityScheduler
                 if (noFitActivities.Count > 1) return false;
 
                 // Try the alternate.
-                if (!camperRequest.AlternateActivity.TryAssignCamperToExistingActivityBlock(camper, true)
-                    && !camperRequest.AlternateActivity.TryAssignCamperToNewActivityBlock(camper))
+                if (camperRequest.AlternateActivity == null ||
+                    (!camperRequest.AlternateActivity.TryAssignCamperToExistingActivityBlock(camper, true)
+                    && !camperRequest.AlternateActivity.TryAssignCamperToNewActivityBlock(camper)))
                 {
                     // Alternate did not fit. FAIL
                     return false;
