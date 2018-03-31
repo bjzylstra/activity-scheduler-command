@@ -8,10 +8,10 @@ using System.Linq;
 namespace ActivityScheduler
 {
     /// <summary>
-    /// Represents the activity and cabin placement requests
-    /// for a camper. LastName/FirstName is the 'KEY' for the record.
+    /// Represents the activity and cabin placement requests for a camper.
+    /// Campers are sortable by their request lists - hardest to place go first.
     /// </summary>
-    public class CamperRequests
+    public class CamperRequests : IComparable<CamperRequests>
     {
         public sealed class CamperRequestsMap : ClassMap<CamperRequests>
         {
@@ -78,7 +78,21 @@ namespace ActivityScheduler
 
         public Camper Camper { get; set; }
         public String CabinMate { get; set; }
-        public List<ActivityDefinition> ActivityRequests { get; set; }
+        private List<ActivityDefinition> _activityDefinitions;
+        public List<ActivityDefinition> ActivityRequests
+        {
+            get { return _activityDefinitions; }
+            set
+            {
+                // Leave it sorted.
+                _activityDefinitions = (value != null)
+                    ? _activityDefinitions = new List<ActivityDefinition>(value)
+                    : _activityDefinitions = new List<ActivityDefinition>();
+                // Sort including name so that campers with the same requests get the
+                // same ordering.
+                _activityDefinitions.Sort(ActivityDefinition.CompareIncludingName);
+            }
+        }
         public ActivityDefinition AlternateActivity { get; set; }
 
         /// <summary>
@@ -130,6 +144,35 @@ namespace ActivityScheduler
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Compare camper requests by the difficulty to satisfy.
+        /// More difficult requests go first.
+        /// </summary>
+        /// <param name="other">Other camper request</param>
+        /// <returns>0 if equal, gt 0 if this before other, lt 0 if this after other</returns>
+        public int CompareTo(CamperRequests other)
+        {
+            int compareValue = 0;
+            for (int i = 0; i < Math.Min(_activityDefinitions.Count, other._activityDefinitions.Count); i++)
+            {
+                // Does not include name in the activity definition compare so equivalent by
+                // complexity activities are not ranked by name (can keep checking other activities)
+                compareValue = _activityDefinitions[i].CompareTo(other._activityDefinitions[i]);
+                if (compareValue != 0) return compareValue;
+            }
+            // Lists match up to the min. If one list is longer, it is harder to satisfy
+            // thus reverse the sort order so that longer goes first.
+            compareValue = _activityDefinitions.Count.CompareTo(other._activityDefinitions.Count) * -1;
+            if (compareValue != 0) return compareValue;
+
+            // Check the alternate. No alternate is harder to resolve than with an alternate
+            compareValue = (AlternateActivity == null)
+                ? other.AlternateActivity == null ? 0 : 1
+                : other.AlternateActivity == null ? -1 : ActivityDefinition.CompareIncludingName(AlternateActivity, other.AlternateActivity);
+
+            return compareValue;
         }
     }
 }

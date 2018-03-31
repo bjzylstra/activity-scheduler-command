@@ -19,10 +19,10 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var succeeded = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
 
             // Assert
-            Assert.IsTrue(succeeded, "Succeeded");
+            Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
         }
 
         [Test]
@@ -39,10 +39,10 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var succeeded = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
 
             // Assert
-            Assert.IsTrue(succeeded, "Succeeded");
+            Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
         }
 
         [Test]
@@ -59,10 +59,10 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var succeeded = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
 
             // Assert
-            Assert.IsTrue(succeeded, "Succeeded");
+            Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
             Assert.AreEqual(numberOfActivitiesTaken, activityDefinitions
                 .Count(ad => ad.ScheduledBlocks.Count == 1), "Blocks scheduled");
             AssertCamperRequestsFilled(camperRequestsList);
@@ -84,10 +84,10 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var succeeded = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
 
             // Assert
-            Assert.IsTrue(succeeded, "Succeeded");
+            Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
             Assert.AreEqual(4, activityDefinitions
                 .Count(ad => ad.ScheduledBlocks.Count == 1), "Blocks scheduled");
             AssertCamperRequestsFilled(camperRequestsList);
@@ -112,10 +112,10 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var succeeded = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
 
             // Assert
-            Assert.IsTrue(succeeded, "Succeeded");
+            Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
             for (int i = 0; i < numberOfActivities; i++)
             {
                 // 2 of the over subscribed and 1 of the rest.
@@ -145,10 +145,10 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var succeeded = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
 
             // Assert
-            Assert.IsFalse(succeeded, "Succeeded");
+            Assert.AreEqual(1, unhappyCampers.Count, "Unhappy campers");
         }
 
         [Test]
@@ -171,10 +171,10 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var succeeded = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
 
             // Assert
-            Assert.IsTrue(succeeded, "Succeeded");
+            Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
             Assert.AreEqual(4, activityDefinitions
                 .Count(ad => ad.ScheduledBlocks.Count == 1), "Blocks scheduled");
             // Check that the alternate was scheduled.
@@ -201,10 +201,10 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var succeeded = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
 
             // Assert
-            Assert.IsFalse(succeeded, "Succeeded");
+            Assert.AreEqual(1, unhappyCampers.Count, "Unhappy campers");
         }
 
         /// <summary>

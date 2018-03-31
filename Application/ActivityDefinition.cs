@@ -9,7 +9,7 @@ namespace ActivityScheduler
     /// Defines an activity and its capacity
     /// Expect these to be read from an XML file.
     /// </summary>
-    public class ActivityDefinition
+    public class ActivityDefinition : IComparable<ActivityDefinition>
     {
         public String Name { get; set; }
         public int MinimumCapacity { get; set; }
@@ -22,6 +22,7 @@ namespace ActivityScheduler
         /// </summary>
         [XmlIgnore]
         public List<IActivityBlock> ScheduledBlocks { get { return new List<IActivityBlock>(_scheduledBlocks); } }
+
 
         private Boolean[] _isAvailableBlocks;
 
@@ -76,6 +77,18 @@ namespace ActivityScheduler
                 {
                     _isAvailableBlocks[usedSlot] = false;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Reset the schedule to try again
+        /// </summary>
+        public void Reset()
+        {
+            _scheduledBlocks.Clear();
+            for (int i = 0; i < ActivityBlock.MaximumTimeSlots; i++)
+            {
+                _isAvailableBlocks[i] = true;
             }
         }
 
@@ -145,6 +158,34 @@ namespace ActivityScheduler
                 _isAvailableBlocks[slotNumber] = false;
             }
             return createdBlock;
+        }
+
+        /// <summary>
+        /// Default sort is by capacities. For difficulty of placement only.
+        /// </summary>
+        /// <param name="otherActivityDefinition"></param>
+        /// <returns>0 if equal, gt 0 if this before other, lt 0 if this after other</returns>
+        public int CompareTo(ActivityDefinition otherActivityDefinition)
+        {
+            int compareValue = 0;
+//            compareValue = OptimalCapacity.CompareTo(otherActivityDefinition.OptimalCapacity);
+            if (compareValue != 0) return compareValue;
+            compareValue = MaximumCapacity.CompareTo(otherActivityDefinition.MaximumCapacity);
+            return compareValue;
+        }
+
+        /// <summary>
+        /// Sort by capacities but also name if capacities match to get consistent list.
+        /// </summary>
+        /// <param name="x">An activity definition</param>
+        /// <param name="y">Another activity definition</param>
+        /// <returns>0 if equal, gt 0 if this before other, lt 0 if this after other</returns>
+        public static int CompareIncludingName(ActivityDefinition x, ActivityDefinition y)
+        {
+            int compareValue = x.CompareTo(y);
+            if (compareValue != 0) return compareValue;
+            compareValue = x.Name.CompareTo(y.Name);
+            return compareValue;
         }
 
     }
