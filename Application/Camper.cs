@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace ActivityScheduler
 {
@@ -14,6 +16,61 @@ namespace ActivityScheduler
         private Boolean[] _isAvailableBlocks;
         private List<IActivityBlock> _scheduledBlocks = new List<IActivityBlock>();
         public List<IActivityBlock> ScheduledBlocks { get { return _scheduledBlocks; } }
+
+        /// <summary>
+        /// Write the camper schedules to a CSV file.
+        /// </summary>
+        /// <param name="camperList">List of campers</param>
+        /// <param name="outputFilePath">Path to the CSV file</param>
+        public static void WriteScheduleToCsvFile(IEnumerable<Camper> camperList, string outputFilePath)
+        {
+            try
+            {
+                List<Camper> campers = camperList.ToList();
+                campers.Sort((c1, c2) =>
+                {
+                    int compareValue = c1.LastName.CompareTo(c2.LastName);
+                    if (compareValue == 0)
+                    {
+                        compareValue = c1.FirstName.CompareTo(c2.FirstName);
+                    }
+                    return compareValue;
+                });
+                using (var outTextWriter = new StreamWriter(outputFilePath))
+                {
+                    using (var csvWriter = new CsvHelper.CsvWriter(outTextWriter))
+                    {
+                        // Write the header
+                        csvWriter.WriteField("Camper");
+                        for (int i = 0; i < ActivityBlock.MaximumTimeSlots; i++)
+                        {
+                            csvWriter.WriteField($"Block {i}");
+                        }
+                        csvWriter.NextRecord();
+
+                        // Write the activities
+                        foreach (var camper in campers)
+                        {
+                            csvWriter.WriteField($"\"{camper}\"");
+
+                            for (int i = 0; i < ActivityBlock.MaximumTimeSlots; i++)
+                            {
+                                // Find activity block in that time slot.
+                                IActivityBlock activityBlock = camper.ScheduledBlocks
+                                    .FirstOrDefault(sb => sb.TimeSlot == i);
+                                csvWriter.WriteField(activityBlock != null ? activityBlock.ActivityDefinition.Name : "Free");
+                            }
+                            csvWriter.NextRecord();
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine("Exception writing output file {0}: {1}", outputFilePath,
+                    e.Message);
+            }
+        }
 
         /// <summary>
         /// Default constructor. Set up the available blocks.

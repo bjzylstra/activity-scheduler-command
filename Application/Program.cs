@@ -9,14 +9,17 @@ namespace ActivityScheduler
     {
         class Options
         {
-            [Option('c', "CamperRequestsPath", Required = true, HelpText = "Path to a CSV file describing the camper activity requests")]
+            [Option('r', "CamperRequestsPath", Required = true, HelpText = "Path to a CSV file describing the camper activity requests")]
             public String CamperRequestsPath { get; set; }
 
-            [Option('a', "ActivityDefinitionsPath", Required = true, HelpText = "Path to the XML file with the activity definitions")]
+            [Option('d', "ActivityDefinitionsPath", Required = true, HelpText = "Path to the XML file with the activity definitions")]
             public String ActivityDefinitionsPath { get; set; }
 
-            [Option('s', "ScheduleCsvPath", HelpText = "Path to where to write the CSV file with the activity schedurles")]
-            public String ScheduleCsvPath { get; set; }
+            [Option('a', "ActivityScheduleCsvPath", HelpText = "Path to where to write the CSV file with the activity schedules")]
+            public String ActivityScheduleCsvPath { get; set; }
+
+            [Option('c', "CamperScheduleCsvPath", HelpText = "Path to where to write the CSV file with the camper schedules")]
+            public String CamperScheduleCsvPath { get; set; }
         }
 
         static void Main(string[] args)
@@ -43,6 +46,12 @@ namespace ActivityScheduler
                 // Most difficult go first.
                 camperRequestsList.Sort();
 
+                // Preload the activity blocks
+                foreach (var activity in activityDefinitions)
+                {
+                    activity.PreloadBlocks();
+                }
+
                 List<CamperRequests> unsuccessfulCamperRequests = Scheduler.ScheduleActivities(camperRequestsList);
                 foreach (var unhappyCamper in unsuccessfulCamperRequests)
                 {
@@ -63,9 +72,16 @@ namespace ActivityScheduler
                     }
                 }
 
-                if (!String.IsNullOrWhiteSpace(opts.ScheduleCsvPath))
+                if (!String.IsNullOrWhiteSpace(opts.ActivityScheduleCsvPath))
                 {
-                    ActivityDefinition.WriteScheduleToCsvFile(activityDefinitions, opts.ScheduleCsvPath);
+                    ActivityDefinition.WriteScheduleToCsvFile(activityDefinitions, opts.ActivityScheduleCsvPath);
+                    Console.Out.WriteLine($"Wrote the activity schedule file to '{opts.ActivityScheduleCsvPath}'");
+                }
+
+                if (!String.IsNullOrWhiteSpace(opts.CamperScheduleCsvPath))
+                {
+                    Camper.WriteScheduleToCsvFile(camperRequestsList.Select(cr => cr.Camper), opts.CamperScheduleCsvPath);
+                    Console.Out.WriteLine($"Wrote the camper schedule file to '{opts.CamperScheduleCsvPath}'");
                 }
 
                 if (unsuccessfulCamperRequests.Count == 0)

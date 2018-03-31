@@ -101,7 +101,7 @@ namespace ActivitySchedulerUnitTests
             int capacity = 2;
             List<ActivityDefinition> activityDefinitions = BuildActivityList(numberOfActivities, capacity);
             int overSubscribedIndex = 1;
-            activityDefinitions[overSubscribedIndex].OptimalCapacity = 1;
+            activityDefinitions[overSubscribedIndex].MaximumCapacity = 1;
 
             int numberOfActivitiesTaken = 3;
             // Camper 1 takes 1-3, camper 2 takes 1-3 but no room in 2
@@ -134,7 +134,7 @@ namespace ActivitySchedulerUnitTests
             int capacity = 2;
             List<ActivityDefinition> activityDefinitions = BuildActivityList(numberOfActivities, capacity, true);
             int overSubscribedIndex = 1;
-            activityDefinitions[overSubscribedIndex].OptimalCapacity = 1;
+            activityDefinitions[overSubscribedIndex].MaximumCapacity = 1;
 
             int numberOfActivitiesTaken = 3;
             // Camper 1 takes 1-3, camper 2 takes 1-3 but no room in 2
@@ -159,7 +159,7 @@ namespace ActivitySchedulerUnitTests
             int capacity = 2;
             List<ActivityDefinition> activityDefinitions = BuildActivityList(numberOfActivities, capacity, true);
             int overSubscribedIndex = 1;
-            activityDefinitions[overSubscribedIndex].OptimalCapacity = 1;
+            activityDefinitions[overSubscribedIndex].MaximumCapacity = 1;
 
             int numberOfActivitiesTaken = 3;
             // Camper 1 takes 1-3, camper 2 takes 1-3 but no room in 2
@@ -188,8 +188,8 @@ namespace ActivitySchedulerUnitTests
             int numberOfActivities = 4;
             int capacity = 2;
             List<ActivityDefinition> activityDefinitions = BuildActivityList(numberOfActivities, capacity, true);
-            activityDefinitions[1].OptimalCapacity = 1;
-            activityDefinitions[2].OptimalCapacity = 1;
+            activityDefinitions[1].MaximumCapacity = 1;
+            activityDefinitions[2].MaximumCapacity = 1;
 
             int numberOfActivitiesTaken = 3;
             // Camper 1 takes 1-3, camper 2 takes 1-3 but no room in 2

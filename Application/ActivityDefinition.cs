@@ -135,14 +135,13 @@ namespace ActivityScheduler
         }
 
         /// <summary>
-        /// Reset the schedule to try again
+        /// Prebuild the blocks
         /// </summary>
-        public void Reset()
+        public void PreloadBlocks()
         {
-            _scheduledBlocks.Clear();
             for (int i = 0; i < ActivityBlock.MaximumTimeSlots; i++)
             {
-                _isAvailableBlocks[i] = true;
+                TryCreateBlock(i);
             }
         }
 

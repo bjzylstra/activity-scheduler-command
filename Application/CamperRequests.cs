@@ -93,6 +93,7 @@ namespace ActivityScheduler
                 _activityDefinitions.Sort(ActivityDefinition.CompareIncludingName);
             }
         }
+
         public ActivityDefinition AlternateActivity { get; set; }
 
         /// <summary>
