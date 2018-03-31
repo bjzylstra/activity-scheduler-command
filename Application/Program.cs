@@ -14,6 +14,9 @@ namespace ActivityScheduler
 
             [Option('a', "ActivityDefinitionsPath", Required = true, HelpText = "Path to the XML file with the activity definitions")]
             public String ActivityDefinitionsPath { get; set; }
+
+            [Option('s', "ScheduleCsvPath", HelpText = "Path to where to write the CSV file with the activity schedurles")]
+            public String ScheduleCsvPath { get; set; }
         }
 
         static void Main(string[] args)
@@ -58,6 +61,11 @@ namespace ActivityScheduler
                             $"in block {activityBlock.TimeSlot} " +
                             $"with {activityBlock.AssignedCampers.Count} campers");
                     }
+                }
+
+                if (!String.IsNullOrWhiteSpace(opts.ScheduleCsvPath))
+                {
+                    ActivityDefinition.WriteScheduleToCsvFile(activityDefinitions, opts.ScheduleCsvPath);
                 }
 
                 if (unsuccessfulCamperRequests.Count == 0)

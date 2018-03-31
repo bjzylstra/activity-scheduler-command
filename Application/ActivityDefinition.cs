@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace ActivityScheduler
@@ -25,6 +26,59 @@ namespace ActivityScheduler
 
 
         private Boolean[] _isAvailableBlocks;
+
+        /// <summary>
+        /// Write the activity schedules to a CSV file.
+        /// </summary>
+        /// <param name="activityDefinitions">List of activity defintions</param>
+        /// <param name="outputFilePath">Path to the CSV file</param>
+        public static void WriteScheduleToCsvFile(List<ActivityDefinition> activityDefinitions, String outputFilePath)
+        {
+            try
+            {
+                using (var outTextWriter = new StreamWriter(outputFilePath))
+                {
+                    using (var csvWriter = new CsvHelper.CsvWriter(outTextWriter))
+                    {
+                        // Write the header
+                        csvWriter.WriteField("Activity");
+                        csvWriter.WriteField("Block");
+                        csvWriter.NextRecord();
+
+                        // Write the activities
+                        foreach (var activity in activityDefinitions)
+                        {
+                            for (int i = 0; i < ActivityBlock.MaximumTimeSlots; i++)
+                            {
+                                // Name only on the first row.
+                                csvWriter.WriteField((i == 0) ? activity.Name : " ");
+
+                                // Block number.
+                                csvWriter.WriteField(i);
+
+                                // Find activity block in that time slot.
+                                IActivityBlock activityBlock = activity.ScheduledBlocks
+                                    .FirstOrDefault(sb => sb.TimeSlot == i);
+                                if (activityBlock != null)
+                                {
+                                    // Campers in the block
+                                    foreach (var camper in activityBlock.AssignedCampers)
+                                    {
+                                        csvWriter.WriteField($"\"{camper}\"");
+                                    }
+                                }
+                                csvWriter.NextRecord();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine("Exception writing output file {0}: {1}", outputFilePath,
+                    e.Message);
+            }
+        }
 
         /// <summary>
         /// Read the activity definition XML file to generate a list of activity definitions
