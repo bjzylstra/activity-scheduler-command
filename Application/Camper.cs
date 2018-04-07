@@ -110,19 +110,6 @@ namespace ActivityScheduler
         }
 
         /// <summary>
-        /// Reset scheduled values to try again.
-        /// </summary>
-        public void Reset()
-        {
-            _scheduledBlocks.Clear();
-            for (int i = 0; i < ActivityBlock.MaximumTimeSlots; i++)
-            {
-                _isAvailableBlocks[i] = true;
-            }
-
-        }
-
-        /// <summary>
         /// Try to assign a block to a camper
         /// </summary>
         /// <param name="block">Block to assign</param>

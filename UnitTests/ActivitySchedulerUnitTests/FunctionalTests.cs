@@ -8,7 +8,10 @@ namespace ActivitySchedulerUnitTests
     [TestClass]
     public class FunctionalTests
     {
-        private const String CommandLineFormat = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll -r {0} -d {1}";
+        private const String CommandLineFormat = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll " +
+            "-r {0} -d {1}";
+        private const String CommandLineFormatWithOutput = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll " +
+            "-r {0} -d {1} -a {2} -c {3}";
 
         [TestMethod]
         public void FunctionalTest_CommandLineIncomplete_ErrorMessage()
@@ -63,9 +66,11 @@ namespace ActivitySchedulerUnitTests
         public void FunctionalTest_ValidInput_GenerateOutput()
         {
             // Act
-            var command = String.Format(CommandLineFormat,
+            var command = String.Format(CommandLineFormatWithOutput,
                 "\"..\\..\\..\\Skills Test Data.csv\"",
-                "..\\..\\..\\Activities.xml");
+                "..\\..\\..\\Activities.xml",
+                "activitySchedule.csv",
+                "camperSchedule.csv");
             String output;
             String errors;
             int exitCode = ExecuteConsoleApplication(command, out output, out errors);
