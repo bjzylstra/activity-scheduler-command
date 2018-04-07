@@ -8,7 +8,7 @@ namespace ActivitySchedulerUnitTests
     [TestClass]
     public class FunctionalTests
     {
-        private const String CommandLineFormat = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll -c {0} -a {1}";
+        private const String CommandLineFormat = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll -r {0} -d {1}";
 
         [TestMethod]
         public void FunctionalTest_CommandLineIncomplete_ErrorMessage()
