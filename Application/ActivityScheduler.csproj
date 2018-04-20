@@ -14,4 +14,16 @@
     <PackageReference Include="ReportGenerator" Version="3.1.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Activities.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ScheduleCampers.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CamperRequests.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

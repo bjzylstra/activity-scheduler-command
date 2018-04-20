@@ -41,11 +41,11 @@ namespace ActivityScheduler
                 Map(m => m.CabinMate).Index(index++);
                 int activityIndex = index;
                 Map(m => m.ActivityRequests).ConvertUsing(row => {
-                    return new List<ActivityDefinition> {
-                        GetActivityForName(row.GetField(activityIndex)),
-                        GetActivityForName(row.GetField(activityIndex+1)),
-                        GetActivityForName(row.GetField(activityIndex+2)),
-                        GetActivityForName(row.GetField(activityIndex+3))
+                    return new List<ActivityRequest> {
+                        new ActivityRequest{Rank = 1, Activity = GetActivityForName(row.GetField(activityIndex))},
+                        new ActivityRequest{Rank = 2, Activity = GetActivityForName(row.GetField(activityIndex+1))},
+                        new ActivityRequest{Rank = 3, Activity = GetActivityForName(row.GetField(activityIndex+2))},
+                        new ActivityRequest{Rank = 4, Activity = GetActivityForName(row.GetField(activityIndex+3))}
                     };
                 });
                 index += 4;
@@ -78,19 +78,19 @@ namespace ActivityScheduler
 
         public Camper Camper { get; set; }
         public String CabinMate { get; set; }
-        private List<ActivityDefinition> _activityDefinitions;
-        public List<ActivityDefinition> ActivityRequests
+        private List<ActivityRequest> _activityRequests;
+        public List<ActivityRequest> ActivityRequests
         {
-            get { return _activityDefinitions; }
+            get { return _activityRequests; }
             set
             {
                 // Leave it sorted.
-                _activityDefinitions = (value != null)
-                    ? _activityDefinitions = new List<ActivityDefinition>(value)
-                    : _activityDefinitions = new List<ActivityDefinition>();
+                _activityRequests = (value != null)
+                    ? _activityRequests = new List<ActivityRequest>(value)
+                    : _activityRequests = new List<ActivityRequest>();
                 // Sort including name so that campers with the same requests get the
                 // same ordering.
-                _activityDefinitions.Sort(ActivityDefinition.CompareIncludingName);
+                _activityRequests.Sort();
             }
         }
 
@@ -156,16 +156,16 @@ namespace ActivityScheduler
         public int CompareTo(CamperRequests other)
         {
             int compareValue = 0;
-            for (int i = 0; i < Math.Min(_activityDefinitions.Count, other._activityDefinitions.Count); i++)
+            for (int i = 0; i < Math.Min(_activityRequests.Count, other._activityRequests.Count); i++)
             {
                 // Does not include name in the activity definition compare so equivalent by
                 // complexity activities are not ranked by name (can keep checking other activities)
-                compareValue = _activityDefinitions[i].CompareTo(other._activityDefinitions[i]);
+                compareValue = _activityRequests[i].CompareTo(other._activityRequests[i]);
                 if (compareValue != 0) return compareValue;
             }
             // Lists match up to the min. If one list is longer, it is harder to satisfy
             // thus reverse the sort order so that longer goes first.
-            compareValue = _activityDefinitions.Count.CompareTo(other._activityDefinitions.Count) * -1;
+            compareValue = _activityRequests.Count.CompareTo(other._activityRequests.Count) * -1;
             if (compareValue != 0) return compareValue;
 
             // Check the alternate. No alternate is harder to resolve than with an alternate

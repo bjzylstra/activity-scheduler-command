@@ -55,11 +55,19 @@ namespace ActivityScheduler
                 List<CamperRequests> unsuccessfulCamperRequests = Scheduler.ScheduleActivities(camperRequestsList);
                 foreach (var unhappyCamper in unsuccessfulCamperRequests)
                 {
-                    List<string> unscheduledActivities = unhappyCamper.ActivityRequests
-                        .Where(ar => !unhappyCamper.Camper.ScheduledBlocks.Select(sb => sb.ActivityDefinition).Contains(ar))
-                        .Select(ar => ar.Name).ToList();
-                    Console.Error.WriteLine($"Failed to place {unhappyCamper.Camper} in {String.Join(',', unscheduledActivities)} " +
-                        $"or alternate {unhappyCamper.AlternateActivity.Name}");
+                    List<ActivityRequest> unscheduledActivities = unhappyCamper.ActivityRequests
+                        .Where(ar => !unhappyCamper.Camper.ScheduledBlocks.Select(sb => sb.ActivityDefinition).Contains(ar.Activity))
+                        .ToList();
+                    if (unscheduledActivities.Any(ar => ar.Rank < 3))
+                    {
+                        Console.Error.WriteLine($"Failed to place {unhappyCamper.Camper} in {String.Join(',', unscheduledActivities.Select(ar => ar.ToString()))} ");
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine($"Failed to place {unhappyCamper.Camper} in " +
+                            $"{String.Join(',', unscheduledActivities.Select(ar => ar.ToString()))} " +
+                            $"or alternate '{unhappyCamper.AlternateActivity.Name}'");
+                    }
                 }
 
                 foreach (var activity in activityDefinitions)

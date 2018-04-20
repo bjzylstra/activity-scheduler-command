@@ -67,8 +67,8 @@ namespace ActivitySchedulerUnitTests
         {
             // Act
             var command = String.Format(CommandLineFormatWithOutput,
-                "\"..\\..\\..\\Skills Test Data.csv\"",
-                "..\\..\\..\\Activities.xml",
+                "CamperRequests.csv",
+                "Activities.xml",
                 "activitySchedule.csv",
                 "camperSchedule.csv");
             String output;

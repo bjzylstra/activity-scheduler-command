@@ -34,7 +34,7 @@ namespace ActivitySchedulerUnitTests
                 new CamperRequests
                 {
                     Camper = new Camper{ FirstName = "Bub", LastName = "Slug"},
-                    ActivityRequests = new List<ActivityDefinition>()
+                    ActivityRequests = new List<ActivityRequest>()
                 }
             };
 
@@ -158,7 +158,7 @@ namespace ActivitySchedulerUnitTests
             int numberOfActivities = 4;
             int capacity = 2;
             List<ActivityDefinition> activityDefinitions = BuildActivityList(numberOfActivities, capacity, true);
-            int overSubscribedIndex = 1;
+            int overSubscribedIndex = 2;
             activityDefinitions[overSubscribedIndex].MaximumCapacity = 1;
 
             int numberOfActivitiesTaken = 3;
@@ -179,6 +179,66 @@ namespace ActivitySchedulerUnitTests
                 .Count(ad => ad.ScheduledBlocks.Count == 1), "Blocks scheduled");
             // Check that the alternate was scheduled.
             AssertCamperInActivity(camperRequestsList[1].Camper, camperRequestsList[1].AlternateActivity);
+        }
+
+        [Test]
+        public void ScheduleActivities_Rank1ActivityBlockFullNoMoreCanBeScheduledHasAlternate_Fails()
+        {
+            // Arrange - campers want same activities and one does not have room.
+            int numberOfActivities = 4;
+            int capacity = 2;
+            List<ActivityDefinition> activityDefinitions = BuildActivityList(numberOfActivities, capacity, true);
+            int overSubscribedIndex = 0;
+            activityDefinitions[overSubscribedIndex].MaximumCapacity = 1;
+
+            int numberOfActivitiesTaken = 3;
+            // Camper 1 takes 1-3, camper 2 takes 1-3 but no room in 2
+            var camperRequestsList = new List<CamperRequests>
+            {
+                BuildCamper("First", activityDefinitions.Take(numberOfActivitiesTaken), null),
+                // Supply an alternate of the final activity
+                BuildCamper("Second", activityDefinitions.Take(numberOfActivitiesTaken), activityDefinitions[3])
+            };
+
+            // Act
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+
+            // Assert
+            Assert.AreEqual(1, unhappyCampers.Count, "Unhappy campers");
+            // Should not have scheduled the alternate
+            Assert.AreEqual(3, activityDefinitions
+                .Count(ad => ad.ScheduledBlocks.Count == 1), "Blocks scheduled");
+            Assert.AreEqual(0, activityDefinitions[3].ScheduledBlocks.Count, "Alternate blocks scheduled");
+        }
+
+        [Test]
+        public void ScheduleActivities_Rank2ActivityBlockFullNoMoreCanBeScheduledHasAlternate_Fails()
+        {
+            // Arrange - campers want same activities and one does not have room.
+            int numberOfActivities = 4;
+            int capacity = 2;
+            List<ActivityDefinition> activityDefinitions = BuildActivityList(numberOfActivities, capacity, true);
+            int overSubscribedIndex = 0;
+            activityDefinitions[overSubscribedIndex].MaximumCapacity = 1;
+
+            int numberOfActivitiesTaken = 3;
+            // Camper 1 takes 1-3, camper 2 takes 1-3 but no room in 2
+            var camperRequestsList = new List<CamperRequests>
+            {
+                BuildCamper("First", activityDefinitions.Take(numberOfActivitiesTaken), null),
+                // Supply an alternate of the final activity
+                BuildCamper("Second", activityDefinitions.Take(numberOfActivitiesTaken), activityDefinitions[3])
+            };
+
+            // Act
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+
+            // Assert
+            Assert.AreEqual(1, unhappyCampers.Count, "Unhappy campers");
+            // Should not have scheduled the alternate
+            Assert.AreEqual(3, activityDefinitions
+                .Count(ad => ad.ScheduledBlocks.Count == 1), "Blocks scheduled");
+            Assert.AreEqual(0, activityDefinitions[3].ScheduledBlocks.Count, "Alternate blocks scheduled");
         }
 
         [Test]
@@ -218,7 +278,7 @@ namespace ActivitySchedulerUnitTests
                 // Check that requested activity was assigned.
                 foreach (var activityRequest in camperRequest.ActivityRequests)
                 {
-                    AssertCamperInActivity(camperRequest.Camper, activityRequest);
+                    AssertCamperInActivity(camperRequest.Camper, activityRequest.Activity);
                 }
                 // Check that the camper is not double booked.
                 bool[] isScheduled = new bool[ActivityBlock.MaximumTimeSlots];
@@ -268,11 +328,13 @@ namespace ActivitySchedulerUnitTests
             IEnumerable<ActivityDefinition> activityRequests, 
             ActivityDefinition alternateActivity)
         {
+            int rank = 1;
             var theCamper = new Camper { FirstName = $"{name}", LastName = $"{name}" };
             var camperRequests = new CamperRequests
             {
                 Camper = theCamper,
-                ActivityRequests = new List<ActivityDefinition>(activityRequests),
+                ActivityRequests = new List<ActivityRequest>(activityRequests
+                .Select(ar => new ActivityRequest { Rank = rank++, Activity = ar })),
                 AlternateActivity = alternateActivity
             };
             return camperRequests;
