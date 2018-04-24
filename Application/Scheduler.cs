@@ -23,14 +23,14 @@ namespace ActivityScheduler
                 var camper = camperRequest.Camper;
 
                 // First schedule any activities that already have blocks allocated.
-                List<ActivityDefinition> newBlockActivities = new List<ActivityDefinition>();
+                List<ActivityRequest> newBlockActivities = new List<ActivityRequest>();
                 foreach (var activityRequest in camperRequest.ActivityRequests)
                 {
-                    if (activityRequest.TryAssignCamperToExistingActivityBlock(camper, false))
+                    if (activityRequest.Activity.TryAssignCamperToExistingActivityBlock(camper, false))
                     {
                         Console.Out.WriteLine($"Placed camper '{camper}' in existing activity block in slot " +
-                            $"'{activityRequest.ScheduledBlocks.Where(sb => sb.AssignedCampers.Contains(camper)).Select(sb => sb.TimeSlot).First()}' " +
-                            $"for '{activityRequest.Name}'");
+                            $"'{activityRequest.Activity.ScheduledBlocks.Where(sb => sb.AssignedCampers.Contains(camper)).Select(sb => sb.TimeSlot).First()}' " +
+                            $"for '{activityRequest}'");
                     }
                     else
                     {
@@ -41,18 +41,32 @@ namespace ActivityScheduler
                 }
 
                 // Try to create new blocks and allocate the camper.
-                List<ActivityDefinition> noFitActivities = new List<ActivityDefinition>();
+                List<ActivityRequest> noFitActivities = new List<ActivityRequest>();
                 foreach (var activityRequest in newBlockActivities)
                 {
-                    if (activityRequest.TryAssignCamperToNewActivityBlock(camper))
+                    if (activityRequest.Activity.TryAssignCamperToNewActivityBlock(camper))
                     {
                         Console.Out.WriteLine($"Placed camper '{camper}' in new activity block in slot " +
-                            $"'{activityRequest.ScheduledBlocks.Where(sb => sb.AssignedCampers.Contains(camper)).Select(sb => sb.TimeSlot).First()}' " +
-                            $"for '{activityRequest.Name}'");
+                            $"'{activityRequest.Activity.ScheduledBlocks.Where(sb => sb.AssignedCampers.Contains(camper)).Select(sb => sb.TimeSlot).First()}' " +
+                            $"for '{activityRequest}'");
                     }
                     else
                     {
-                        noFitActivities.Add(activityRequest);
+                        if (activityRequest.Rank > 2)
+                        {
+                            noFitActivities.Add(activityRequest);
+                            Console.Out.WriteLine($"Trying alternate for camper '{camper}' {activityRequest}" +
+                                $"camper has activities in blocks: " +
+                                $"'{String.Join(',', camper.ScheduledBlocks.Select(b => b.TimeSlot).ToArray())}'");
+                        }
+                        else
+                        {
+                            Console.Error.WriteLine($"Failed to place camper '{camper}' in {activityRequest}" +
+                                $"camper has activities in blocks: " +
+                                $"'{String.Join(',', camper.ScheduledBlocks.Select(b => b.TimeSlot).ToArray())}'");
+                            unsuccessfulCamperRequests.Add(camperRequest);
+                            continue;
+                        }
                     }
                 }
 
@@ -63,7 +77,7 @@ namespace ActivityScheduler
                 if (noFitActivities.Count > 1)
                 {
                     Console.Error.WriteLine($"Failed to place camper '{camper}' in " +
-                        $"'{String.Join(',', noFitActivities.Select(a => a.Name).ToArray())}' " +
+                        $"'{String.Join(',', noFitActivities.Select(a => a.ToString()).ToArray())}' " +
                         $"camper has activities in blocks: " +
                         $"'{String.Join(',', camper.ScheduledBlocks.Select(b => b.TimeSlot).ToArray())}'");
                     unsuccessfulCamperRequests.Add(camperRequest);
@@ -90,9 +104,9 @@ namespace ActivityScheduler
                 }
 
                 // Alternate did not fit. FAIL
-                Console.Error.WriteLine($"Attempted unsuccessfully to place camper '{camper}' " +
+                Console.Error.WriteLine($"Failed to place camper '{camper}' " +
                     $"in alternate '{camperRequest.AlternateActivity?.Name}' " +
-                    $"after trying '{String.Join(',', noFitActivities.Select(a => a.Name).ToArray())}' " +
+                    $"after trying '{String.Join(',', noFitActivities.Select(a => a.ToString()).ToArray())}' " +
                     $"camper has activities in blocks: " +
                     $"'{String.Join(',', camper.ScheduledBlocks.Select(b => b.TimeSlot).ToArray())}'");
                 unsuccessfulCamperRequests.Add(camperRequest);
