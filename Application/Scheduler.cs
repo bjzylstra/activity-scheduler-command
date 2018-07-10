@@ -26,6 +26,12 @@ namespace ActivityScheduler
                 List<ActivityRequest> newBlockActivities = new List<ActivityRequest>();
                 foreach (var activityRequest in camperRequest.ActivityRequests)
                 {
+                    // Handle missing activity requests by logging and skipping.
+                    if (activityRequest?.Activity == null)
+                    {
+                        Console.Out.WriteLine($"Camper '{camper}' has no activity in rank '{activityRequest?.Rank}'. Skipping to next activity.");
+                        continue;
+                    }
                     if (activityRequest.Activity.TryAssignCamperToExistingActivityBlock(camper, false))
                     {
                         Console.Out.WriteLine($"Placed camper '{camper}' in existing activity block in slot " +

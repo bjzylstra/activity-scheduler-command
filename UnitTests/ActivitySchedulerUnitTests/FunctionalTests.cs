@@ -83,6 +83,26 @@ namespace ActivitySchedulerUnitTests
         }
 
         [TestMethod]
+        public void FunctionalTest_ValidInputNoActivity4_GenerateOutput()
+        {
+            // Act
+            var command = String.Format(CommandLineFormatWithOutput,
+                @"..\..\..\NoActivity4.csv",
+                "Activities.xml",
+                "activitySchedule.csv",
+                "camperSchedule.csv");
+            String output;
+            String errors;
+            int exitCode = ExecuteConsoleApplication(command, out output, out errors);
+
+            // Assert
+            Assert.AreEqual(0, exitCode, "exitcode");
+            Assert.AreEqual(String.Empty, errors, "Errors");
+            AssertStringContains(output, "Found 98 campers");
+            AssertStringContains(output, "Found 9 activity definitions");
+        }
+
+        [TestMethod]
         public void FunctionalTest_RequestUnknownActivity_ErrorMessage()
         {
             // Act
