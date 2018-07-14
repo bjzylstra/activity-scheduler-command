@@ -1,0 +1,7 @@
+﻿Activity Schedule Command Line Utility
+
+1.0.2 - July 14, 2018
+- Handle null activities requests on the camper.csv file.
+
+1.0.1 - April 2018
+- Initial release
