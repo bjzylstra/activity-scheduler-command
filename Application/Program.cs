@@ -83,13 +83,13 @@ namespace ActivityScheduler
                         .ToList();
                     if (unscheduledActivities.Any(ar => ar.Rank < 3))
                     {
-                        Console.Error.WriteLine($"Failed to place {unhappyCamper.Camper} in {String.Join(',', unscheduledActivities.Select(ar => ar.ToString()))} ");
+                        Console.Error.WriteLine($"Failed to place {unhappyCamper.Camper} in {String.Join(',', unscheduledActivities.Select(ar => ar?.ToString()))} ");
                     }
                     else
                     {
                         Console.Error.WriteLine($"Failed to place {unhappyCamper.Camper} in " +
-                            $"{String.Join(',', unscheduledActivities.Select(ar => ar.ToString()))} " +
-                            $"or alternate '{unhappyCamper.AlternateActivity.Name}'");
+                            $"{String.Join(',', unscheduledActivities.Select(ar => ar?.ToString()))} " +
+                            $"or alternate '{unhappyCamper.AlternateActivity?.Name}'");
                     }
                 }
 
