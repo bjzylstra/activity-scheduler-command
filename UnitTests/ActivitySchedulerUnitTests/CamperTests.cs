@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ActivityScheduler;
 using NSubstitute;
+using Camp;
 
 namespace ActivitySchedulerUnitTests
 {

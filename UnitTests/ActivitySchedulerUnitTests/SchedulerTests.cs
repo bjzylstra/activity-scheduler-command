@@ -1,4 +1,5 @@
 ﻿using ActivityScheduler;
+using Camp;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using System;

@@ -2,6 +2,7 @@
 using ActivityScheduler;
 using System;
 using System.Collections.Generic;
+using Camp;
 
 namespace ActivitySchedulerUnitTests
 {

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 
-namespace ActivityScheduler
+namespace Camp
 {
     /// <summary>
     /// Defines an activity and its capacity

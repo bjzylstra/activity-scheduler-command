@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Camp;
+using System;
 
 namespace ActivityScheduler
 {
