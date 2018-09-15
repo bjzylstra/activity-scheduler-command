@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,6 +14,7 @@ namespace Camp
     /// </summary>
     public class ActivityDefinition : IComparable<ActivityDefinition>
     {
+
         public String Name { get; set; }
         public int MinimumCapacity { get; set; }
         public int MaximumCapacity { get; set; }
@@ -24,8 +27,104 @@ namespace Camp
         [XmlIgnore]
         public List<IActivityBlock> ScheduledBlocks { get { return new List<IActivityBlock>(_scheduledBlocks); } }
 
-
         private Boolean[] _isAvailableBlocks;
+
+        /// <summary>
+        /// Read the activity schedule from a CSV file.
+        /// </summary>
+        /// <param name="inputFilePath">Path to the activity schedule file</param>
+        /// <returns>List of activity definitions describing the schedule</returns>
+        public static List<ActivityDefinition> ReadScheduleFromCsvFile(String inputFilePath)
+        {
+            List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>();
+            try
+            {
+                var inFileStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read);
+                var streamReader = new StreamReader(inFileStream);
+                var csvReader = new CsvReader(streamReader, new Configuration
+                {
+                    HasHeaderRecord = true,
+                    HeaderValidated = null
+                });
+
+                // Skip over the header line
+                csvReader.Read();
+
+                ActivityDefinition currentActivityDefinition = null;
+                Dictionary<string, Camper> campersByName = new Dictionary<string, Camper>();
+
+                while (csvReader.Read())
+                {
+                    string activityName = csvReader.GetField(0);
+                    if (!string.IsNullOrWhiteSpace(activityName))
+                    {
+                        currentActivityDefinition = new ActivityDefinition { Name = activityName };
+                        activityDefinitions.Add(currentActivityDefinition);
+                    }
+                    if (currentActivityDefinition == null)
+                    {
+                        throw new Exception("Malformed file: no activity at start");
+                    }
+                    int timeSlot = csvReader.GetField<int>(1);
+                    currentActivityDefinition._scheduledBlocks.Add(new ActivityBlock
+                    {
+                        ActivityDefinition = currentActivityDefinition,
+                        TimeSlot = timeSlot
+                    });
+                    // Next is the collection of camper names.
+                    int camperIndex = 0;
+                    object camperFullNameObject;
+                    while (csvReader.TryGetField(typeof(string), 2 + camperIndex, out camperFullNameObject))
+                    {
+                        // Find or create the camper
+                        string camperFullName = (string)camperFullNameObject;
+                        Camper camper;
+                        if (!campersByName.TryGetValue(camperFullName, out camper))
+                        {
+                            string[] camperNameParts = camperFullName.Split(',');
+                            camper = new Camper
+                            {
+                                FirstName = camperNameParts[1].Trim('"'),
+                                LastName = camperNameParts[0].Trim('"')
+                            };
+                            campersByName.Add(camperFullName, camper);
+                        }
+                        // Add camper to activity
+                        currentActivityDefinition.ScheduledBlocks[timeSlot].AssignedCampers.Add(camper);
+
+                        // Add activity to camper
+                        camper.ScheduledBlocks.Add(currentActivityDefinition.ScheduledBlocks[timeSlot]);
+
+                        camperIndex++;
+                    }
+                }
+                return activityDefinitions;
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.Error.WriteLine("Could not open Camper CSV file {0}", e.FileName);
+            }
+            catch (CsvHelperException e)
+            {
+                KeyNotFoundException keyNotFoundException = e.InnerException as KeyNotFoundException;
+                if (keyNotFoundException != null)
+                {
+                    Console.Error.WriteLine("Error parsing input file {0}: {1}", inputFilePath,
+                        keyNotFoundException.Message);
+                }
+                else
+                {
+                    Console.Error.WriteLine("Exception parsing input file {0}: {1}", inputFilePath,
+                        e.Message);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine("Exception parsing input file {0}: {1}", inputFilePath,
+                    e.Message);
+            }
+            return null;
+        }
 
         /// <summary>
         /// Write the activity schedules to a CSV file.
