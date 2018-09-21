@@ -10,4 +10,8 @@
     <PackageReference Include="EPPlus" Version="4.5.2.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Camp\Camp.csproj" />
+  </ItemGroup>
+
 </Project>

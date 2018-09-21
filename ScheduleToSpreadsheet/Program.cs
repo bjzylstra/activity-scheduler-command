@@ -2,6 +2,8 @@
 using CommandLine;
 using System;
 using System.IO;
+using Camp;
+using System.Collections.Generic;
 
 namespace ScheduleToSpreadsheet
 {
@@ -12,9 +14,6 @@ namespace ScheduleToSpreadsheet
             [Option('a', "ActivityScheduleCsvPath", Required = true, HelpText = "Path to the CSV file with the activity schedules")]
             public String ActivityScheduleCsvPath { get; set; }
 
-            [Option('c', "CamperScheduleCsvPath", Required = true, HelpText = "Path to the CSV file with the camper schedules")]
-            public String CamperScheduleCsvPath { get; set; }
-
             [Option('s', "ScheduleExcelPath", Required = true, HelpText = "Path to the output Excel spreadsheet file")]
             public String ScheduleExcelPath { get; set; }
         }
@@ -22,31 +21,27 @@ namespace ScheduleToSpreadsheet
         {
             Parser.Default.ParseArguments<Options>(args).WithParsed(opts =>
             {
+                List<ActivityDefinition> activitySchedule =
+                    ActivityDefinition.ReadScheduleFromCsvFile(opts.ActivityScheduleCsvPath);
+
+                if (activitySchedule == null) Environment.Exit(-2);
+
                 //Creates a blank workbook. Use the using statment, so the package is disposed when we are done.
-                using (var p = new ExcelPackage())
+                using (var excelApplication = new ExcelPackage())
                 {
-                    FileInfo activityCsv = new FileInfo(opts.ActivityScheduleCsvPath);
-                    if (activityCsv.Exists)
-                    {
-                        ExcelWorksheet ws = p.Workbook.Worksheets.Add("Activities");
-                        //To set values in the spreadsheet use the Cells indexer.
-                        ws.Cells.LoadFromText(activityCsv);
+                    ActivitySheet activitySheet = new ActivitySheet(activitySchedule);
 
-                    }
+                    activitySheet.AddToWorkbook(excelApplication.Workbook);
 
-                    FileInfo camperCsv = new FileInfo(opts.CamperScheduleCsvPath);
-                    if (camperCsv.Exists)
-                    {
-                        ExcelWorksheet ws = p.Workbook.Worksheets.Add("Campers");
-                        //To set values in the spreadsheet use the Cells indexer.
-                        ws.Cells.LoadFromText(camperCsv);
+                    CamperSheet camperSheet = new CamperSheet(activitySchedule);
 
-                    }
+                    camperSheet.AddToWorkbook(excelApplication.Workbook);
+
                     //Save the new workbook. We haven't specified the filename so use the Save as method.
-                    p.SaveAs(new FileInfo(opts.ScheduleExcelPath));
+                    excelApplication.SaveAs(new FileInfo(opts.ScheduleExcelPath));
                 }
 
-                Console.Out.WriteLine($"Ran with {opts.ActivityScheduleCsvPath} and {opts.CamperScheduleCsvPath}");
+                Console.Out.WriteLine($"Ran with {opts.ActivityScheduleCsvPath}");
                 Environment.Exit(0);
             }).WithNotParsed(opts =>
             {

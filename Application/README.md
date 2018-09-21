@@ -20,4 +20,3 @@ Report is in file://UnitTests/ActivitySchedulerUnitTests/coverage/index.html
 # TODO
 - Schedule 1 pass by optimal and pick up the unplaced using maximum
 - Output to log file
-- Bat file to bundle up to run from double click
