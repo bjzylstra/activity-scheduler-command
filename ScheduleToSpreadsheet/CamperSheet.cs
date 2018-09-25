@@ -61,7 +61,7 @@ namespace ScheduleToSpreadsheet
                     }
                     camperWorksheet.Cells[row, column].Style.Fill.PatternType = ExcelFillStyle.Solid;
                     camperWorksheet.Cells[row, column].Style.Fill.BackgroundColor
-                        .SetColor(activityBlock == null ? Color.Red : Color.Green);
+                        .SetColor(activityBlock == null ? Color.Red : Color.LawnGreen);
                     column++;
                 }
                 row++;
