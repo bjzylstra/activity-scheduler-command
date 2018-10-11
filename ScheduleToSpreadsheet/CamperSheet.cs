@@ -12,6 +12,10 @@ namespace ScheduleToSpreadsheet
     {
         private List<Camper> _camperSchedule;
 
+        /// <summary>
+        /// Construct the camper sheet generator from the activity block definitions
+        /// </summary>
+        /// <param name="activitySchedule">List of activity definitions with schedule information</param>
         public CamperSheet(List<ActivityDefinition> activitySchedule)
         {
             _camperSchedule = activitySchedule.SelectMany(activity => 
@@ -23,6 +27,10 @@ namespace ScheduleToSpreadsheet
             _camperSchedule.Sort(camperComparer);
         }
 
+        /// <summary>
+        /// Add and populate the camper sheet in the work book
+        /// </summary>
+        /// <param name="excelWorkbook">Work book</param>
         internal void AddToWorkbook(ExcelWorkbook excelWorkbook)
         {
             ExcelWorksheet camperWorksheet = excelWorkbook.Worksheets.Add("Campers");

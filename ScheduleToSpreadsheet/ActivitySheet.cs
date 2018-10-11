@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using Camp;
 using OfficeOpenXml;
+using OfficeOpenXml.ConditionalFormatting.Contracts;
 using OfficeOpenXml.Style;
 
 namespace ScheduleToSpreadsheet
@@ -19,6 +21,10 @@ namespace ScheduleToSpreadsheet
             _activitySchedule = activitySchedule;
         }
 
+        /// <summary>
+        /// Add and populate the activity sheet in the work book
+        /// </summary>
+        /// <param name="excelWorkbook">Work book</param>
         internal void AddToWorkbook(ExcelWorkbook excelWorkbook)
         {
             ExcelWorksheet activityWorksheet = excelWorkbook.Worksheets.Add("Activities");
@@ -35,8 +41,13 @@ namespace ScheduleToSpreadsheet
             row++;
             activityWorksheet.View.FreezePanes(row, column);
 
+            int topActivityRow;
+            int bottomActivityRow;
+            int countColumn = activityWorksheet.Cells.Start.Column + 2;
             foreach (var activity in _activitySchedule)
             {
+                topActivityRow = row;
+                bottomActivityRow = row;
                 column = activityWorksheet.Cells.Start.Column;
                 activityWorksheet.Column(column).Width = 20;
                 activityWorksheet.SetValue(row, column, activity.Name);
@@ -46,40 +57,98 @@ namespace ScheduleToSpreadsheet
                     activityWorksheet.SetValue(row, column, activityBlock.TimeSlot);
                     column++;
 
-                    bool showLimits = activity.MaximumCapacity > 0;
-                    bool aboveMinimum = activityBlock.AssignedCampers.Count >= activity.MinimumCapacity;
-                    int numberOfCampers = activityBlock.AssignedCampers.Count;
-                    activityWorksheet.SetValue(row, column, numberOfCampers);
-                    if (showLimits)
-                    {
-                        activityWorksheet.Cells[row, column].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                        activityWorksheet.Cells[row, column].Style.Fill.BackgroundColor
-                            .SetColor(numberOfCampers > activity.MaximumCapacity || !aboveMinimum
-                                ? Color.OrangeRed
-                                : (numberOfCampers > activity.OptimalCapacity) ? Color.Yellow
-                                : Color.LawnGreen);
-                    }
+                    // Get the count from the number of non-blank camper cells
+                    ExcelRange activityCamperRange = activityWorksheet
+                        .Cells[row, countColumn + 1, row, countColumn + 40];
+                    activityWorksheet.Cells[row, column].Formula = $"COUNTA({activityCamperRange.Address})";
                     column++;
 
                     for (int camperIndex = 1; camperIndex <= activityBlock.AssignedCampers.Count; camperIndex++)
                     {
-                        var camper = activityBlock.AssignedCampers[camperIndex-1];
+                        var camper = activityBlock.AssignedCampers[camperIndex - 1];
                         activityWorksheet.Column(column).Width = 30;
                         activityWorksheet.SetValue(row, column, camper.ToString());
-                        if (showLimits)
-                        {
-                            activityWorksheet.Cells[row, column].Style.Fill.PatternType = ExcelFillStyle.Solid;
-                            activityWorksheet.Cells[row, column].Style.Fill.BackgroundColor
-                                .SetColor(camperIndex > activity.MaximumCapacity || !aboveMinimum
-                                    ? Color.OrangeRed
-                                    : (camperIndex > activity.OptimalCapacity) ? Color.Yellow
-                                    : Color.LawnGreen);
-                        }
                         column++;
                     }
+                    bottomActivityRow = row;
                     row++;
                 }
+
+                AddConditionalColorToCount(activityWorksheet, topActivityRow, bottomActivityRow, countColumn, activity);
+
+                AddConditionalColorToCampers(activityWorksheet, topActivityRow, bottomActivityRow, countColumn, activity);
+
             }
+        }
+
+        /// <summary>
+        /// Add coloring based on the activity block subscription level (count) to the campers in the block
+        /// </summary>
+        /// <param name="activityWorksheet">Worksheet with activity block details</param>
+        /// <param name="topActivityRow">Row number for the first (top) block of the activity</param>
+        /// <param name="bottomActivityRow">Row number for the last (bottom) block of the activity</param>
+        /// <param name="countColumn">Column number for the count fields</param>
+        /// <param name="activity">Activity definition</param>
+        private static void AddConditionalColorToCampers(ExcelWorksheet activityWorksheet, int topActivityRow, int bottomActivityRow, int countColumn, ActivityDefinition activity)
+        {
+            int maximumCapacity = Math.Min(activity.MaximumCapacity, 100);
+            int optimalCapacity = Math.Min(activity.OptimalCapacity, maximumCapacity);
+            ExcelRange activityCampersAboveMaximum = activityWorksheet
+                .Cells[topActivityRow, countColumn + maximumCapacity + 1, bottomActivityRow, countColumn + maximumCapacity + 20];
+            IExcelConditionalFormattingContainsText campersMoreThanMaximum =
+               activityCampersAboveMaximum.ConditionalFormatting.AddContainsText();
+            campersMoreThanMaximum.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            campersMoreThanMaximum.Style.Fill.BackgroundColor.Color = Color.Red;
+
+            if (optimalCapacity < maximumCapacity)
+            {
+                ExcelRange activityCampersAboveOptimal = activityWorksheet
+                    .Cells[topActivityRow, countColumn + optimalCapacity + 1, bottomActivityRow, countColumn + maximumCapacity];
+                IExcelConditionalFormattingContainsText campersMoreThanOptimal =
+                   activityCampersAboveOptimal.ConditionalFormatting.AddContainsText();
+                campersMoreThanOptimal.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                campersMoreThanOptimal.Style.Fill.BackgroundColor.Color = Color.Yellow;
+            }
+
+            if (activity.MinimumCapacity > 0)
+            {
+                ExcelRange activityCampersBelowMinimum = activityWorksheet
+                    .Cells[topActivityRow, countColumn + 1, bottomActivityRow, countColumn + activity.MinimumCapacity];
+                IExcelConditionalFormattingNotContainsText emptyBelowMinimum =
+                   activityCampersBelowMinimum.ConditionalFormatting.AddNotContainsText();
+                emptyBelowMinimum.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                emptyBelowMinimum.Style.Fill.BackgroundColor.Color = Color.CornflowerBlue;
+
+            }
+        }
+
+        /// <summary>
+        /// Color the counts for each block of an activity
+        /// </summary>
+        /// <param name="activityWorksheet">Worksheet with activity block details</param>
+        /// <param name="topActivityRow">Row number for the first (top) block of the activity</param>
+        /// <param name="bottomActivityRow">Row number for the last (bottom) block of the activity</param>
+        /// <param name="countColumn">Column number for the count fields</param>
+        /// <param name="activity">Activity definition</param>
+        private static void AddConditionalColorToCount(ExcelWorksheet activityWorksheet, int topActivityRow, int bottomActivityRow, int countColumn, ActivityDefinition activity)
+        {
+            ExcelRange activityCounts = activityWorksheet
+                .Cells[topActivityRow, countColumn, bottomActivityRow, countColumn];
+            IExcelConditionalFormattingGreaterThan countMoreThanMaximum =
+                activityCounts.ConditionalFormatting.AddGreaterThan();
+            countMoreThanMaximum.Formula = $"{activity.MaximumCapacity}";
+            countMoreThanMaximum.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            countMoreThanMaximum.Style.Fill.BackgroundColor.Color = Color.Red;
+            IExcelConditionalFormattingGreaterThan countMoreThanOptimal =
+                activityCounts.ConditionalFormatting.AddGreaterThan();
+            countMoreThanOptimal.Formula = $"{activity.OptimalCapacity}";
+            countMoreThanOptimal.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            countMoreThanOptimal.Style.Fill.BackgroundColor.Color = Color.Yellow;
+            IExcelConditionalFormattingLessThan countLessThanMinimum =
+                activityCounts.ConditionalFormatting.AddLessThan();
+            countLessThanMinimum.Formula = $"{activity.MinimumCapacity}";
+            countLessThanMinimum.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            countLessThanMinimum.Style.Fill.BackgroundColor.Color = Color.CornflowerBlue;
         }
     }
 }
