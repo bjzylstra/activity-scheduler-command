@@ -1,0 +1,6 @@
+﻿Schedule to Spreadsheet Command Line Utility
+
+1.0.0 - ???
+- Initial release
+- Generate spreadsheet with activity and camper sheets.
+- Color activity sheet to show fill levels
