@@ -102,7 +102,7 @@ namespace Camp
             }
             catch (FileNotFoundException e)
             {
-                Console.Error.WriteLine("Could not open Camper CSV file {0}", e.FileName);
+                Console.Error.WriteLine("Could not open Activity Schedule CSV file {0}", e.FileName);
             }
             catch (CsvHelperException e)
             {

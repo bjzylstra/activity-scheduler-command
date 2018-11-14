@@ -1,17 +1,17 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using ActivityScheduler;
 using System;
 
 namespace ActivitySchedulerUnitTests
 {
-    [TestClass]
+    [TestFixture]
     public class CamperRequestsTests
     {
         private const String BadContentFileLocation = @"..\..\..\Bogus.csv";
         private const String GoodFileLocation = @"..\..\..\Skills Test Data.csv";
         private const String NonExistentFileLocation = @"NoSuchDirectory\NoSuchFile.csv";
 
-        [TestMethod]
+        [Test]
         public void ReadCamperRequests_fileNotFound_returnsNull()
         {
             // Act
@@ -19,10 +19,10 @@ namespace ActivitySchedulerUnitTests
                 ActivityDefinitionTests.DefaultActivityDefinitions);
 
             // Assert
-            Assert.IsNull(camperRequests, "Return from ReadCamperRequests");
+            Assert.That(camperRequests, Is.Null, "Return from ReadCamperRequests");
         }
 
-        [TestMethod]
+        [Test]
         public void ReadCamperRequests_invalidRequestFile_returnsNull()
         {
             // Act
@@ -30,10 +30,10 @@ namespace ActivitySchedulerUnitTests
                 ActivityDefinitionTests.DefaultActivityDefinitions);
 
             // Assert
-            Assert.IsNull(camperRequests, "Return from ReadCamperRequests");
+            Assert.That(camperRequests, Is.Null, "Return from ReadCamperRequests");
         }
 
-        [TestMethod]
+        [Test]
         public void ReadCamperRequests_validInput_loadsList()
         {
             // Act
@@ -41,11 +41,11 @@ namespace ActivitySchedulerUnitTests
                 ActivityDefinitionTests.DefaultActivityDefinitions);
 
             // Assert
-            Assert.IsNotNull(camperRequests, "Return from ReadCamperRequests");
-            Assert.AreEqual(98, camperRequests.Count, "Number of camper requests");
+            Assert.That(camperRequests, Is.Not.Null, "Return from ReadCamperRequests");
+            Assert.That(camperRequests.Count, Is.EqualTo(98), "Number of camper requests");
         }
 
-        [TestMethod]
+        [Test]
         public void ReadCamperRequests_UnknownActivity_returnsNull()
         {
             // Act
@@ -53,7 +53,7 @@ namespace ActivitySchedulerUnitTests
                 ActivityDefinitionTests.IncompleteActivityDefinitions);
 
             // Assert
-            Assert.IsNull(camperRequests, "Return from ReadCamperRequests");
+            Assert.That(camperRequests, Is.Null, "Return from ReadCamperRequests");
         }
     }
 }
