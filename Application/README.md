@@ -2,15 +2,20 @@
 
 Command line application to read the camper signups CSV file and generate schedule CSVs for each activity.
 
-Usage: ActivityScheduler.dll -InputCSV <String> [-Help]
+Usage: dotnet ActivityScheduler.dll -r <String> -d <String> [-a <String>] [-c <String>]
 
-    -InputCSV <String>
-        Path to a CSV file describing the camper activity requests Alias: -i.
+  -r, --CamperRequestsPath         Required. Path to a CSV file describing the camper activity requests
 
-    -Help [<Boolean>]
-        Displays this help message. Alias: -?.
+  -d, --ActivityDefinitionsPath    Required. Path to the XML file with the activity definitions
 
-Execute with dotnet
+  -a, --ActivityScheduleCsvPath    Path to where to write the CSV file with the activity schedules
+
+  -c, --CamperScheduleCsvPath      Path to where to write the CSV file with the camper schedules
+
+  --help                           Display this help screen.
+
+  --version                        Display version information.
+
 
 # Coverage
 cd UnitTests\ActivitySchedulerUnitTests
@@ -20,4 +25,3 @@ Report is in file://UnitTests/ActivitySchedulerUnitTests/coverage/index.html
 # TODO
 - Schedule 1 pass by optimal and pick up the unplaced using maximum
 - Output to log file
-- Bat file to bundle up to run from double click

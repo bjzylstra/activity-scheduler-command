@@ -1,13 +1,13 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ActivityScheduler;
+﻿using NUnit.Framework;
 using NSubstitute;
+using Camp;
 
 namespace ActivitySchedulerUnitTests
 {
-    [TestClass]
+    [TestFixture]
     public class CamperTests
     {
-        [TestMethod]
+        [Test]
         public void TryAssignBlock_BlockRejectsAdd_Fails()
         {
             // Arrange - need a camper with all slots open and and block that rejects
@@ -20,11 +20,11 @@ namespace ActivitySchedulerUnitTests
             var didAssign = camper.TryAssignBlock(mockBlock);
 
             // Assert
-            Assert.IsFalse(didAssign, "Succeeded in assigning block");
-            Assert.AreEqual(0, camper.ScheduledBlocks.Count, "Number of scheduled blocks");
+            Assert.That(didAssign, Is.False, "Succeeded in assigning block");
+            Assert.That(camper.ScheduledBlocks.Count, Is.EqualTo(0), "Number of scheduled blocks");
         }
 
-        [TestMethod]
+        [Test]
         public void TryAssignBlock_NullBlock_Fails()
         {
             // Arrange - need a camper
@@ -34,11 +34,11 @@ namespace ActivitySchedulerUnitTests
             var didAssign = camper.TryAssignBlock(null);
 
             // Assert
-            Assert.IsFalse(didAssign, "Succeeded in assigning block");
-            Assert.AreEqual(0, camper.ScheduledBlocks.Count, "Number of scheduled blocks");
+            Assert.That(didAssign, Is.False, "Succeeded in assigning block");
+            Assert.That(camper.ScheduledBlocks.Count, Is.EqualTo(0), "Number of scheduled blocks");
         }
 
-        [TestMethod]
+        [Test]
         public void TryAssignBlock_TimeSlotUnavailable_Fails()
         {
             // Arrange - need a camper with only 1 block available and 
@@ -52,11 +52,11 @@ namespace ActivitySchedulerUnitTests
             var didAssign = camper.TryAssignBlock(mockBlock);
 
             // Assert
-            Assert.IsFalse(didAssign, "Succeeded in assigning block");
-            Assert.AreEqual(0, camper.ScheduledBlocks.Count, "Number of scheduled blocks");
+            Assert.That(didAssign, Is.False, "Succeeded in assigning block");
+            Assert.That(camper.ScheduledBlocks.Count, Is.EqualTo(0), "Number of scheduled blocks");
         }
 
-        [TestMethod]
+        [Test]
         public void TryAssignBlock_TimeSlotAvailable_Succeeds()
         {
             // Arrange - need a camper with only 1 block available and 
@@ -70,9 +70,9 @@ namespace ActivitySchedulerUnitTests
             var didAssign = camper.TryAssignBlock(mockBlock);
 
             // Assert
-            Assert.IsTrue(didAssign, "Succeeded in assigning block");
-            Assert.AreEqual(1, camper.ScheduledBlocks.Count, "Number of scheduled blocks");
-            Assert.IsFalse(camper.IsAvailableInTimeSlot(2), "Slot with activity is available");
+            Assert.That(didAssign, Is.True, "Succeeded in assigning block");
+            Assert.That(camper.ScheduledBlocks.Count, Is.EqualTo(1), "Number of scheduled blocks");
+            Assert.That(camper.IsAvailableInTimeSlot(2), Is.False, "Slot with activity is available");
         }
     }
 }

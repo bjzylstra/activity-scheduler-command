@@ -1,4 +1,4 @@
-﻿using ActivityScheduler;
+﻿using Camp;
 using NUnit.Framework;
 
 namespace ActivitySchedulerUnitTests
@@ -20,8 +20,9 @@ namespace ActivitySchedulerUnitTests
             var didAdd = activityBlock.TryAddCamper(camper);
 
             // Assert
-            Assert.IsTrue(didAdd, "TryAddCamper succeeded");
-            Assert.AreEqual(1, activityBlock.AssignedCampers.Count, "Number of assigned campers");
+            Assert.That(didAdd, Is.True, "TryAddCamper succeeded");
+            Assert.That(activityBlock.AssignedCampers.Count, Is.EqualTo(1),
+                "Number of assigned campers");
         }
 
         [Test]
@@ -38,9 +39,11 @@ namespace ActivitySchedulerUnitTests
             var didAdd = activityBlock.TryAddCamper(new Camper { FirstName = "Second" });
 
             // Assert
-            Assert.IsFalse(didAdd, "TryAddCamper succeeded");
-            Assert.AreEqual(1, activityBlock.AssignedCampers.Count, "Number of assigned campers");
-            Assert.AreEqual("First", activityBlock.AssignedCampers[0].FirstName, "Name of assigned camper");
+            Assert.That(didAdd, Is.False, "TryAddCamper succeeded");
+            Assert.That(activityBlock.AssignedCampers.Count, Is.EqualTo(1),
+                "Number of assigned campers");
+            Assert.That(activityBlock.AssignedCampers[0].FirstName, Is.EqualTo("First"),
+                "Name of assigned camper");
         }
     }
 }

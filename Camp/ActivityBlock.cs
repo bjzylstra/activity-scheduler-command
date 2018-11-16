@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ActivityScheduler
+namespace Camp
 {
     /// <summary>
     /// Public methods on an interface to support mocking.

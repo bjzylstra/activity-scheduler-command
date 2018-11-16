@@ -1,16 +1,17 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ActivityScheduler;
+﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using Camp;
 
 namespace ActivitySchedulerUnitTests
 {
-    [TestClass]
+    [TestFixture]
     public class ActivityDefinitionTests
     {
         private const String BadContentFileLocation = @"..\..\..\Bogus.csv";
-        private const String GoodFileLocation = @"..\..\..\Activities.xml";
-        private const String NonExistentFileLocation = @"NoSuchDirectory\NoSuchFile.xml";
+        private const String GoodDefinitionFileLocation = @"..\..\..\Activities.xml";
+        private const String GoodScheduleCsvFileLocation = @"..\..\..\ActivitySchedule.csv";
+        private const String NonExistentDefinitionFileLocation = @"NoSuchDirectory\NoSuchFile.xml";
         public static List<ActivityDefinition> DefaultActivityDefinitions = new List<ActivityDefinition>{
             new ActivityDefinition { Name = "Archery", MaximumCapacity = 16, OptimalCapacity = 12 },
             new ActivityDefinition { Name = "Canoeing", MaximumCapacity = 12, OptimalCapacity = 12 },
@@ -34,38 +35,38 @@ namespace ActivitySchedulerUnitTests
             new ActivityDefinition { Name = "Wall Climbing", MaximumCapacity = 12, OptimalCapacity = 10 }
         };
 
-        [TestMethod]
+        [Test]
         public void ReadActivityDefinitions_fileNotFound_returnsNull()
         {
             // Act
-            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(NonExistentFileLocation);
+            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(NonExistentDefinitionFileLocation);
 
             // Assert
             Assert.IsNull(activityDefinitions, "Return from ReadActivityDefinitions");
         }
 
-        [TestMethod]
+        [Test]
         public void ReadActivityDefinitions_invalidInput_returnsNull()
         {
             // Act
-            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(NonExistentFileLocation);
+            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(NonExistentDefinitionFileLocation);
 
             // Assert
             Assert.IsNull(activityDefinitions, "Return from ReadActivityDefinitions");
         }
 
-        [TestMethod]
+        [Test]
         public void ReadActivityDefinitions_validInput_loadsList()
         {
             // Act
-            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(GoodFileLocation);
+            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(GoodDefinitionFileLocation);
 
             // Assert
             Assert.IsNotNull(activityDefinitions, "Return from ReadActivityDefinitions");
             AssertListsEqual(DefaultActivityDefinitions, activityDefinitions);
         }
 
-        [TestMethod]
+        [Test]
         public void TryAssignCamperToNewActivityBlock_CamperIntersectActivityAvailable_Success()
         {
             // Arrange - setup a camper with slot 0 used and an activity with slot 1 used.
@@ -83,7 +84,7 @@ namespace ActivitySchedulerUnitTests
                 "Number of assigned campers");
         }
 
-        [TestMethod]
+        [Test]
         public void TryAssignCamperToNewActivityBlock_CamperIntersectActivityNotAvailable_Fail()
         {
             // Arrange - setup a camper with slot 0,2 used and an activity with slot 1,3 used.
@@ -98,7 +99,7 @@ namespace ActivitySchedulerUnitTests
             Assert.AreEqual(0, activityDefinition.ScheduledBlocks.Count, "Number of activity blocks");
         }
 
-        [TestMethod]
+        [Test]
         public void TryAssignCamperToExistingActivityBlock_CamperAvailableBlockHasRoom_Success()
         {
             // Arrange - Add activity block to activity that can take 2 campers
@@ -120,7 +121,7 @@ namespace ActivitySchedulerUnitTests
                 "Number of assigned campers");
         }
 
-        [TestMethod]
+        [Test]
         public void TryAssignCamperToExistingActivityBlock_CamperNotAvailable_Fail()
         {
             // Arrange - Add activity block to activity that can take 2 campers
@@ -143,7 +144,7 @@ namespace ActivitySchedulerUnitTests
             Assert.AreEqual("First", activityDefinition.ScheduledBlocks[0].AssignedCampers[0].FirstName, "Name of the assigned camper");
         }
 
-        [TestMethod]
+        [Test]
         public void TryAssignCamperToExistingActivityBlock_CamperAvailableBlockHasNoRoom_Fail()
         {
             // Arrange - Add activity block to activity that can take 1 campers
@@ -166,7 +167,7 @@ namespace ActivitySchedulerUnitTests
             Assert.AreEqual("First", activityDefinition.ScheduledBlocks[0].AssignedCampers[0].FirstName, "Name of the assigned camper");
         }
 
-        [TestMethod]
+        [Test]
         public void TryAssignCamperToExistingActivityBlock_CamperAvailableBlockAtOptimalAllowToMax_Success()
         {
             // Arrange - Add activity block to activity that can take 1 campers
@@ -186,6 +187,39 @@ namespace ActivitySchedulerUnitTests
             Assert.AreEqual(2, activityDefinition.ScheduledBlocks[0].TimeSlot, "Time slot of the scheduled block");
             Assert.AreEqual(2, activityDefinition.ScheduledBlocks[0].AssignedCampers.Count,
                 "Number of assigned campers");
+        }
+
+        [Test]
+        public void ReadScheduleFromCsvFile_MultipleActivitiesAndCampers_ScheduledLoaded()
+        {
+            // Act 
+            var activityDefinitions = ActivityDefinition.ReadScheduleFromCsvFile(GoodScheduleCsvFileLocation);
+
+            // Assert
+            Assert.IsNotNull(activityDefinitions, "Activity Definitions");
+            Assert.AreEqual(9, activityDefinitions.Count, "Number of activities");
+            ActivityDefinition checkActivityDefinition = activityDefinitions[8];
+            Assert.AreEqual(4, checkActivityDefinition.ScheduledBlocks.Count, 
+                $"Number of blocks in {checkActivityDefinition.Name}");
+            IActivityBlock checkActivityBlock = checkActivityDefinition.ScheduledBlocks[3];
+            Assert.That(checkActivityBlock.AssignedCampers.Count, Is.GreaterThan(0),
+                $"Number of campers in {checkActivityDefinition.Name}, block {checkActivityBlock.TimeSlot}");
+        }
+
+        [Test]
+        public void ReadScheduleFromCsvFile_FileNotFound_NoScheduleLoaded()
+        {
+            // Act 
+            var activityDefinitions = ActivityDefinition.ReadScheduleFromCsvFile(NonExistentDefinitionFileLocation);
+            Assert.That(activityDefinitions, Is.Null, "Activity Definitions");
+        }
+
+        [Test]
+        public void ReadScheduleFromCsvFile_BadCsvFile_NoScheduleLoaded()
+        {
+            // Act 
+            var activityDefinitions = ActivityDefinition.ReadScheduleFromCsvFile(BadContentFileLocation);
+            Assert.That(activityDefinitions, Is.Null, "Activity Definitions");
         }
 
         /// <summary>
