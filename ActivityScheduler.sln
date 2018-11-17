@@ -7,9 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActivityScheduler", "Applic
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActivitySchedulerUnitTests", "UnitTests\ActivitySchedulerUnitTests\ActivitySchedulerUnitTests.csproj", "{FC2454E4-1EE4-4226-BE3E-53B4A3D339CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScheduleToSpreadsheet", "ScheduleToSpreadsheet\ScheduleToSpreadsheet.csproj", "{8BBBB3E6-2766-48BB-ABB4-05FEC83BBC24}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScheduleToSpreadsheet", "ScheduleToSpreadsheet\ScheduleToSpreadsheet.csproj", "{8BBBB3E6-2766-48BB-ABB4-05FEC83BBC24}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Camp", "Camp\Camp.csproj", "{75848ADA-2EF7-447F-A657-DD5C18B4EE18}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Camp", "Camp\Camp.csproj", "{75848ADA-2EF7-447F-A657-DD5C18B4EE18}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9C84F4AA-5CC2-4939-87FF-87EAB7CD4049}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
