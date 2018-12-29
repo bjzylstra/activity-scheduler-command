@@ -22,6 +22,10 @@ cd UnitTests\ActivitySchedulerUnitTests
 dotnet build /t:coverage
 Report is in file://UnitTests/ActivitySchedulerUnitTests/coverage/index.html
 
+# Generating a release folder in the solution folder
+cd Application
+dotnet msbuild /t:BuildRelease
+
 # TODO
 - Schedule 1 pass by optimal and pick up the unplaced using maximum
 - Output to log file

@@ -37,7 +37,8 @@
   <Target Name="BuildRelease">
     <MakeDir Directories="$(ReleaseDirectory)\publish" />
     <Copy SourceFiles="Activities.xml;CamperRequests.csv;ScheduleCampers.bat" DestinationFolder="$(ReleaseDirectory)" />
-<!--    <Exec Command="dotnet publish ActivityScheduler.csproj -o $(ReleaseDirectory)\publish" /> -->
+    <Exec Command="dotnet publish ActivityScheduler.csproj -o $(ReleaseDirectory)\publish" />
+    <Exec Command="dotnet publish ..\ScheduleToSpreadsheet\ScheduleToSpreadsheet.csproj -o $(ReleaseDirectory)\publish" />
   </Target>
 
 </Project>
