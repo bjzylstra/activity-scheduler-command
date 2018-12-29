@@ -39,6 +39,7 @@
     <Copy SourceFiles="Activities.xml;CamperRequests.csv;ScheduleCampers.bat" DestinationFolder="$(ReleaseDirectory)" />
     <Exec Command="dotnet publish ActivityScheduler.csproj -o $(ReleaseDirectory)\publish" />
     <Exec Command="dotnet publish ..\ScheduleToSpreadsheet\ScheduleToSpreadsheet.csproj -o $(ReleaseDirectory)\publish" />
+    <ZipDirectory SourceDirectory="$(ReleaseDirectory)" DestinationFile="$(ReleaseDirectory).zip" />
   </Target>
 
 </Project>
