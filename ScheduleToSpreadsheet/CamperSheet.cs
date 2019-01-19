@@ -47,7 +47,7 @@ namespace ScheduleToSpreadsheet
             camperWorksheet.Column(column).Width = 30;
             column++;
             camperWorksheet.View.FreezePanes(row+1, column);
-            for (int blockNumber = 0; blockNumber < maxBlockNumber; blockNumber++)
+            for (int blockNumber = 0; blockNumber <= maxBlockNumber; blockNumber++)
             {
                 camperWorksheet.Column(column).Width = 20;
                 camperWorksheet.SetValue(row, column, $"Block {blockNumber}");
@@ -60,7 +60,7 @@ namespace ScheduleToSpreadsheet
                 column = camperWorksheet.Cells.Start.Column;
                 camperWorksheet.SetValue(row, column, camper.ToString());
                 column++;
-                for (int blockNumber = 0; blockNumber < maxBlockNumber; blockNumber++)
+                for (int blockNumber = 0; blockNumber <= maxBlockNumber; blockNumber++)
                 {
                     var activityBlock = camper.ScheduledBlocks.FirstOrDefault(block => block.TimeSlot == blockNumber);
                     if (activityBlock != null)
