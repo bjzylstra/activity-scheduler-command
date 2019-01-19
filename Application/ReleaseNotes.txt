@@ -1,5 +1,10 @@
 ﻿Activity Schedule Command Line Utility
 
+2.0.0 - January 19, 2019
+- Added ScheduleToSpreadsheet to generate an Excel spreadsheet from the scheduler output
+- Added UseOptimalLimit option to the schedule to do 2 pass scheduling (once at using 
+ activity optimal limits and schedule any missed requests using activity maximum limit)
+
 1.0.2 - July 14, 2018
 - Handle null activities requests on the camper.csv file.
 
