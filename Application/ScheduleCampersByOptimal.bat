@@ -1,4 +1,4 @@
-dotnet publish\ActivityScheduler.dll -r CamperRequests.csv -d Activities.xml -a ActivitySchedule.csv -c CamperSchedule.csv 1> ScheduleCampers.log 2>&1
+dotnet publish\ActivityScheduler.dll -r CamperRequests.csv -d Activities.xml -a ActivitySchedule.csv -c CamperSchedule.csv -o 1> ScheduleCampers.log 2>&1
 @ECHO OFF
 IF NOT %ERRORLEVEL% EQU 0 (
 	ECHO Not all the campers could be placed in their requested activities.

@@ -1,4 +1,4 @@
-﻿using Camp;
+using Camp;
 using CommandLine;
 using System;
 using System.Collections.Generic;
@@ -21,6 +21,9 @@ namespace ActivityScheduler
 
             [Option('c', "CamperScheduleCsvPath", HelpText = "Path to where to write the CSV file with the camper schedules")]
             public String CamperScheduleCsvPath { get; set; }
+
+			[Option('o', "UseOptimalLimit", HelpText = "Schedules using optimal activity size and attempts fix ups with maximum size", Default = false)]
+			public bool UseOptimalLimit { get; set; }
         }
 
         static void Main(string[] args)
@@ -53,7 +56,13 @@ namespace ActivityScheduler
                     activity.PreloadBlocks();
                 }
 
-                List<CamperRequests> unsuccessfulCamperRequests = Scheduler.ScheduleActivities(camperRequestsList);
+                List<CamperRequests> unsuccessfulCamperRequests = Scheduler.ScheduleActivities(camperRequestsList, opts.UseOptimalLimit);
+				if (opts.UseOptimalLimit && unsuccessfulCamperRequests.Any())
+				{
+					Console.Out.WriteLine($"Attempting to resolve {unsuccessfulCamperRequests.Count} " +
+						$"unsuccessful camper requests using the activity maximum limits");
+					unsuccessfulCamperRequests = Scheduler.ScheduleActivities(unsuccessfulCamperRequests, false);
+				}
                 foreach (var activity in activityDefinitions)
                 {
                     foreach (var activityBlock in activity.ScheduledBlocks)
@@ -79,9 +88,7 @@ namespace ActivityScheduler
                 Console.Out.WriteLine();
                 foreach (var unhappyCamper in unsuccessfulCamperRequests)
                 {
-                    List<ActivityRequest> unscheduledActivities = unhappyCamper.ActivityRequests
-                        .Where(ar => !unhappyCamper.Camper.ScheduledBlocks.Select(sb => sb.ActivityDefinition).Contains(ar.Activity))
-                        .ToList();
+					List<ActivityRequest> unscheduledActivities = unhappyCamper.UnscheduledActivities;
                     if (unscheduledActivities.Any(ar => ar.Rank < 3))
                     {
                         Console.Error.WriteLine($"Failed to place {unhappyCamper.Camper} in {String.Join(',', unscheduledActivities.Select(ar => ar?.ToString()))} ");

@@ -95,7 +95,39 @@ namespace ActivityScheduler
             }
         }
 
-        public ActivityDefinition AlternateActivity { get; set; }
+		public ActivityDefinition AlternateActivity { get; set; }
+
+		/// <summary>
+		/// True if the alternate activity has been scheduled
+		/// </summary>
+		public bool ScheduledAlternateActivity
+		{
+			get
+			{
+				return Camper.ScheduledBlocks.Any(sb => sb.ActivityDefinition == AlternateActivity);
+			}
+		}
+
+		/// <summary>
+		/// Getter for the list of activities that have not been scheduled on this request.
+		/// Adjusts for an activity having been replaced by the alternate.
+		/// </summary>
+		public List<ActivityRequest> UnscheduledActivities
+		{
+			get
+			{
+				List<ActivityRequest> unscheduledActivities = ActivityRequests
+					.Where(ar => !Camper.ScheduledBlocks.Any(sb => sb.ActivityDefinition == ar.Activity))
+					.ToList();
+				if (ScheduledAlternateActivity)
+				{
+					// If the alternate got placed, it should have replaced the last request.
+					unscheduledActivities.Remove(unscheduledActivities.Last());
+				}
+				return unscheduledActivities;
+
+			}
+		}
 
         /// <summary>
         /// Read the CamperRequests from a CSV file. The activities must be found
