@@ -69,7 +69,7 @@ namespace ActivityScheduler
 						}
 						else
 						{
-							Console.Error.WriteLine($"Failed to place camper '{camper}' in {activityRequest}" +
+							Console.Out.WriteLine($"Failed to place camper '{camper}' in {activityRequest}" +
 								$"camper has activities in blocks: " +
 								$"'{String.Join(',', camper.ScheduledBlocks.Select(b => b.TimeSlot).ToArray())}'");
 							unsuccessfulCamperRequests.Add(camperRequest);
@@ -84,7 +84,7 @@ namespace ActivityScheduler
 				// If fitting the alternate won't complete the schedule, fail.
 				if (camperRequest.ScheduledAlternateActivity || noFitActivities.Count > 1)
 				{
-					Console.Error.WriteLine($"Failed to place camper '{camper}' in " +
+					Console.Out.WriteLine($"Failed to place camper '{camper}' in " +
 						$"'{String.Join(',', noFitActivities.Select(a => a.ToString()).ToArray())}' " +
 						$"camper has activities in blocks: " +
 						$"'{String.Join(',', camper.ScheduledBlocks.Select(b => b.TimeSlot).ToArray())}'");
@@ -112,7 +112,7 @@ namespace ActivityScheduler
 				}
 
 				// Alternate did not fit. FAIL
-				Console.Error.WriteLine($"Failed to place camper '{camper}' " +
+				Console.Out.WriteLine($"Failed to place camper '{camper}' " +
 					$"in alternate '{camperRequest.AlternateActivity?.Name}' " +
 					$"after trying '{String.Join(',', noFitActivities.Select(a => a.ToString()).ToArray())}' " +
 					$"camper has activities in blocks: " +

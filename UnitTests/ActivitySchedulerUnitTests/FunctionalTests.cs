@@ -12,8 +12,10 @@ namespace ActivitySchedulerUnitTests
 	{
 		private const String ScheduleCommandFormat = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll " +
 			"-r {0} -d {1}";
-		private const String ScheduleCommandFormatWithOutput = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll " +
+		private const String ScheduleCommandMaximumFormatWithOutput = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll " +
 			"-r {0} -d {1} -a {2} -c {3}";
+		private const String ScheduleCommandOptimalFormatWithOutput = @"dotnet ..\..\..\..\..\Application\bin\Debug\netcoreapp2.0\ActivityScheduler.dll " +
+			"-r {0} -d {1} -a {2} -c {3} -o";
 		private const String SpreadsheetCommandFormat = @"dotnet ..\..\..\..\..\ScheduleToSpreadsheet\bin\Debug\netcoreapp2.0\ScheduleToSpreadsheet.dll " +
 			"-a {0} -s {1}";
 		private const String SpreadsheetCommandFormatWithDefinitions = @"dotnet ..\..\..\..\..\ScheduleToSpreadsheet\bin\Debug\netcoreapp2.0\ScheduleToSpreadsheet.dll " +
@@ -66,10 +68,10 @@ namespace ActivitySchedulerUnitTests
 		}
 
 		[Test]
-		public void ActivityScheduler_ValidInput_GenerateOutput()
+		public void ActivityScheduler_UseMaximumsOnly_GenerateOutput()
 		{
 			// Act
-			var command = String.Format(ScheduleCommandFormatWithOutput,
+			var command = String.Format(ScheduleCommandMaximumFormatWithOutput,
 				"CamperRequests.csv",
 				"Activities.xml",
 				"activitySchedule.csv",
@@ -86,10 +88,30 @@ namespace ActivitySchedulerUnitTests
 		}
 
 		[Test]
-		public void ActivityScheduler_ValidInputNoActivity4_GenerateOutput()
+		public void ActivityScheduler_UseOptimum_GenerateOutput()
 		{
 			// Act
-			var command = String.Format(ScheduleCommandFormatWithOutput,
+			var command = String.Format(ScheduleCommandOptimalFormatWithOutput,
+				"CamperRequests.csv",
+				"Activities.xml",
+				"activitySchedule.csv",
+				"camperSchedule.csv");
+			String output;
+			String errors;
+			int exitCode = ExecuteConsoleApplication(command, out output, out errors);
+
+			// Assert
+			Assert.That(exitCode, Is.EqualTo(0), "exitcode");
+			Assert.That(errors, Is.Empty, "Errors");
+			Assert.That(output, Contains.Substring("Found 98 campers"), "Output");
+			Assert.That(output, Contains.Substring("Found 9 activity definitions"), "Output");
+		}
+
+		[Test]
+		public void ActivityScheduler_NoActivity4_GenerateOutput()
+		{
+			// Act
+			var command = String.Format(ScheduleCommandMaximumFormatWithOutput,
 				@"..\..\..\NoActivity4.csv",
 				"Activities.xml",
 				"activitySchedule.csv",
