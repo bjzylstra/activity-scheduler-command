@@ -37,20 +37,19 @@ namespace ScheduleToSpreadsheet
 
             int row = camperWorksheet.Cells.Start.Row;
             int column = camperWorksheet.Cells.Start.Column;
-            int maxBlockNumber = 0;
-            _camperSchedule.ForEach(camper => 
-                camper.ScheduledBlocks.ForEach(block => 
-                    maxBlockNumber = Math.Max(maxBlockNumber, block.TimeSlot)));
+			// Find the expected number of scheduled blocks by polling all campers
+			int maxBlockNumber = _camperSchedule.Aggregate(0, (maxBlocks, c) 
+				=> Math.Max(maxBlocks, c.ScheduledBlocks.Count(sb => sb != null)));
 
             // Add the headers
             camperWorksheet.SetValue(row, column, "Camper");
             camperWorksheet.Column(column).Width = 30;
             column++;
             camperWorksheet.View.FreezePanes(row+1, column);
-            for (int blockNumber = 0; blockNumber <= maxBlockNumber; blockNumber++)
+            for (int blockNumber = 0; blockNumber < maxBlockNumber; blockNumber++)
             {
                 camperWorksheet.Column(column).Width = 20;
-                camperWorksheet.SetValue(row, column, $"Block {blockNumber}");
+                camperWorksheet.SetValue(row, column, $"Block {blockNumber+1}");
                 column++;
             }
 
@@ -59,8 +58,15 @@ namespace ScheduleToSpreadsheet
             {
                 column = camperWorksheet.Cells.Start.Column;
                 camperWorksheet.SetValue(row, column, camper.ToString());
-                column++;
-                for (int blockNumber = 0; blockNumber <= maxBlockNumber; blockNumber++)
+				int numberOfScheduledBlocks = camper.ScheduledBlocks.Count(b => b != null);
+				if (numberOfScheduledBlocks < maxBlockNumber)
+				{
+					camperWorksheet.Cells[row, column].Style.Fill.PatternType = ExcelFillStyle.Solid;
+					camperWorksheet.Cells[row, column].Style.Fill.BackgroundColor
+						.SetColor(Color.Red);
+				}
+				column++;
+                for (int blockNumber = 0; blockNumber < maxBlockNumber; blockNumber++)
                 {
                     var activityBlock = camper.ScheduledBlocks.FirstOrDefault(block => block.TimeSlot == blockNumber);
                     if (activityBlock != null)
