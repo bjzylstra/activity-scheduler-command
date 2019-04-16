@@ -12,7 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Macros\Activities\PackRow" />
     <None Remove="Macros\Activities\PackSheet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Macros\Activities\PackRow" />
   </ItemGroup>
 
   <ItemGroup>

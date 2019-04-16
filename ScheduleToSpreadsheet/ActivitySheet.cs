@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Camp;
 using OfficeOpenXml;
 using OfficeOpenXml.ConditionalFormatting.Contracts;
@@ -94,7 +95,7 @@ namespace ScheduleToSpreadsheet
 		/// </summary>
 		internal void AddMacros()
 		{
-			ExcelVBAModule module = _worksheet.CodeModule;
+			StringBuilder codeBuilder = new StringBuilder();
 
 			Assembly assembly = typeof(ActivitySheet).Assembly;
 			List<string> resourceNames = new List<string>(assembly.GetManifestResourceNames());
@@ -105,10 +106,12 @@ namespace ScheduleToSpreadsheet
 					resourceName);
 				using (var reader = new StreamReader(macroStream))
 				{
-					module.Code = reader.ReadToEnd();
+					codeBuilder.Append(reader.ReadToEnd());
+					codeBuilder.AppendLine();
 				}
 			}
 
+			_worksheet.CodeModule.Code = codeBuilder.ToString();
 		}
 
 		/// <summary>

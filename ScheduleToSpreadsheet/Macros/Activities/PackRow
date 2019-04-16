@@ -1,0 +1,19 @@
+﻿Sub PackRow(Row As Integer)
+    Set activity = ActiveWorkbook.Worksheets("Activities")
+
+    destCol = 4
+    maxCol = 30
+    While destCol <= maxCol
+        If IsEmpty(activity.Cells(Row, destCol).Value) Then
+            sourceCol = destCol + 1
+            Do While sourceCol < maxCol And IsEmpty(activity.Cells(Row, sourceCol).Value)
+                sourceCol = sourceCol + 1
+            Loop
+            If Not IsEmpty(activity.Cells(Row, sourceCol).Value) Then
+                activity.Cells(Row, destCol).Value = activity.Cells(Row, sourceCol).Value
+                activity.Cells(Row, sourceCol).Value = ""
+            End If
+        End If
+        destCol = destCol + 1
+    Wend
+End Sub
