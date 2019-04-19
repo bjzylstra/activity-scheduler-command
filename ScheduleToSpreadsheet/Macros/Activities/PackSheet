@@ -1,7 +1,6 @@
 Sub PackSheet()
-    Set activity = ActiveWorkbook.Worksheets("Activities")
     Row = 2
-    While Not IsEmpty(activity.Cells(Row, 2).Value)
+    While Not IsEmpty(Activities.Cells(Row, 2).Value)
         PackRow (Row)
         Row = Row + 1
     Wend

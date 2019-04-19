@@ -1,0 +1,31 @@
+﻿Sub CopyActivitiesToCampers()
+    Call PackSheet
+    Call Campers.ClearActivities
+    
+    Dim activityName As String
+    Dim activityBlock As Integer
+    Dim camperName As String
+    
+    ' Go down the activity sheet until out of activity blocks
+    activityRow = 2
+    While Not IsEmpty(Activities.Cells(activityRow, 2))
+        Let activityBlock = Activities.Cells(activityRow, 2).Value
+        If activityBlock = 0 Then
+            ' Activity name is only on the first block (i.e. 0)
+            Let activityName = Activities.Cells(activityRow, 1).Value
+        End If
+        ' Go across the assigned campers and update their camper blocks
+        activityColumn = 4
+        While Not IsEmpty(Activities.Cells(activityRow, activityColumn))
+            Let camperName = Activities.Cells(activityRow, activityColumn).Value
+            If Campers.AssignActivity(camperName, activityBlock, activityName) Then
+                Activities.Cells(activityRow, activityColumn).Interior.Color = RGB(0, 255, 0)
+            Else
+                Activities.Cells(activityRow, activityColumn).Interior.Color = RGB(255, 0, 0)
+            End If
+            activityColumn = activityColumn + 1
+        Wend
+        activityRow = activityRow + 1
+    Wend
+    
+End Sub
