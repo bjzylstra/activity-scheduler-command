@@ -1,22 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using Camp;
 using OfficeOpenXml;
 using OfficeOpenXml.ConditionalFormatting.Contracts;
 using OfficeOpenXml.Style;
-using OfficeOpenXml.VBA;
 
 namespace ScheduleToSpreadsheet
 {
-    internal class ActivitySheet
+    internal class ActivitySheet : WorkSheet
     {
         private List<ActivityDefinition> _activitySchedule;
-		private ExcelWorksheet _worksheet;
 
 		/// <summary>
 		/// Create the activity sheet definition from an activity schedule
@@ -24,17 +18,13 @@ namespace ScheduleToSpreadsheet
 		/// <param name="activitySchedule">Activity Definitions with schedule information</param>
 		/// <param name="excelWorkbook">Work book</param>
 		public ActivitySheet(List<ActivityDefinition> activitySchedule, ExcelWorkbook excelWorkbook)
+			: base("Activities", excelWorkbook)
         {
             _activitySchedule = activitySchedule;
-			_worksheet = excelWorkbook.Worksheets.Add("Activities");
-			if (_worksheet.Workbook.VbaProject == null)
-			{
-				_worksheet.Workbook.CreateVBAProject();
-			}
 		}
 
 		/// <summary>
-		/// Add and populate the activity sheet in the work book
+		/// Populate the activity sheet in the work book
 		/// </summary>
 		internal void BuildWorksheet()
         {
@@ -89,30 +79,6 @@ namespace ScheduleToSpreadsheet
 
             }
         }
-
-		/// <summary>
-		/// Add macros contained in embedded resources to the work sheet.
-		/// </summary>
-		internal void AddMacros()
-		{
-			StringBuilder codeBuilder = new StringBuilder();
-
-			Assembly assembly = typeof(ActivitySheet).Assembly;
-			List<string> resourceNames = new List<string>(assembly.GetManifestResourceNames());
-			foreach (var resourceName in resourceNames.Where(r 
-				=> r.StartsWith("ScheduleToSpreadsheet.Macros.Activities")))
-			{
-				Stream macroStream = typeof(ActivitySheet).Assembly.GetManifestResourceStream(
-					resourceName);
-				using (var reader = new StreamReader(macroStream))
-				{
-					codeBuilder.Append(reader.ReadToEnd());
-					codeBuilder.AppendLine();
-				}
-			}
-
-			_worksheet.CodeModule.Code = codeBuilder.ToString();
-		}
 
 		/// <summary>
 		/// Add coloring based on the activity block subscription level (count) to the campers in the block

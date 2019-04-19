@@ -79,9 +79,10 @@ namespace ScheduleToSpreadsheet
 				activitySheet.BuildWorksheet();
 				activitySheet.AddMacros();
 
-				CamperSheet camperSheet = new CamperSheet(activitySchedule);
+				CamperSheet camperSheet = new CamperSheet(activitySchedule, excelPackage.Workbook);
 
-				camperSheet.AddToWorkbook(excelPackage.Workbook);
+				camperSheet.BuildWorksheet();
+				camperSheet.AddMacros();
 
 				try
 				{
