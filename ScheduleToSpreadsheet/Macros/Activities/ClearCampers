@@ -1,0 +1,12 @@
+﻿Sub ClearCampers()
+    PackSheet
+    Row = 2
+    While Not IsEmpty(Activities.Cells(Row, 2).Value)
+        Column = 4
+        While Not IsEmpty(Activities.Cells(Row, Column).Value)
+            Activities.Cells(Row, Column).Value = ""
+            Column = Column + 1
+        Wend
+        Row = Row + 1
+    Wend
+End Sub

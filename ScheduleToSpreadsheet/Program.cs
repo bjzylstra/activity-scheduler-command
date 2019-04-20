@@ -5,7 +5,6 @@ using System.IO;
 using Camp;
 using System.Collections.Generic;
 using System.Linq;
-using OfficeOpenXml.VBA;
 
 namespace ScheduleToSpreadsheet
 {
@@ -77,12 +76,14 @@ namespace ScheduleToSpreadsheet
 				ActivitySheet activitySheet = new ActivitySheet(activitySchedule, excelPackage.Workbook);
 
 				activitySheet.BuildWorksheet();
-				activitySheet.AddMacros();
+				activitySheet.AddVisualBasicCode();
+				activitySheet.AddCommands();
 
 				CamperSheet camperSheet = new CamperSheet(activitySchedule, excelPackage.Workbook);
 
 				camperSheet.BuildWorksheet();
-				camperSheet.AddMacros();
+				camperSheet.AddVisualBasicCode();
+				camperSheet.AddCommands();
 
 				try
 				{

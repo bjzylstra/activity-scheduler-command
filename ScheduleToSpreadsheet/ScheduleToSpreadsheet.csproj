@@ -12,14 +12,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Macros\ActivitiesCommands\ActivitiesToCampers" />
+    <None Remove="Macros\Activities\AssignCamper" />
+    <None Remove="Macros\Activities\ClearCampers" />
     <None Remove="Macros\Activities\CopyActivitesToCampers" />
     <None Remove="Macros\Activities\PackRow" />
     <None Remove="Macros\Activities\PackSheet" />
+    <None Remove="Macros\CampersCommands\CampersToActivities" />
     <None Remove="Macros\Campers\AssignActivity" />
     <None Remove="Macros\Campers\ClearActivities" />
+    <None Remove="Macros\Campers\CopyCampersToActivities" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Macros\ActivitiesCommands\ActivitiesToCampers" />
+    <EmbeddedResource Include="Macros\Activities\AssignCamper" />
+    <EmbeddedResource Include="Macros\Activities\ClearCampers" />
     <EmbeddedResource Include="Macros\Activities\CopyActivitesToCampers" />
     <EmbeddedResource Include="Macros\Activities\PackRow" />
   </ItemGroup>
@@ -28,8 +36,10 @@
     <EmbeddedResource Include="Macros\Activities\PackSheet">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Macros\CampersCommands\CampersToActivities" />
     <EmbeddedResource Include="Macros\Campers\AssignActivity" />
     <EmbeddedResource Include="Macros\Campers\ClearActivities" />
+    <EmbeddedResource Include="Macros\Campers\CopyCampersToActivities" />
   </ItemGroup>
 
   <ItemGroup>

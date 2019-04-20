@@ -1,0 +1,3 @@
+﻿Sub CampersToActivities()
+    Call Campers.CopyCampersToActivities
+End Sub

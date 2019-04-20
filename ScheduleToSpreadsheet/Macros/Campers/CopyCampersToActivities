@@ -1,0 +1,28 @@
+﻿Sub CopyCampersToActivities()
+    Call Activities.ClearCampers
+    
+    Dim activityName As String
+    Dim activityBlock As Integer
+    Dim camperName As String
+    
+    ' Go down the camper sheet until out of campers
+    camperRow = 2
+    While Not IsEmpty(Campers.Cells(camperRow, 1))
+        Let camperName = Campers.Cells(camperRow, 1).Value
+        Let activityBlock = 1
+        ' Go across the activity blocks
+        While activityBlock <= 4
+            camperColumn = activityBlock + 1
+            If Not IsEmpty(Campers.Cells(camperRow, camperColumn)) Then
+                Let activityName = Campers.Cells(camperRow, camperColumn).Value
+                If Activities.AssignCamper(camperName, activityBlock, activityName) Then
+                    Campers.Cells(camperRow, camperColumn).Interior.Color = RGB(0, 255, 0)
+                Else
+                    Campers.Cells(camperRow, camperColumn).Interior.Color = RGB(255, 0, 0)
+                End If
+            End If
+            activityBlock = activityBlock + 1
+        Wend
+        camperRow = camperRow + 1
+    Wend
+End Sub
