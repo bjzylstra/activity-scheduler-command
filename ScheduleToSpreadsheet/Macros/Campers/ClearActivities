@@ -1,0 +1,12 @@
+﻿Sub ClearActivities()
+    Row = 2
+    While Not IsEmpty(Campers.Cells(Row, 1).Value)
+        Column = 2
+        While Not IsEmpty(Campers.Cells(1, Column).Value)
+            Campers.Cells(Row, Column).Value = ""
+            Campers.Cells(Row, Column).Interior.Color = RGB(255, 0, 0)
+            Column = Column + 1
+        Wend
+        Row = Row + 1
+    Wend
+End Sub

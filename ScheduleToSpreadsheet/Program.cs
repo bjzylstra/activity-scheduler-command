@@ -71,20 +71,24 @@ namespace ScheduleToSpreadsheet
 		private static void CreateWorkbook(Options opts, List<ActivityDefinition> activitySchedule)
 		{
 			//Creates a blank workbook. Use the using statment, so the package is disposed when we are done.
-			using (var excelApplication = new ExcelPackage())
+			using (var excelPackage = new ExcelPackage())
 			{
-				ActivitySheet activitySheet = new ActivitySheet(activitySchedule);
+				ActivitySheet activitySheet = new ActivitySheet(activitySchedule, excelPackage.Workbook);
 
-				activitySheet.AddToWorkbook(excelApplication.Workbook);
+				activitySheet.BuildWorksheet();
+				activitySheet.AddVisualBasicCode();
+				activitySheet.AddCommands();
 
-				CamperSheet camperSheet = new CamperSheet(activitySchedule);
+				CamperSheet camperSheet = new CamperSheet(activitySchedule, excelPackage.Workbook);
 
-				camperSheet.AddToWorkbook(excelApplication.Workbook);
+				camperSheet.BuildWorksheet();
+				camperSheet.AddVisualBasicCode();
+				camperSheet.AddCommands();
 
 				try
 				{
 					//Save the new workbook. We haven't specified the filename so use the Save as method.
-					excelApplication.SaveAs(new FileInfo(opts.ScheduleExcelPath));
+					excelPackage.SaveAs(new FileInfo(opts.ScheduleExcelPath));
 				}
 				catch (InvalidOperationException e)
 				{

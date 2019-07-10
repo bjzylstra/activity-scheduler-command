@@ -1,0 +1,22 @@
+﻿Function AssignCamper(camperName As String, activityBlock As Integer, activityName As String) As Boolean
+    ' Find the activity row
+    activityRow = 2
+    ' Hard coded 12 activities or less
+    While activityRow < 50 And Not Activities.Cells(activityRow, 1).Value = activityName
+        activityRow = activityRow + 1
+    Wend
+
+    ' If the activity is not found, return false
+    If activityRow >= 50 Then
+        AssignCamper = False
+    Else
+        AssignCamper = True
+        activityRow = activityRow + activityBlock - 1
+        activityColumn = 4
+        While Not IsEmpty(Activities.Cells(activityRow, activityColumn))
+            activityColumn = activityColumn + 1
+        Wend
+        Activities.Cells(activityRow, activityColumn).Value = camperName
+    End If
+End Function
+

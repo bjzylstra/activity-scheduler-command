@@ -1,0 +1,15 @@
+﻿Function AssignActivity(camperName As String, activityBlock As Integer, activityName As String) As Boolean
+    camperRow = 2
+    ' Find the camper with the given name
+    While Not IsEmpty(Campers.Cells(camperRow, 1).Value) And Not Campers.Cells(camperRow, 1).Value = camperName
+        camperRow = camperRow + 1
+    Wend
+    ' If the camper is not found, mark the source cell as Red
+    If IsEmpty(Campers.Cells(camperRow, 1).Value) Or Not IsEmpty(Campers.Cells(camperRow, 2 + activityBlock).Value) Then
+        AssignActivity = False
+    Else
+        AssignActivity = True
+        Campers.Cells(camperRow, 2 + activityBlock).Value = activityName
+        Campers.Cells(camperRow, 2 + activityBlock).Interior.Color = RGB(0, 255, 0)
+    End If
+End Function

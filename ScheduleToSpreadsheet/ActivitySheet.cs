@@ -8,92 +8,91 @@ using OfficeOpenXml.Style;
 
 namespace ScheduleToSpreadsheet
 {
-    internal class ActivitySheet
+    internal class ActivitySheet : WorkSheet
     {
         private List<ActivityDefinition> _activitySchedule;
 
-        /// <summary>
-        /// Create the activity sheet definition from an activity schedule
-        /// </summary>
-        /// <param name="activitySchedule">Activity Definitions with schedule information</param>
-        public ActivitySheet(List<ActivityDefinition> activitySchedule)
+		/// <summary>
+		/// Create the activity sheet definition from an activity schedule
+		/// </summary>
+		/// <param name="activitySchedule">Activity Definitions with schedule information</param>
+		/// <param name="excelWorkbook">Work book</param>
+		public ActivitySheet(List<ActivityDefinition> activitySchedule, ExcelWorkbook excelWorkbook)
+			: base("Activities", excelWorkbook)
         {
             _activitySchedule = activitySchedule;
-        }
+		}
 
-        /// <summary>
-        /// Add and populate the activity sheet in the work book
-        /// </summary>
-        /// <param name="excelWorkbook">Work book</param>
-        internal void AddToWorkbook(ExcelWorkbook excelWorkbook)
+		/// <summary>
+		/// Populate the activity sheet in the work book
+		/// </summary>
+		internal void BuildWorksheet()
         {
-            ExcelWorksheet activityWorksheet = excelWorkbook.Worksheets.Add("Activities");
-
-            int row = activityWorksheet.Cells.Start.Row;
-            int column = activityWorksheet.Cells.Start.Column;
+            int row = _worksheet.Cells.Start.Row;
+            int column = _worksheet.Cells.Start.Column;
 
             // Add the headers
-            activityWorksheet.SetValue(row, column++, "Activity");
-            activityWorksheet.Column(column).Width = 5;
-            activityWorksheet.SetValue(row, column++, "Block");
-            activityWorksheet.Column(column).Width = 5;
-            activityWorksheet.SetValue(row, column++, "# Campers");
+            _worksheet.SetValue(row, column++, "Activity");
+            _worksheet.Column(column).Width = 5;
+            _worksheet.SetValue(row, column++, "Block");
+            _worksheet.Column(column).Width = 5;
+            _worksheet.SetValue(row, column++, "# Campers");
             row++;
-            activityWorksheet.View.FreezePanes(row, column);
+            _worksheet.View.FreezePanes(row, column);
 
             int topActivityRow;
             int bottomActivityRow;
-            int countColumn = activityWorksheet.Cells.Start.Column + 2;
+            int countColumn = _worksheet.Cells.Start.Column + 2;
             foreach (var activity in _activitySchedule)
             {
                 topActivityRow = row;
                 bottomActivityRow = row;
-                column = activityWorksheet.Cells.Start.Column;
-                activityWorksheet.Column(column).Width = 20;
-                activityWorksheet.SetValue(row, column, activity.Name);
+                column = _worksheet.Cells.Start.Column;
+                _worksheet.Column(column).Width = 20;
+                _worksheet.SetValue(row, column, activity.Name);
                 foreach (var activityBlock in activity.ScheduledBlocks)
                 {
-                    column = activityWorksheet.Cells.Start.Column + 1;
-                    activityWorksheet.SetValue(row, column, activityBlock.TimeSlot);
+                    column = _worksheet.Cells.Start.Column + 1;
+                    _worksheet.SetValue(row, column, activityBlock.TimeSlot);
                     column++;
 
                     // Get the count from the number of non-blank camper cells
-                    ExcelRange activityCamperRange = activityWorksheet
+                    ExcelRange activityCamperRange = _worksheet
                         .Cells[row, countColumn + 1, row, countColumn + 40];
-                    activityWorksheet.Cells[row, column].Formula = $"COUNTA({activityCamperRange.Address})";
+                    _worksheet.Cells[row, column].Formula = $"COUNTA({activityCamperRange.Address})";
                     column++;
 
                     for (int camperIndex = 1; camperIndex <= activityBlock.AssignedCampers.Count; camperIndex++)
                     {
                         var camper = activityBlock.AssignedCampers[camperIndex - 1];
-                        activityWorksheet.Column(column).Width = 30;
-                        activityWorksheet.SetValue(row, column, camper.ToString());
+                        _worksheet.Column(column).Width = 30;
+                        _worksheet.SetValue(row, column, camper.ToString());
                         column++;
                     }
                     bottomActivityRow = row;
                     row++;
                 }
 
-                AddConditionalColorToCount(activityWorksheet, topActivityRow, bottomActivityRow, countColumn, activity);
+                AddConditionalColorToCount(_worksheet, topActivityRow, bottomActivityRow, countColumn, activity);
 
-                AddConditionalColorToCampers(activityWorksheet, topActivityRow, bottomActivityRow, countColumn, activity);
+                AddConditionalColorToCampers(_worksheet, topActivityRow, bottomActivityRow, countColumn, activity);
 
             }
         }
 
-        /// <summary>
-        /// Add coloring based on the activity block subscription level (count) to the campers in the block
-        /// </summary>
-        /// <param name="activityWorksheet">Worksheet with activity block details</param>
-        /// <param name="topActivityRow">Row number for the first (top) block of the activity</param>
-        /// <param name="bottomActivityRow">Row number for the last (bottom) block of the activity</param>
-        /// <param name="countColumn">Column number for the count fields</param>
-        /// <param name="activity">Activity definition</param>
-        private static void AddConditionalColorToCampers(ExcelWorksheet activityWorksheet, int topActivityRow, int bottomActivityRow, int countColumn, ActivityDefinition activity)
+		/// <summary>
+		/// Add coloring based on the activity block subscription level (count) to the campers in the block
+		/// </summary>
+		/// <param name="_worksheet">Worksheet with activity block details</param>
+		/// <param name="topActivityRow">Row number for the first (top) block of the activity</param>
+		/// <param name="bottomActivityRow">Row number for the last (bottom) block of the activity</param>
+		/// <param name="countColumn">Column number for the count fields</param>
+		/// <param name="activity">Activity definition</param>
+		private static void AddConditionalColorToCampers(ExcelWorksheet _worksheet, int topActivityRow, int bottomActivityRow, int countColumn, ActivityDefinition activity)
         {
             int maximumCapacity = Math.Min(activity.MaximumCapacity, 100);
             int optimalCapacity = Math.Min(activity.OptimalCapacity, maximumCapacity);
-            ExcelRange activityCampersAboveMaximum = activityWorksheet
+            ExcelRange activityCampersAboveMaximum = _worksheet
                 .Cells[topActivityRow, countColumn + maximumCapacity + 1, bottomActivityRow, countColumn + maximumCapacity + 20];
             IExcelConditionalFormattingContainsText campersMoreThanMaximum =
                activityCampersAboveMaximum.ConditionalFormatting.AddContainsText();
@@ -102,7 +101,7 @@ namespace ScheduleToSpreadsheet
 
             if (optimalCapacity < maximumCapacity)
             {
-                ExcelRange activityCampersAboveOptimal = activityWorksheet
+                ExcelRange activityCampersAboveOptimal = _worksheet
                     .Cells[topActivityRow, countColumn + optimalCapacity + 1, bottomActivityRow, countColumn + maximumCapacity];
                 IExcelConditionalFormattingContainsText campersMoreThanOptimal =
                    activityCampersAboveOptimal.ConditionalFormatting.AddContainsText();
@@ -112,7 +111,7 @@ namespace ScheduleToSpreadsheet
 
             if (activity.MinimumCapacity > 0)
             {
-                ExcelRange activityCampersBelowMinimum = activityWorksheet
+                ExcelRange activityCampersBelowMinimum = _worksheet
                     .Cells[topActivityRow, countColumn + 1, bottomActivityRow, countColumn + activity.MinimumCapacity];
                 IExcelConditionalFormattingNotContainsText emptyBelowMinimum =
                    activityCampersBelowMinimum.ConditionalFormatting.AddNotContainsText();
@@ -125,14 +124,14 @@ namespace ScheduleToSpreadsheet
         /// <summary>
         /// Color the counts for each block of an activity
         /// </summary>
-        /// <param name="activityWorksheet">Worksheet with activity block details</param>
+        /// <param name="_worksheet">Worksheet with activity block details</param>
         /// <param name="topActivityRow">Row number for the first (top) block of the activity</param>
         /// <param name="bottomActivityRow">Row number for the last (bottom) block of the activity</param>
         /// <param name="countColumn">Column number for the count fields</param>
         /// <param name="activity">Activity definition</param>
-        private static void AddConditionalColorToCount(ExcelWorksheet activityWorksheet, int topActivityRow, int bottomActivityRow, int countColumn, ActivityDefinition activity)
+        private static void AddConditionalColorToCount(ExcelWorksheet _worksheet, int topActivityRow, int bottomActivityRow, int countColumn, ActivityDefinition activity)
         {
-            ExcelRange activityCounts = activityWorksheet
+            ExcelRange activityCounts = _worksheet
                 .Cells[topActivityRow, countColumn, bottomActivityRow, countColumn];
             IExcelConditionalFormattingGreaterThan countMoreThanMaximum =
                 activityCounts.ConditionalFormatting.AddGreaterThan();

@@ -1,0 +1,18 @@
+﻿Sub PackRow(Row As Integer)
+    destCol = 4
+    maxCol = 30
+    While destCol <= maxCol
+        If IsEmpty(Activities.Cells(Row, destCol).Value) Then
+            sourceCol = destCol + 1
+            Do While sourceCol < maxCol And IsEmpty(Activities.Cells(Row, sourceCol).Value)
+                sourceCol = sourceCol + 1
+            Loop
+            If Not IsEmpty(Activities.Cells(Row, sourceCol).Value) Then
+                Activities.Cells(Row, destCol).Value = Activities.Cells(Row, sourceCol).Value
+                Activities.Cells(Row, sourceCol).Value = ""
+            End If
+        End If
+        Activities.Cells(Row, destCol).Interior.Color = RGB(255, 255, 255)
+        destCol = destCol + 1
+    Wend
+End Sub
