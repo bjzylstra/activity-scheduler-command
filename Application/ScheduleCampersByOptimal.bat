@@ -10,7 +10,7 @@ IF NOT %ERRORLEVEL% EQU 0 (
 		exit %ERRORLEVEL%
 	)
 )
-dotnet publish\ScheduleToSpreadsheet.dll -a ActivitySchedule.csv -d Activities.xml -s Schedule.xlsx 1> BuildSpreadsheet.log 2>&1
+dotnet publish\ScheduleToSpreadsheet.dll -a ActivitySchedule.csv -d Activities.xml -s Schedule.xlsm 1> BuildSpreadsheet.log 2>&1
 IF %ERRORLEVEL% EQU 0 (
 	ECHO Success!
 	ECHO Open the Schedule.xlsx file in Excel to the generated schedule.

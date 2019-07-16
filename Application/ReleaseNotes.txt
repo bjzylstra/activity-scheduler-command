@@ -1,5 +1,8 @@
 ﻿Activity Schedule Command Line Utility
 
+2.2.0 - July 16, 2019
+- Save schedule file as xlsm so Excel will allow it to open.
+
 2.1.0 - July 9, 2019
 - Macros on Excel Spreadsheet to populate activies from campers and campers from activities.
 
