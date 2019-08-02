@@ -9,7 +9,8 @@
     ' Go down the activity sheet until out of activity blocks
     activityRow = 2
     While Not IsEmpty(Activities.Cells(activityRow, 2))
-        Let activityBlock = Activities.Cells(activityRow, 2).Value
+		' Readable value is 1 based - convert to 0 based for math
+        Let activityBlock = Activities.Cells(activityRow, 2).Value - 1
         If activityBlock = 0 Then
             ' Activity name is only on the first block (i.e. 0)
             Let activityName = Activities.Cells(activityRow, 1).Value

@@ -1,5 +1,10 @@
 ﻿Activity Schedule Command Line Utility
 
+2.3.0 - August 2, 2019
+- ActivitiesToCamper puts the colliding name on the camper sheet to make for easier
+ correcting.
+- Activity block numbers are always 1 based in the spreadsheet (readability)
+
 2.2.0 - July 16, 2019
 - Save schedule file as xlsm so Excel will allow it to open.
 

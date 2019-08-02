@@ -53,7 +53,8 @@ namespace ScheduleToSpreadsheet
                 foreach (var activityBlock in activity.ScheduledBlocks)
                 {
                     column = _worksheet.Cells.Start.Column + 1;
-                    _worksheet.SetValue(row, column, activityBlock.TimeSlot);
+					// Show the block # 1 based for readability
+                    _worksheet.SetValue(row, column, activityBlock.TimeSlot+1);
                     column++;
 
                     // Get the count from the number of non-blank camper cells
