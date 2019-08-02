@@ -5,8 +5,13 @@
         camperRow = camperRow + 1
     Wend
     ' If the camper is not found, mark the source cell as Red
-    If IsEmpty(Campers.Cells(camperRow, 1).Value) Or Not IsEmpty(Campers.Cells(camperRow, 2 + activityBlock).Value) Then
+    If IsEmpty(Campers.Cells(camperRow, 1).Value) Then
         AssignActivity = False
+    ElseIf Not IsEmpty(Campers.Cells(camperRow, 2 + activityBlock).Value) Then
+        ' If the spot is taken, mark it in red and put the update value to the right
+        AssignActivity = False
+        Campers.Cells(camperRow, 2 + activityBlock).Interior.Color = RGB(255, 0, 0)
+        Campers.Cells(camperRow, 6 + activityBlock).Value = activityName
     Else
         AssignActivity = True
         Campers.Cells(camperRow, 2 + activityBlock).Value = activityName

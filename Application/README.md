@@ -27,5 +27,6 @@ cd Application
 dotnet msbuild /t:BuildRelease
 
 # TODO
-- Schedule 1 pass by optimal and pick up the unplaced using maximum
 - Output to log file
+- Activities XML editor
+- Select CSV files instead of requiring copy/paste
