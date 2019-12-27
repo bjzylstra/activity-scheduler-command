@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace Camp
@@ -201,6 +202,27 @@ namespace Camp
             catch (Exception e)
             {
                 Console.Error.WriteLine("Exception parsing input file {0}: {1}", xmlPath,
+                        e.Message);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Read the activity definition XML from a buffer to generate a list of activity definitions
+        /// </summary>
+        /// <param name="buffer">Buffer containing the activity definition XML file</param>
+        /// <returns>List of activity defintions found in the file. Returns null if unsuccessful</returns>
+        public static List<ActivityDefinition> ReadActivityDefinitions(byte[] buffer)
+        {
+            try
+            {
+                MemoryStream memoryStream = new MemoryStream(buffer);
+                XmlSerializer serializer = new XmlSerializer(typeof(List<ActivityDefinition>));
+                return (List<ActivityDefinition>)serializer.Deserialize(memoryStream);
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine("Exception parsing ActivityDefinitions: {0}", 
                         e.Message);
             }
             return null;

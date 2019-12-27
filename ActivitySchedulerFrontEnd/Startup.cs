@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ActivitySchedulerFrontEnd.Data;
+using Blazor.FileReader;
 
 namespace ActivitySchedulerFrontEnd
 {
@@ -26,8 +27,13 @@ namespace ActivitySchedulerFrontEnd
 		public void ConfigureServices(IServiceCollection services)
 		{
 			services.AddRazorPages();
-			services.AddServerSideBlazor();
+			// Limits size of file transfers
+			services.AddServerSideBlazor().AddHubOptions(o =>
+			{
+				o.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10MB
+			});
 			services.AddSingleton<WeatherForecastService>();
+			services.AddFileReaderService(options => options.InitializeOnFirstCall = true);
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

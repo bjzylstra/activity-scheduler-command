@@ -1,0 +1,38 @@
+﻿@page "/schedule"
+
+<h3>RunScheduler</h3>
+
+@using System.IO;
+@inject IFileReaderService fileReaderService;
+
+<p>
+    Activity definition file -
+    <input type="file" @ref=activityDefinitionFileElement accept=".xml" />
+</p>
+<button @onclick=ReadFile>Read file</button>
+<hr />
+<textarea style="max-width: 100%;" cols="60" rows="20">@Output</textarea>
+
+@code {
+    ElementReference activityDefinitionFileElement;
+
+    string Output { get; set; }
+
+    public async Task ReadFile()
+    {
+        Output = String.Empty;
+        foreach (var file in await fileReaderService.CreateReference(activityDefinitionFileElement).EnumerateFilesAsync())
+        {
+            // Read into buffer and act (uses less memory)
+            using (Stream stream = await file.OpenReadAsync())
+            {
+                byte[] buffer = new byte[stream.Length];
+                await stream.ReadAsync(buffer);
+
+                List<ActivityDefinition> activityDefinitions =
+                    ActivityDefinition.ReadActivityDefinitions(buffer);
+                Output += $"Found {activityDefinitions.Count} activity definitions";
+            }
+        }
+    }
+}
