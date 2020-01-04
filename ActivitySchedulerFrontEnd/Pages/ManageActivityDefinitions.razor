@@ -1,0 +1,56 @@
+﻿<h3>Manage Activity Definitions</h3>
+
+@page "/activities"
+
+@using System.IO;
+@inject IFileReaderService fileReaderService;
+@inject IJSRuntime  JSRuntime
+
+<p>
+    Read from Activity definition file -
+    <input type="file" @ref=activityDefinitionFileElement accept=".xml" />
+</p>
+<button @onclick=ReadFile>Read file</button>
+<hr />
+<textarea style="max-width: 100%;" cols="60" rows="20">@output</textarea>
+<hr />
+<p>
+    Write to Activity definition file -
+    <input @bind="fileName" />
+</p>
+<button @onclick="DownloadFile">Download file</button>
+
+@code {
+    ElementReference activityDefinitionFileElement;
+
+    string output { get; set; }
+    string fileName = "DefaultActivity.xml";
+    List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>();
+
+    public async Task ReadFile()
+    {
+        output = String.Empty;
+        foreach (var file in await fileReaderService.CreateReference(activityDefinitionFileElement).EnumerateFilesAsync())
+        {
+            // Read into buffer and act (uses less memory)
+            using (Stream stream = await file.OpenReadAsync())
+            {
+                StreamReader reader = new StreamReader(stream);
+                string contents = await reader.ReadToEndAsync();
+
+                activityDefinitions =
+                    ActivityDefinition.ReadActivityDefinitionsFromString(contents);
+                output += $"Found {activityDefinitions.Count} activity definitions";
+            }
+        }
+    }
+
+    public async void DownloadFile()
+    {
+        // Blazor native does not currently support downloading a file to the client
+        // so use a Javascript function.
+        await JSRuntime.InvokeAsync<object>(
+            "FileSaveAs", fileName,
+            ActivityDefinition.WriteActivityDefinitionsToString(activityDefinitions));
+    }
+}

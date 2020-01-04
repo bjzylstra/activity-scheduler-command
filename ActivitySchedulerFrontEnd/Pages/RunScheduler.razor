@@ -4,34 +4,33 @@
 
 @using System.IO;
 @inject IFileReaderService fileReaderService;
+@inject IJSRuntime  JSRuntime
 
 <p>
-    Activity definition file -
-    <input type="file" @ref=activityDefinitionFileElement accept=".xml" />
+    Select camper requests CSV file -
+    <input type="file" @ref=camperRequestsFileElement accept=".csv" />
 </p>
 <button @onclick=ReadFile>Read file</button>
 <hr />
-<textarea style="max-width: 100%;" cols="60" rows="20">@Output</textarea>
+<textarea style="max-width: 100%;" cols="60" rows="20">@output</textarea>
+<hr />
 
 @code {
-    ElementReference activityDefinitionFileElement;
+    ElementReference camperRequestsFileElement;
 
-    string Output { get; set; }
+    string output { get; set; }
 
     public async Task ReadFile()
     {
-        Output = String.Empty;
-        foreach (var file in await fileReaderService.CreateReference(activityDefinitionFileElement).EnumerateFilesAsync())
+        output = String.Empty;
+        foreach (var file in await fileReaderService.CreateReference(camperRequestsFileElement).EnumerateFilesAsync())
         {
             // Read into buffer and act (uses less memory)
             using (Stream stream = await file.OpenReadAsync())
             {
-                byte[] buffer = new byte[stream.Length];
-                await stream.ReadAsync(buffer);
-
-                List<ActivityDefinition> activityDefinitions =
-                    ActivityDefinition.ReadActivityDefinitions(buffer);
-                Output += $"Found {activityDefinitions.Count} activity definitions";
+                StreamReader reader = new StreamReader(stream);
+                string contents = await reader.ReadToEndAsync();
+                output += $"{contents}";
             }
         }
     }

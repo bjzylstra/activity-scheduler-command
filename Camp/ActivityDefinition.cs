@@ -208,21 +208,47 @@ namespace Camp
         }
 
         /// <summary>
-        /// Read the activity definition XML from a buffer to generate a list of activity definitions
+        /// Read the activity definition XML from a string to generate a list of activity definitions
         /// </summary>
-        /// <param name="buffer">Buffer containing the activity definition XML file</param>
-        /// <returns>List of activity defintions found in the file. Returns null if unsuccessful</returns>
-        public static List<ActivityDefinition> ReadActivityDefinitions(byte[] buffer)
+        /// <param name="buffer">String containing the activity definition XML file</param>
+        /// <returns>List of activity definitions found. Returns null if unsuccessful</returns>
+        public static List<ActivityDefinition> ReadActivityDefinitionsFromString(String contents)
         {
             try
             {
-                MemoryStream memoryStream = new MemoryStream(buffer);
+                StringReader reader = new StringReader(contents);
                 XmlSerializer serializer = new XmlSerializer(typeof(List<ActivityDefinition>));
-                return (List<ActivityDefinition>)serializer.Deserialize(memoryStream);
+                return (List<ActivityDefinition>)serializer.Deserialize(reader);
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine("Exception parsing ActivityDefinitions: {0}", 
+                        e.Message);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Write the activity definition list as XML to a string.
+        /// </summary>
+        /// <param name="activityDefinitions">List of activity definitions</param>
+        /// <returns>XML representation of the activity definitions</returns>
+        public static string WriteActivityDefinitionsToString(List<ActivityDefinition> activityDefinitions)
+        {
+            try
+            {
+                var memoryStream = new MemoryStream();
+                XmlSerializer serializer = new XmlSerializer(typeof(List<ActivityDefinition>));
+                serializer.Serialize(memoryStream, activityDefinitions);
+                memoryStream.Position = 0;
+                using (StreamReader reader = new StreamReader(memoryStream))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine("Exception parsing ActivityDefinitions: {0}",
                         e.Message);
             }
             return null;
