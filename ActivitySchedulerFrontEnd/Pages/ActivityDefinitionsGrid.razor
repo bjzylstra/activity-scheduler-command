@@ -1,0 +1,41 @@
+﻿<h3>ActivityDefinitionsGrid</h3>
+
+@using System.Globalization
+@inject NavigationManager NavigationManager
+@inject IActivityDefinitionService ActivityDefinitionService
+
+@if (_task.IsCompleted)
+{
+    <div class="row">
+        <div class="col-md-12">
+            <GridComponent T="ActivityDefinition" Grid="@_grid"></GridComponent>
+        </div>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@code {
+    private CGrid<ActivityDefinition> _grid;
+    private Task _task;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var locale = CultureInfo.CurrentCulture;
+
+        var query = new QueryDictionary<StringValues>();
+        var client = new GridClient<ActivityDefinition>(q => ActivityDefinitionService.GetActivityDefinitionsGridRows(
+            ColumnCollections.ActivityDefinitionColumns, q), query, false, "activityDefinitionsGrid", 
+            ColumnCollections.ActivityDefinitionColumns)
+            .SetStriped(true)
+            .WithGridItemsCount();
+
+        _grid = client.Grid;
+        // Set new items to grid
+        _task = client.UpdateGrid();
+        await _task;
+    }
+
+}

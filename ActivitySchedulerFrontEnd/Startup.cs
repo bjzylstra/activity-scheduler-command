@@ -1,15 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ActivitySchedulerFrontEnd.Data;
 using Blazor.FileReader;
+using ActivitySchedulerFrontEnd.Services;
 
 namespace ActivitySchedulerFrontEnd
 {
@@ -32,7 +27,7 @@ namespace ActivitySchedulerFrontEnd
 			{
 				o.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10MB
 			});
-			services.AddSingleton<WeatherForecastService>();
+			services.AddScoped<IActivityDefinitionService, ActivityDefinitionService>();
 			services.AddFileReaderService(options => options.InitializeOnFirstCall = true);
 		}
 
