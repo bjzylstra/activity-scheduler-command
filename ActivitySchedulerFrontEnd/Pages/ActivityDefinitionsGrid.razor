@@ -1,8 +1,6 @@
-﻿<h3>ActivityDefinitionsGrid</h3>
+﻿@inject IActivityDefinitionService ActivityDefinitionService
 
-@using System.Globalization
-@inject NavigationManager NavigationManager
-@inject IActivityDefinitionService ActivityDefinitionService
+<h3>@definitionSetName Activities</h3>
 
 @if (_task.IsCompleted)
 {
@@ -20,17 +18,19 @@ else
 @code {
     private CGrid<ActivityDefinition> _grid;
     private Task _task;
+    public string definitionSetName = "Default";
 
     protected override async Task OnParametersSetAsync()
     {
-        var locale = CultureInfo.CurrentCulture;
-
         var query = new QueryDictionary<StringValues>();
         var client = new GridClient<ActivityDefinition>(q => ActivityDefinitionService.GetActivityDefinitionsGridRows(
-            ColumnCollections.ActivityDefinitionColumns, q), query, false, "activityDefinitionsGrid", 
+            ColumnCollections.ActivityDefinitionColumns, q), query, false, "activityDefinitionsGrid",
             ColumnCollections.ActivityDefinitionColumns)
+            .Sortable()
+            .Filterable()
             .SetStriped(true)
-            .WithGridItemsCount();
+            .WithMultipleFilters()
+            .WithGridItemsCount("Number of Activities");
 
         _grid = client.Grid;
         // Set new items to grid

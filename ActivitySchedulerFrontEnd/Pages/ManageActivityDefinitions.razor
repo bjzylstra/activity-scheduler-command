@@ -1,10 +1,14 @@
-﻿<h3>Manage Activity Definitions</h3>
-
-@page "/activities"
+﻿@page "/activities"
 
 @using System.IO;
 @inject IFileReaderService fileReaderService;
 @inject IJSRuntime  JSRuntime
+
+<h2>Manage Activity Definitions</h2>
+
+<ActivitySetSelector />
+<p>Button to add an activity set</p>
+<p>Button to delete the currently selected activity set</p>
 
 <hr />
 <ActivityDefinitionsGrid />
