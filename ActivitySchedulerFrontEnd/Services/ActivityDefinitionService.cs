@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Reflection;
 
 namespace ActivitySchedulerFrontEnd.Services
 {
@@ -32,11 +35,32 @@ namespace ActivitySchedulerFrontEnd.Services
 		{
 			try
 			{
-				// TODO: Troll the disk for activities and build up the dictionary
-				var activityDefinitions = ActivityDefinition.ReadActivityDefinitions("DefaultActivities.xml");
-				if (activityDefinitions != null)
+				DirectoryInfo dataDirectoryInfo = new DirectoryInfo(
+					Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+				string applicationName = Assembly.GetEntryAssembly().GetName().Name;
+				DirectoryInfo applicationDirectoryInfo = dataDirectoryInfo.GetDirectories().FirstOrDefault(d =>
+					d.Name.Equals(applicationName, StringComparison.OrdinalIgnoreCase));
+				if (applicationDirectoryInfo == null)
 				{
-					_activitySets.Add("DefaultActivities", activityDefinitions);
+					dataDirectoryInfo.CreateSubdirectory(applicationName);
+					applicationDirectoryInfo = dataDirectoryInfo.GetDirectories().FirstOrDefault(d =>
+						d.Name.Equals(applicationName, StringComparison.OrdinalIgnoreCase));
+					File.Copy("DefaultActivities.xml", applicationDirectoryInfo.FullName + "\\DefaultActivities.xml");
+					applicationDirectoryInfo.Refresh();
+				}
+
+				string activityFileExtension = ".xml";
+				foreach (var activityFile in applicationDirectoryInfo.EnumerateFiles()
+					.Where(f => f.Extension.Equals(activityFileExtension, StringComparison.OrdinalIgnoreCase))
+					)
+				{
+					var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(activityFile.FullName);
+					if (activityDefinitions != null)
+					{
+						string activitySetName = activityFile.Name.Substring(0, 
+							activityFile.Name.Length - activityFileExtension.Length);
+						_activitySets.Add(activitySetName, activityDefinitions);
+					}
 				}
 			}
 			catch (Exception)
