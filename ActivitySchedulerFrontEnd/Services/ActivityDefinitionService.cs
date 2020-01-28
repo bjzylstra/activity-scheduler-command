@@ -12,21 +12,31 @@ namespace ActivitySchedulerFrontEnd.Services
 {
 	public class ActivityDefinitionService : IActivityDefinitionService
 	{
-		private List<ActivityDefinition> _activityDefinitions = new List<ActivityDefinition>
+		private Dictionary<string, List<ActivityDefinition>> _activitySets = new Dictionary<string, List<ActivityDefinition>>
 		{
-			new ActivityDefinition{ Name = "Water fun", MinimumCapacity=10, MaximumCapacity=20 },
-			new ActivityDefinition{ Name = "Field games", MinimumCapacity=10, MaximumCapacity=40, OptimalCapacity=16 }
+			{
+				"default", new List<ActivityDefinition>{
+					new ActivityDefinition{ Name = "Water fun", MinimumCapacity=10, MaximumCapacity=20 },
+					new ActivityDefinition{ Name = "Field games", MinimumCapacity=10, MaximumCapacity=40, OptimalCapacity=16 }
+				}
+			},
+			{
+				"preload", new List<ActivityDefinition>{
+					new ActivityDefinition{ Name = "Water fun", MinimumCapacity=10, MaximumCapacity=20 },
+					new ActivityDefinition{ Name = "Field games", MinimumCapacity=10, MaximumCapacity=40, OptimalCapacity=16 }
+				}
+			}
 		};
-		private List<string> _activitySetNames = new List<string> { "preload", "default" };
 
 		public ActivityDefinitionService()
 		{
 			try
 			{
+				// TODO: Troll the disk for activities and build up the dictionary
 				var activityDefinitions = ActivityDefinition.ReadActivityDefinitions("DefaultActivities.xml");
 				if (activityDefinitions != null)
 				{
-					_activityDefinitions = activityDefinitions;
+					_activitySets.Add("DefaultActivities", activityDefinitions);
 				}
 			}
 			catch (Exception)
@@ -45,9 +55,11 @@ namespace ActivitySchedulerFrontEnd.Services
 			throw new NotImplementedException();
 		}
 
-		public ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(Action<IGridColumnCollection<ActivityDefinition>> columns, QueryDictionary<StringValues> query)
+		public ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(string activitySet, 
+			Action<IGridColumnCollection<ActivityDefinition>> columns, QueryDictionary<StringValues> query)
 		{
-			var server = new GridServer<ActivityDefinition>(_activityDefinitions, new QueryCollection(query),
+			var server = new GridServer<ActivityDefinition>(_activitySets[activitySet], 
+				new QueryCollection(query),
 				true, "activityDefinitionsGrid", columns)
 				.Sortable()
 				.Filterable()
@@ -57,9 +69,11 @@ namespace ActivitySchedulerFrontEnd.Services
 			return server.ItemsToDisplay;
 		}
 
-		public ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(QueryDictionary<StringValues> query)
+		public ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(string activitySet,
+			QueryDictionary<StringValues> query)
 		{
-			var server = new GridServer<ActivityDefinition>(_activityDefinitions, new QueryCollection(query),
+			var server = new GridServer<ActivityDefinition>(_activitySets[activitySet], 
+				new QueryCollection(query),
 				true, "activityDefinitionGrid", null).AutoGenerateColumns()
 				.Sortable()
 				.Filterable()
@@ -81,14 +95,17 @@ namespace ActivitySchedulerFrontEnd.Services
 
 		public IEnumerable<string> GetActivitySetNames()
 		{
-			return _activitySetNames;
+			return _activitySets.Keys;
 		}
 	}
 
 	public interface IActivityDefinitionService : ICrudDataService<ActivityDefinition>
 	{
-		ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(Action<IGridColumnCollection<ActivityDefinition>> columns, QueryDictionary<StringValues> query);
-		ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(QueryDictionary<StringValues> query);
+		ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(string activityDefinitionSet, 
+			Action<IGridColumnCollection<ActivityDefinition>> columns, 
+			QueryDictionary<StringValues> query);
+		ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(string activityDefinitionSet, 
+			QueryDictionary<StringValues> query);
 		IEnumerable<string> GetActivitySetNames();
 	}
 }

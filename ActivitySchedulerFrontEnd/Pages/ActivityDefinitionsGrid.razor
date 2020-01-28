@@ -1,12 +1,12 @@
 ﻿@inject IActivityDefinitionService ActivityDefinitionService
 
-<h3>@definitionSetName Activities</h3>
+<h3>@ActivitySet Activities</h3>
 
 @if (_task.IsCompleted)
 {
     <div class="row">
         <div class="col-md-12">
-            <GridComponent T="ActivityDefinition" Grid="@_grid"></GridComponent>
+            <GridComponent @ref="_component" T="ActivityDefinition" Grid="@_grid"></GridComponent>
         </div>
     </div>
 }
@@ -18,24 +18,38 @@ else
 @code {
     private CGrid<ActivityDefinition> _grid;
     private Task _task;
-    public string definitionSetName = "Default";
+    private GridComponent<ActivityDefinition> _component;
+
+
+    [Parameter]
+    public string ActivitySet { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
         var query = new QueryDictionary<StringValues>();
-        var client = new GridClient<ActivityDefinition>(q => ActivityDefinitionService.GetActivityDefinitionsGridRows(
-            ColumnCollections.ActivityDefinitionColumns, q), query, false, "activityDefinitionsGrid",
-            ColumnCollections.ActivityDefinitionColumns)
-            .Sortable()
-            .Filterable()
-            .SetStriped(true)
-            .WithMultipleFilters()
-            .WithGridItemsCount("Number of Activities");
+        if (_component == null)
+        {
+            IGridClient<ActivityDefinition> gridClient = new GridClient<ActivityDefinition>(q => ActivityDefinitionService.GetActivityDefinitionsGridRows(
+                ActivitySet,
+                ColumnCollections.ActivityDefinitionColumns, q), query, false, "activityDefinitionsGrid",
+                ColumnCollections.ActivityDefinitionColumns)
+                .Sortable()
+                .Filterable()
+                .SetStriped(true)
+                .WithMultipleFilters()
+                .WithGridItemsCount("Number of Activities");
+            _grid = gridClient.Grid;
+            // Set new items to grid
+            _task = gridClient.UpdateGrid();
+            await _task;
+        }
+        else
+        {
+            // Parameter on an existing grid has changed -
+            // tell the underlying component to update
+            await _component.UpdateGrid();
+        }
 
-        _grid = client.Grid;
-        // Set new items to grid
-        _task = client.UpdateGrid();
-        await _task;
     }
 
 }

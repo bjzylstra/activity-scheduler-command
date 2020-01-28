@@ -3,7 +3,7 @@
 
 <h4>Select an Activity Definition Set to Edit</h4>
 
-@if (activitySets == null)
+@if (_activitySets == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -14,7 +14,7 @@ else
             <label for="activitySet">Activity Set</label>
             <select id="activitySet" @bind="CurrentActivitySet">
                 <option value="">Select</option>
-                @foreach (var set in activitySets)
+                @foreach (var set in _activitySets)
                     {
                     <option value="@set">
                         @set
@@ -27,21 +27,27 @@ else
 
 
 @code {
-    public List<string> activitySets;
+    private List<string> _activitySets;
 
     private string _currentActivitySet;
-    public string CurrentActivitySet
-    {
-        get => _currentActivitySet;
+    [Parameter]
+    public string CurrentActivitySet { get => _currentActivitySet;
         set
         {
-            _currentActivitySet = value;
+            // Update only if changed or an infinite loop will occur
+            if (value != _currentActivitySet)
+            {
+                _currentActivitySet = value;
+                CurrentActivitySetChanged.InvokeAsync(value);
+            }
         }
     }
 
+    [Parameter]
+    public EventCallback<string> CurrentActivitySetChanged { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        activitySets = new List<string>(ActivityDefinitionService.GetActivitySetNames());
-        _currentActivitySet = activitySets[0];
+        _activitySets = new List<string>(ActivityDefinitionService.GetActivitySetNames());
     }
 }

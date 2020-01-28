@@ -6,39 +6,52 @@
 
 <h2>Manage Activity Definitions</h2>
 
-<ActivitySetSelector />
-<p>Button to add an activity set</p>
+<ActivitySetSelector @bind-CurrentActivitySet="ActivitySet" />
+<p>Button to create an empty activity set</p>
+<p>Button to copy the current activity set</p>
 <p>Button to delete the currently selected activity set</p>
+<p>Import into the current activity set</p>
+<p>Export the current activity set</p>
 
 <hr />
-<ActivityDefinitionsGrid />
+<ActivityDefinitionsGrid ActivitySet=@ActivitySet />
 <hr />
 
 <p>
     Read from Activity definition file -
-    <input type="file" @ref=activityDefinitionFileElement accept=".xml" />
+    <input type="file" @ref=_activityDefinitionFileElement accept=".xml" />
 </p>
 <button @onclick=ReadFile>Read file</button>
 <hr />
-<textarea style="max-width: 100%;" cols="60" rows="20">@output</textarea>
+<textarea style="max-width: 100%;" cols="60" rows="20">@_output</textarea>
 <hr />
 <p>
     Write to Activity definition file -
-    <input @bind="fileName" />
+    <input @bind="_fileName" />
 </p>
 <button @onclick="DownloadFile">Download file</button>
 
 @code {
-    ElementReference activityDefinitionFileElement;
+    public string ActivitySet { get; 
+        set; }
 
-    string output { get; set; }
-    string fileName = "DefaultActivity.xml";
-    List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>();
+    ElementReference _activityDefinitionFileElement;
+    string _output { get; set; }
+    string _fileName = "DefaultActivity.xml";
+    List<ActivityDefinition> _activityDefinitions = new List<ActivityDefinition>();
+
+    protected override void OnInitialized()
+    {
+        // TODO: Pull from some persistence - perhaps a cookie?
+        ActivitySet = "default";
+        _fileName = $"{ActivitySet}.xml";
+        base.OnInitialized();
+    }
 
     public async Task ReadFile()
     {
-        output = String.Empty;
-        foreach (var file in await fileReaderService.CreateReference(activityDefinitionFileElement).EnumerateFilesAsync())
+        _output = String.Empty;
+        foreach (var file in await fileReaderService.CreateReference(_activityDefinitionFileElement).EnumerateFilesAsync())
         {
             // Read into buffer and act (uses less memory)
             using (Stream stream = await file.OpenReadAsync())
@@ -46,9 +59,9 @@
                 StreamReader reader = new StreamReader(stream);
                 string contents = await reader.ReadToEndAsync();
 
-                activityDefinitions =
+                _activityDefinitions =
                     ActivityDefinition.ReadActivityDefinitionsFromString(contents);
-                output += $"Found {activityDefinitions.Count} activity definitions";
+                _output += $"Found {_activityDefinitions.Count} activity definitions";
             }
         }
     }
@@ -58,7 +71,7 @@
         // Blazor native does not currently support downloading a file to the client
         // so use a Javascript function.
         await JSRuntime.InvokeAsync<object>(
-            "FileSaveAs", fileName,
-            ActivityDefinition.WriteActivityDefinitionsToString(activityDefinitions));
+            "FileSaveAs", _fileName,
+            ActivityDefinition.WriteActivityDefinitionsToString(_activityDefinitions));
     }
 }
