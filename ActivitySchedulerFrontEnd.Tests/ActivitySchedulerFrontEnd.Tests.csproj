@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\BlazorUnitTestingPrototype\Microsoft.AspNetCore.Components.Testing\Microsoft.AspNetCore.Components.Testing.csproj" />
     <ProjectReference Include="..\ActivitySchedulerFrontEnd\ActivitySchedulerFrontEnd.csproj" />
+    <ProjectReference Include="..\Camp\Camp.csproj" />
   </ItemGroup>
 
 </Project>

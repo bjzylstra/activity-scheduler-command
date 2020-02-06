@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Components.Testing;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ActivitySchedulerFrontEnd.Tests
 {

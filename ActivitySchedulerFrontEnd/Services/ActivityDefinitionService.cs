@@ -15,58 +15,90 @@ namespace ActivitySchedulerFrontEnd.Services
 {
 	public class ActivityDefinitionService : IActivityDefinitionService
 	{
-		private Dictionary<string, List<ActivityDefinition>> _activitySets = new Dictionary<string, List<ActivityDefinition>>
-		{
-			{
-				"default", new List<ActivityDefinition>{
-					new ActivityDefinition{ Name = "Water fun", MinimumCapacity=10, MaximumCapacity=20 },
-					new ActivityDefinition{ Name = "Field games", MinimumCapacity=10, MaximumCapacity=40, OptimalCapacity=16 }
-				}
-			},
-			{
-				"preload", new List<ActivityDefinition>{
-					new ActivityDefinition{ Name = "Water fun", MinimumCapacity=10, MaximumCapacity=20 },
-					new ActivityDefinition{ Name = "Field games", MinimumCapacity=10, MaximumCapacity=40, OptimalCapacity=16 }
-				}
-			}
-		};
+		private Dictionary<string, List<ActivityDefinition>> _activitySets;
+		private const string ActivityFileExtension = ".xml";
 
+		/// <summary>
+		/// Default constructor used by dependency injection
+		/// </summary>
 		public ActivityDefinitionService()
 		{
+			string applicationName = Assembly.GetEntryAssembly().GetName().Name;
+			_activitySets = InitializeActivitySets(applicationName);
+		}
+
+		/// <summary>
+		/// Construct with a fixed application name for testing
+		/// </summary>
+		/// <param name="folderName">Application name for local application data folder</param>
+		public ActivityDefinitionService(string folderName)
+		{
+			_activitySets = InitializeActivitySets(folderName);
+		}
+
+		/// <summary>
+		/// Generate the activity sets from the local application data folder.
+		/// Creates and preloads with the embedded definitions if folder is not found.
+		/// </summary>
+		/// <param name="applicationName">Application name for local applications data folder</param>
+		/// <returns>Dictionary of activity definitions by set name</returns>
+		private Dictionary<string, List<ActivityDefinition>> InitializeActivitySets(string applicationName)
+		{
+			Dictionary<string, List<ActivityDefinition>> activitySets = new Dictionary<string, List<ActivityDefinition>>();
 			try
 			{
 				DirectoryInfo dataDirectoryInfo = new DirectoryInfo(
 					Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
-				string applicationName = Assembly.GetEntryAssembly().GetName().Name;
 				DirectoryInfo applicationDirectoryInfo = dataDirectoryInfo.GetDirectories().FirstOrDefault(d =>
 					d.Name.Equals(applicationName, StringComparison.OrdinalIgnoreCase));
 				if (applicationDirectoryInfo == null)
 				{
-					dataDirectoryInfo.CreateSubdirectory(applicationName);
-					applicationDirectoryInfo = dataDirectoryInfo.GetDirectories().FirstOrDefault(d =>
-						d.Name.Equals(applicationName, StringComparison.OrdinalIgnoreCase));
-					File.Copy("DefaultActivities.xml", applicationDirectoryInfo.FullName + "\\DefaultActivities.xml");
+					// First time - load default from the embedded resource
+					applicationDirectoryInfo = dataDirectoryInfo.CreateSubdirectory(applicationName);
+					Assembly assembly = typeof(ActivityDefinitionService).Assembly;
+					foreach (string activityResource in assembly.GetManifestResourceNames())
+					{
+						if (activityResource.EndsWith(ActivityFileExtension))
+						{
+							string[] resourcePathElements = activityResource.Split('.');
+							string activitySet = resourcePathElements[resourcePathElements.Length - 2];
+							using (FileStream writeStream = File.OpenWrite(
+								$"{applicationDirectoryInfo.FullName}\\{activitySet}{ActivityFileExtension}"))
+							{
+								using (Stream activitiesStream = assembly.GetManifestResourceStream(activityResource))
+								{
+									byte[] buffer = new byte[activitiesStream.Length];
+									int bytesRead = activitiesStream.Read(buffer, 0, buffer.Length);
+									if (bytesRead > 0)
+									{
+										writeStream.Write(buffer, 0, bytesRead);
+									}
+								}
+							}
+
+						}
+					}
 					applicationDirectoryInfo.Refresh();
 				}
 
-				string activityFileExtension = ".xml";
 				foreach (var activityFile in applicationDirectoryInfo.EnumerateFiles()
-					.Where(f => f.Extension.Equals(activityFileExtension, StringComparison.OrdinalIgnoreCase))
+					.Where(f => f.Extension.Equals(ActivityFileExtension, StringComparison.OrdinalIgnoreCase))
 					)
 				{
 					var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(activityFile.FullName);
 					if (activityDefinitions != null)
 					{
-						string activitySetName = activityFile.Name.Substring(0, 
-							activityFile.Name.Length - activityFileExtension.Length);
-						_activitySets.Add(activitySetName, activityDefinitions);
+						string activitySetName = activityFile.Name.Substring(0,
+							activityFile.Name.Length - ActivityFileExtension.Length);
+						activitySets.Add(activitySetName, activityDefinitions);
 					}
 				}
 			}
-			catch (Exception)
+			catch (Exception e)
 			{
 				// TODO: nice log message here
 			}
+			return activitySets;
 		}
 
 		public Task Delete(params object[] keys)
