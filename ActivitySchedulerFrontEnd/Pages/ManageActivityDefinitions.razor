@@ -1,4 +1,4 @@
-﻿@page "/activities"
+@page "/activities"
 
 @using System.IO;
 @inject IFileReaderService fileReaderService;
@@ -37,15 +37,15 @@
 
     ElementReference _activityDefinitionFileElement;
     string _output { get; set; }
-    string _fileName = "DefaultActivity.xml";
+    string _fileName = "DefaultActivities.xml";
     List<ActivityDefinition> _activityDefinitions = new List<ActivityDefinition>();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // TODO: Pull from some persistence - perhaps a cookie?
-        ActivitySet = "default";
+        // Activity set comes from route if present.
+        ActivitySet = ActivitySet ?? "DefaultActivities";
         _fileName = $"{ActivitySet}.xml";
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
     public async Task ReadFile()

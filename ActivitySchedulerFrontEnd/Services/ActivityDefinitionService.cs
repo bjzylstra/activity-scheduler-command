@@ -153,6 +153,12 @@ namespace ActivitySchedulerFrontEnd.Services
 		{
 			return _activitySets.Keys;
 		}
+
+		public IEnumerable<ActivityDefinition> GetActivityDefinition(string activitySetName)
+		{
+			_activitySets.TryGetValue(activitySetName, out List<ActivityDefinition> activityDefinitions);
+			return activityDefinitions;
+		}
 	}
 
 	public interface IActivityDefinitionService : ICrudDataService<ActivityDefinition>
@@ -163,5 +169,6 @@ namespace ActivitySchedulerFrontEnd.Services
 		ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(string activityDefinitionSet, 
 			QueryDictionary<StringValues> query);
 		IEnumerable<string> GetActivitySetNames();
+		IEnumerable<ActivityDefinition> GetActivityDefinition(string activitySetName);
 	}
 }

@@ -42,8 +42,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 			_callBackValue = string.Empty;
 
 			// Act
-			var selector = _component.Find("select");
-			var selectorValue = _activitySetNames[1];
+			HtmlAgilityPack.HtmlNode selector = _component.Find("select");
+			string selectorValue = _activitySetNames[1];
 			selector.Change(selectorValue);
 
 			// Assert
