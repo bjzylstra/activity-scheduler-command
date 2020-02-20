@@ -5,7 +5,9 @@
 @using System.IO;
 @inject IFileReaderService fileReaderService;
 @inject IJSRuntime  JSRuntime
+@inject ILocalStorageService localStorage
 
+<ActivitySetSelector @bind-CurrentActivitySet="ActivitySet" />
 <p>
     Select camper requests CSV file -
     <input type="file" @ref=camperRequestsFileElement accept=".csv" />
@@ -16,9 +18,44 @@
 <hr />
 
 @code {
+    /// <summary>
+    /// Name of the cookie to record the activity set across pages.
+    /// </summary>
+    private const string ActivitySetKey = "activitySet";
+
+    /// <summary>
+    /// Track the activity set and update the cookie for persistence across pages.
+    /// </summary>
+    private string _activitySet;
+    public string ActivitySet
+    {
+        get => _activitySet;
+        set
+        {
+            if (value != _activitySet)
+            {
+                _activitySet = value;
+                // This cannot be async so fire and hope it gets there in time.
+                localStorage.SetItemAsync(ActivitySetKey, value);
+            }
+        }
+    }
+
     ElementReference camperRequestsFileElement;
 
     string output { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Activity set comes from cookie if present.
+        ActivitySet = await localStorage.GetItemAsync<string>(ActivitySetKey);
+        if (string.IsNullOrEmpty(ActivitySet))
+        {
+            ActivitySet = "DefaultActivities";
+        }
+
+        await base.OnInitializedAsync();
+    }
 
     public async Task ReadFile()
     {

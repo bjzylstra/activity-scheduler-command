@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using ActivitySchedulerFrontEnd.Pages;
+﻿using ActivitySchedulerFrontEnd.Pages;
 using ActivitySchedulerFrontEnd.Services;
 using Blazor.FileReader;
 using Blazored.LocalStorage;
@@ -12,17 +7,22 @@ using Microsoft.AspNetCore.Components.Testing;
 using Microsoft.JSInterop;
 using NSubstitute;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ActivitySchedulerFrontEnd.Tests
 {
 	[TestFixture]
-	public class ManageActivityDefinitionsTests
+	public class RunSchedulerTests
 	{
 		private const string DefaultSetName = "DefaultActivities";
 		private const string ActivitySetKey = "activitySet";
 		private string _applicationName = Guid.NewGuid().ToString();
 		private TestHost _host = new TestHost();
-		private Dictionary<string, List<ActivityDefinition>> _expectedActivitySets = 
+		private Dictionary<string, List<ActivityDefinition>> _expectedActivitySets =
 			new Dictionary<string, List<ActivityDefinition>>();
 		private ILocalStorageService _localStorage;
 
@@ -87,69 +87,53 @@ namespace ActivitySchedulerFrontEnd.Tests
 		}
 
 		[Test]
-		public void ManageActivityDefinitions_InitializeEmptyLocalStorage_ShowsDefaultActivitySet()
+		public void RunScheduler_InitializeEmptyLocalStorage_ShowDefaultActivitySet()
 		{
 			// Arrange / Act
 			_localStorage.ClearReceivedCalls();
 			_localStorage.GetItemAsync<string>(Arg.Any<string>())
 				.Returns(Task.FromResult(string.Empty));
-			RenderedComponent<ManageActivityDefinitions> component = 
-				_host.AddComponent<ManageActivityDefinitions>();
+			RenderedComponent<RunScheduler> component =
+				_host.AddComponent<RunScheduler>();
 
 			// Assert
 			// Verify activity set selector is initialized to default
 			Assert.That(component.Instance.ActivitySet, Is.EqualTo(DefaultSetName),
 				"ActivitySet initial value");
-			// Verify activity grid has correct number of rows.
-			HtmlAgilityPack.HtmlNode gridCountSpan = component.FindAll("span")
-				.FirstOrDefault(s => s.Attributes
-				.Any(a => a.Value.Equals("grid-itemscount-caption", 
-				StringComparison.OrdinalIgnoreCase)));
-			Assert.That(gridCountSpan?.InnerText,
-				Is.EqualTo(_expectedActivitySets[DefaultSetName].Count.ToString()),
-				"Reported number of activities in grid");
+
 			// Verify activity set is persisted.
 			Received.InOrder(async () =>
 			{
-				// Empty comes from original load.
 				await _localStorage.SetItemAsync(ActivitySetKey, DefaultSetName);
 			});
 		}
 
 		[Test]
-		public void ManageActivityDefinitions_InitializeFromLocalStorage_ShowsStoredActivitySet()
+		public void RunScheduler_InitializeFromLocalStorage_ShowsStoredActivitySet()
 		{
 			// Arrange / Act
-			string activitySetName = _expectedActivitySets.Keys.Skip(1).First();
+			string activitySetName = "testy";
 			_localStorage.GetItemAsync<string>(Arg.Any<string>())
 				.Returns(Task.FromResult(activitySetName));
-			RenderedComponent<ManageActivityDefinitions> component =
-				_host.AddComponent<ManageActivityDefinitions>();
+			RenderedComponent<RunScheduler> component =
+				_host.AddComponent<RunScheduler>();
 
 			// Assert
 			// Verify activity set selector is initialized to default
 			Assert.That(component.Instance.ActivitySet, Is.EqualTo(activitySetName),
 				"ActivitySet initial value");
-			// Verify activity grid has correct number of rows.
-			HtmlAgilityPack.HtmlNode gridCountSpan = component.FindAll("span")
-				.FirstOrDefault(s => s.Attributes
-				.Any(a => a.Value.Equals("grid-itemscount-caption",
-				StringComparison.OrdinalIgnoreCase)));
-			Assert.That(gridCountSpan?.InnerText,
-				Is.EqualTo(_expectedActivitySets[activitySetName].Count.ToString()),
-				"Reported number of activities in grid");
 		}
 
 		[Test]
-		public void ManageActivityDefinitions_SetActivitySet_UpdatesGrid()
+		public void RunScheduler_SetActivitySet_UpdatesActivitySet()
 		{
 			// Arrange
 			_localStorage.ClearReceivedCalls();
-			RenderedComponent<ManageActivityDefinitions> component =
-				_host.AddComponent<ManageActivityDefinitions>();
+			RenderedComponent<RunScheduler> component =
+				_host.AddComponent<RunScheduler>();
 
 			// Act - change set
-			string activitySetName = _expectedActivitySets.Keys.Skip(1).First();
+			string activitySetName = "testy";
 			HtmlAgilityPack.HtmlNode setSelector = component.Find("select");
 			setSelector.Change(activitySetName);
 
@@ -157,18 +141,11 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Verify activity set selector is updated
 			Assert.That(component.Instance.ActivitySet, Is.EqualTo(activitySetName),
 				"ActivitySet selected value");
-			// Verify activity grid has correct number of rows.
-			HtmlAgilityPack.HtmlNode gridCountSpan = component.FindAll("span")
-				.FirstOrDefault(s => s.Attributes
-				.Any(a => a.Value.Equals("grid-itemscount-caption",
-				StringComparison.OrdinalIgnoreCase)));
-			Assert.That(gridCountSpan?.InnerText,
-				Is.EqualTo(_expectedActivitySets[activitySetName].Count.ToString()),
-				"Reported number of activities in grid");
 
 			// Verify activity set is persisted.
 			Received.InOrder(async () =>
 			{
+				// Empty comes from original load.
 				await _localStorage.SetItemAsync(ActivitySetKey, activitySetName);
 			});
 		}
