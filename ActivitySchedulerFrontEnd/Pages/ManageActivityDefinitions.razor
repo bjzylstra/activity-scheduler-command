@@ -1,8 +1,9 @@
 @page "/activities"
 
 @using System.IO;
-@inject IFileReaderService fileReaderService;
+@inject IFileReaderService fileReaderService
 @inject IJSRuntime  JSRuntime
+@inject ILocalStorageService localStorage
 
 <h2>Manage Activity Definitions</h2>
 
@@ -32,19 +33,44 @@
 <button @onclick="DownloadFile">Download file</button>
 
 @code {
-    public string ActivitySet { get; 
-        set; }
+    /// <summary>
+    /// Name of the cookie to record the activity set across pages.
+    /// </summary>
+    private const string ActivitySetKey = "activitySet";
+
+    /// <summary>
+    /// Track the activity set and update the cookie for persistence across pages.
+    /// </summary>
+    private string _activitySet;
+    public string ActivitySet
+    {
+        get => _activitySet;
+        set
+        {
+            if (value != _activitySet)
+            {
+                _activitySet = value;
+                // This cannot be async so fire and hope it gets there in time.
+                localStorage.SetItemAsync(ActivitySetKey, value);
+            }
+        }
+    }
 
     ElementReference _activityDefinitionFileElement;
     string _output { get; set; }
-    string _fileName = "DefaultActivities.xml";
+    string _fileName;
     List<ActivityDefinition> _activityDefinitions = new List<ActivityDefinition>();
 
     protected override async Task OnInitializedAsync()
     {
-        // Activity set comes from route if present.
-        ActivitySet = ActivitySet ?? "DefaultActivities";
+        // Activity set comes from cookie if present.
+        ActivitySet = await localStorage.GetItemAsync<string>(ActivitySetKey);
+        if (string.IsNullOrEmpty(ActivitySet))
+        {
+            ActivitySet = "DefaultActivities";
+        }
         _fileName = $"{ActivitySet}.xml";
+
         await base.OnInitializedAsync();
     }
 

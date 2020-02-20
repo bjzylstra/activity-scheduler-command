@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Blazor.FileReader;
 using ActivitySchedulerFrontEnd.Services;
+using Blazored.LocalStorage;
 
 namespace ActivitySchedulerFrontEnd
 {
@@ -29,6 +30,7 @@ namespace ActivitySchedulerFrontEnd
 			});
 			services.AddScoped<IActivityDefinitionService, ActivityDefinitionService>();
 			services.AddFileReaderService(options => options.InitializeOnFirstCall = true);
+			services.AddBlazoredLocalStorage();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

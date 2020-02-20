@@ -114,7 +114,10 @@ namespace ActivitySchedulerFrontEnd.Services
 		public ItemsDTO<ActivityDefinition> GetActivityDefinitionsGridRows(string activitySet, 
 			Action<IGridColumnCollection<ActivityDefinition>> columns, QueryDictionary<StringValues> query)
 		{
-			var server = new GridServer<ActivityDefinition>(_activitySets[activitySet], 
+			var server = new GridServer<ActivityDefinition>(
+				string.IsNullOrEmpty(activitySet)
+					? new List<ActivityDefinition>()
+					: _activitySets[activitySet],
 				new QueryCollection(query),
 				true, "activityDefinitionsGrid", columns)
 				.Sortable()
