@@ -1,6 +1,6 @@
 using NUnit.Framework;
-using ActivityScheduler;
 using System;
+using Camp;
 
 namespace ActivitySchedulerUnitTests
 {

@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
-namespace ActivityScheduler
+namespace Camp
 {
     /// <summary>
     /// Functional class to generate the schedules.

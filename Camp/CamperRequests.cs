@@ -1,12 +1,11 @@
-﻿using Camp;
-using CsvHelper;
+﻿using CsvHelper;
 using CsvHelper.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace ActivityScheduler
+namespace Camp
 {
     /// <summary>
     /// Represents the activity and cabin placement requests for a camper.
