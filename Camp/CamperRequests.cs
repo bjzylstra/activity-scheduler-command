@@ -140,17 +140,10 @@ namespace Camp
         {
             try
             {
-                var inFileStream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read);
-                var streamReader = new StreamReader(inFileStream);
-                var csvReader = new CsvReader(streamReader, new Configuration
+                using (var inFileStream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read))
                 {
-                    HasHeaderRecord = true,
-                    HeaderValidated = null
-                });
-                csvReader.Configuration.RegisterClassMap(new CamperRequestsMap(activityDefinitions));
-                var camperRequestsEnumerator = csvReader.GetRecords<CamperRequests>();
-                List<CamperRequests> camperRequestsList = new List<CamperRequests>(camperRequestsEnumerator);
-                return camperRequestsList;
+                    return ReadCamperRequests(inFileStream, activityDefinitions);
+                }
             }
             catch (FileNotFoundException e)
             {
@@ -177,6 +170,27 @@ namespace Camp
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Read the camper requests from a CSV stream. The activities must be found
+        /// in the activity list to be valid.
+        /// </summary>
+        /// <param name="csvStream">Camper requests on a stream</param>
+        /// <param name="activityDefinitions">List of valid activity definitions</param>
+        /// <returns></returns>
+        public static List<CamperRequests> ReadCamperRequests(Stream csvStream, List<ActivityDefinition> activityDefinitions)
+        {
+            var streamReader = new StreamReader(csvStream);
+            var csvReader = new CsvReader(streamReader, new Configuration
+            {
+                HasHeaderRecord = true,
+                HeaderValidated = null
+            });
+            csvReader.Configuration.RegisterClassMap(new CamperRequestsMap(activityDefinitions));
+            var camperRequestsEnumerator = csvReader.GetRecords<CamperRequests>();
+            List<CamperRequests> camperRequestsList = new List<CamperRequests>(camperRequestsEnumerator);
+            return camperRequestsList;
         }
 
         /// <summary>

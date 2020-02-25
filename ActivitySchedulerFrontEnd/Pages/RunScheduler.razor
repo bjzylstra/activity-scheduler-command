@@ -3,16 +3,18 @@
 <h3>RunScheduler</h3>
 
 @using System.IO;
+@using System.Text;
 @inject IFileReaderService fileReaderService;
 @inject IJSRuntime  JSRuntime
 @inject ILocalStorageService localStorage
+@inject IActivityDefinitionService activityService
 
 <ActivitySetSelector @bind-CurrentActivitySet="ActivitySet" />
 <p>
     Select camper requests CSV file -
     <input type="file" @ref=camperRequestsFileElement accept=".csv" />
 </p>
-<button @onclick=ReadFile>Read file</button>
+<button @onclick=ScheduleCampers>Generate Schedule</button>
 <hr />
 <textarea style="max-width: 100%;" cols="60" rows="20">@output</textarea>
 <hr />
@@ -57,17 +59,25 @@
         await base.OnInitializedAsync();
     }
 
-    public async Task ReadFile()
+    public async Task ScheduleCampers()
     {
         output = String.Empty;
         foreach (var file in await fileReaderService.CreateReference(camperRequestsFileElement).EnumerateFilesAsync())
         {
+            List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+                activityService.GetActivityDefinition(ActivitySet));
             // Read into buffer and act (uses less memory)
             using (Stream stream = await file.OpenReadAsync())
             {
+                // Need to copy into string stream so a sync read can be used with CSV reader
                 StreamReader reader = new StreamReader(stream);
                 string contents = await reader.ReadToEndAsync();
-                output += $"{contents}";
+                byte[] encodedContents = Encoding.ASCII.GetBytes(contents);
+                MemoryStream memoryStream = new MemoryStream(encodedContents);
+
+                List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(memoryStream, activityDefinitions);
+
+                output += $"Loaded {camperRequests.Count} camper requests";
             }
         }
     }
