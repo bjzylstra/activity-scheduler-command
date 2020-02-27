@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,6 +29,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			new Dictionary<string, List<ActivityDefinition>>();
 		private ILocalStorageService _localStorage;
 		private IFileReaderService _fileReaderService;
+		private byte[] _camperRequestsBuffer;
 
 		private DirectoryInfo ApplicationDirectoryInfo
 		{
@@ -87,6 +89,14 @@ namespace ActivitySchedulerFrontEnd.Tests
 			_host.AddService(_fileReaderService);
 			_localStorage = Substitute.For<ILocalStorageService>();
 			_host.AddService(_localStorage);
+
+			Assembly assembly = typeof(RunSchedulerTests).Assembly;
+			using (Stream camperRequests = assembly.GetManifestResourceStream(
+				"ActivitySchedulerFrontEnd.Tests.CamperRequests.csv"))
+			{
+				_camperRequestsBuffer = new byte[camperRequests.Length];
+				int bytesRead = camperRequests.Read(_camperRequestsBuffer, 0, _camperRequestsBuffer.Length);
+			}
 		}
 
 		[Test]
@@ -159,19 +169,24 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange
 			RenderedComponent<RunScheduler> component =
 				_host.AddComponent<RunScheduler>();
-			byte[] encodedCharacters = Encoding.ASCII.GetBytes("Hello");
-			MemoryStream fakeFile = new MemoryStream(encodedCharacters);
+			MemoryStream fakeFile = new MemoryStream(_camperRequestsBuffer);
 			IFileReference inputFile = Substitute.For<IFileReference>();
 			inputFile.OpenReadAsync().Returns(fakeFile);
 			IFileReaderRef fileReaderRef = Substitute.For<IFileReaderRef>();
 			fileReaderRef.EnumerateFilesAsync().Returns(new IFileReference[] { inputFile });
 			_fileReaderService.CreateReference(Arg.Any<ElementReference>()).Returns(fileReaderRef);
 
-			// Act
-			HtmlAgilityPack.HtmlNode loadFileButton = component.Find("button");
-			loadFileButton.Click();
+			// Act - execute scheduler
+			HtmlAgilityPack.HtmlNode runSchedulerButton = component.Find("button");
+			runSchedulerButton.Click();
 
-			//
+			// Assert file is loaded
+			Assert.That(component.Instance.Output, Contains.Substring("Loaded 9 activity definitions from DefaultActivities"),
+				"Messages after scheduling");
+			Assert.That(component.Instance.Output, Contains.Substring("Loaded 98 camper requests"),
+				"Messages after scheduling");
+			Assert.That(component.Instance.Output, Contains.Substring("98 campers scheduled"),
+				"Messages after scheduling");
 		}
 	}
 }

@@ -9,13 +9,45 @@ namespace Camp
     /// </summary>
     public static class Scheduler
     {
-        /// <summary>
-        /// Schedule a set of camper requests into a list of ActivityBlocks
-        /// </summary>
-        /// <param name="camperRequestList">List of camper requests</param>
+		public static List<CamperRequests> ScheduleActivities(List<CamperRequests> camperRequests,
+			List<ActivityDefinition> activityDefinitions)
+		{
+			// Sort the campers by difficulty to resolve activity list.
+			// Most difficult go first.
+			camperRequests.Sort();
+
+			// Preload the activity blocks
+			foreach (var activity in activityDefinitions)
+			{
+				activity.PreloadBlocks();
+			}
+
+			List<CamperRequests> unsuccessfulCamperRequests = Scheduler.ScheduleActivities(camperRequests, true);
+			if (unsuccessfulCamperRequests.Any())
+			{
+				//Console.Out.WriteLine($"Attempting to resolve {unsuccessfulCamperRequests.Count} " +
+				//	$"unsuccessful camper requests using the activity maximum limits");
+				unsuccessfulCamperRequests = Scheduler.ScheduleActivities(unsuccessfulCamperRequests, false);
+			}
+			//foreach (var activity in activityDefinitions)
+			//{
+			//	foreach (var activityBlock in activity.ScheduledBlocks)
+			//	{
+			//		Console.Out.WriteLine($"Scheduled '{activity.Name}' " +
+			//			$"in block {activityBlock.TimeSlot} " +
+			//			$"with {activityBlock.AssignedCampers.Count} campers");
+			//	}
+			//}
+			return unsuccessfulCamperRequests;
+		}
+
+		/// <summary>
+		/// Schedule a set of camper requests into a list of ActivityBlocks
+		/// </summary>
+		/// <param name="camperRequestList">List of camper requests</param>
 		/// <param name="useOptimalAsLimit">Use the activity optimal as the maximum</param>
-        /// <returns>List of camper requests that did not get placed</returns>
-        public static List<CamperRequests> ScheduleActivities(List<CamperRequests> camperRequestList, 
+		/// <returns>List of camper requests that did not get placed</returns>
+		public static List<CamperRequests> ScheduleActivities(List<CamperRequests> camperRequestList, 
 			bool useOptimalAsLimit = false)
         {
             List<CamperRequests> unsuccessfulCamperRequests = new List<CamperRequests>();
