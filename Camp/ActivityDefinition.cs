@@ -2,6 +2,7 @@
 using CsvHelper.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
@@ -41,7 +42,7 @@ namespace Camp
             {
                 var inFileStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read);
                 var streamReader = new StreamReader(inFileStream);
-                var csvReader = new CsvReader(streamReader, new Configuration
+                var csvReader = new CsvReader(streamReader, new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
                     HasHeaderRecord = true,
                     HeaderValidated = null
@@ -137,7 +138,7 @@ namespace Camp
             {
                 using (var outTextWriter = new StreamWriter(outputFilePath))
                 {
-                    using (var csvWriter = new CsvHelper.CsvWriter(outTextWriter))
+                    using (var csvWriter = new CsvWriter(outTextWriter, CultureInfo.InvariantCulture))
                     {
                         // Write the header
                         csvWriter.WriteField("Activity");

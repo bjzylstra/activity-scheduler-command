@@ -2,6 +2,7 @@
 using CsvHelper.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -182,7 +183,7 @@ namespace Camp
         public static List<CamperRequests> ReadCamperRequests(Stream csvStream, List<ActivityDefinition> activityDefinitions)
         {
             var streamReader = new StreamReader(csvStream);
-            var csvReader = new CsvReader(streamReader, new Configuration
+            var csvReader = new CsvReader(streamReader, new CsvConfiguration(CultureInfo.InvariantCulture)
             {
                 HasHeaderRecord = true,
                 HeaderValidated = null

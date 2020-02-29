@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -38,7 +39,8 @@ namespace Camp
                 });
                 using (var outTextWriter = new StreamWriter(outputFilePath))
                 {
-                    using (var csvWriter = new CsvHelper.CsvWriter(outTextWriter))
+                    using (var csvWriter = new CsvHelper.CsvWriter(outTextWriter, 
+                        CultureInfo.InvariantCulture))
                     {
                         // Write the header
                         csvWriter.WriteField("Camper");
