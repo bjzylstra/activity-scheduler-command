@@ -10,6 +10,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 
 namespace ActivitySchedulerFrontEnd.Services
 {
@@ -17,23 +18,28 @@ namespace ActivitySchedulerFrontEnd.Services
 	{
 		private Dictionary<string, List<ActivityDefinition>> _activitySets;
 		private const string ActivityFileExtension = ".xml";
+		private readonly ILogger<ActivityDefinitionService> _logger;
 
 		/// <summary>
 		/// Default constructor used by dependency injection
 		/// </summary>
-		public ActivityDefinitionService()
+		/// <param name="logger">Logger</param>
+		public ActivityDefinitionService(ILogger<ActivityDefinitionService> logger)
 		{
 			string applicationName = Assembly.GetEntryAssembly().GetName().Name;
 			_activitySets = InitializeActivitySets(applicationName);
+			_logger = logger;
 		}
 
 		/// <summary>
 		/// Construct with a fixed application name for testing
 		/// </summary>
 		/// <param name="folderName">Application name for local application data folder</param>
-		public ActivityDefinitionService(string folderName)
+		/// <param name="logger">Logger</param>
+		public ActivityDefinitionService(string folderName, ILogger<ActivityDefinitionService> logger)
 		{
 			_activitySets = InitializeActivitySets(folderName);
+			_logger = logger;
 		}
 
 		/// <summary>
@@ -85,7 +91,8 @@ namespace ActivitySchedulerFrontEnd.Services
 					.Where(f => f.Extension.Equals(ActivityFileExtension, StringComparison.OrdinalIgnoreCase))
 					)
 				{
-					var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(activityFile.FullName);
+					var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(
+						activityFile.FullName, _logger);
 					if (activityDefinitions != null)
 					{
 						string activitySetName = activityFile.Name.Substring(0,
@@ -163,6 +170,20 @@ namespace ActivitySchedulerFrontEnd.Services
 				? activityDefinitions.Select(ad => new ActivityDefinition(ad)).ToList()
 				: new List<ActivityDefinition>();
 		}
+
+		public async Task<List<ActivityDefinition>> ReadActivityDefinitionsAsync(Stream stream)
+		{
+			StreamReader reader = new StreamReader(stream);
+			string contents = await reader.ReadToEndAsync();
+
+			return ActivityDefinition.ReadActivityDefinitionsFromString(contents, _logger);
+		}
+
+		public string WriteActivityDefinitionsToString(
+			List<ActivityDefinition> activityDefinitions)
+		{
+			return ActivityDefinition.WriteActivityDefinitionsToString(activityDefinitions, _logger);
+		}
 	}
 
 	public interface IActivityDefinitionService : ICrudDataService<ActivityDefinition>
@@ -174,5 +195,8 @@ namespace ActivitySchedulerFrontEnd.Services
 			QueryDictionary<StringValues> query);
 		IEnumerable<string> GetActivitySetNames();
 		IEnumerable<ActivityDefinition> GetActivityDefinition(string activitySetName);
+
+		Task<List<ActivityDefinition>> ReadActivityDefinitionsAsync(Stream stream);
+		string WriteActivityDefinitionsToString(List<ActivityDefinition> activityDefinitions);
 	}
 }

@@ -5,11 +5,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="nlog.config" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Services\DefaultActivities.xml" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Services\DefaultActivities.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

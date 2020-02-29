@@ -1,5 +1,6 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -135,9 +136,10 @@ namespace Camp
         /// </summary>
         /// <param name="csvFilePath"></param>
         /// <param name="activityDefinitions">List of valid activity definitions</param>
+        /// <param name="logger">Logger</param>
         /// <returns></returns>
         public static List<CamperRequests> ReadCamperRequests(String csvFilePath, 
-            List<ActivityDefinition> activityDefinitions)
+            List<ActivityDefinition> activityDefinitions, ILogger logger)
         {
             try
             {
@@ -148,26 +150,23 @@ namespace Camp
             }
             catch (FileNotFoundException e)
             {
-                Console.Error.WriteLine("Could not open Camper CSV file {0}", e.FileName);
+                logger.LogError($"Could not open Camper CSV file {e.FileName}");
             }
             catch (CsvHelperException e)
             {
                 KeyNotFoundException keyNotFoundException = e.InnerException as KeyNotFoundException;
                 if (keyNotFoundException != null)
                 {
-                    Console.Error.WriteLine("Error parsing input file {0}: {1}", csvFilePath,
-                        keyNotFoundException.Message);
+                    logger.LogError($"Error parsing input file {csvFilePath}: {keyNotFoundException.Message}");
                 }
                 else
                 {
-                    Console.Error.WriteLine("Exception parsing input file {0}: {1}", csvFilePath,
-                        e.Message);
+                    logger.LogError($"Exception parsing input file {csvFilePath}: {e.Message}");
                 }
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Exception parsing input file {0}: {1}", csvFilePath,
-                    e.Message);
+                logger.LogError($"Exception parsing input file {csvFilePath}: {e.Message}");
             }
 
             return null;

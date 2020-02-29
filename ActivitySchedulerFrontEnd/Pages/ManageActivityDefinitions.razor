@@ -4,6 +4,7 @@
 @inject IFileReaderService fileReaderService
 @inject IJSRuntime  JSRuntime
 @inject ILocalStorageService localStorage
+@inject IActivityDefinitionService activityDefinitionService
 
 <h2>Manage Activity Definitions</h2>
 
@@ -82,11 +83,8 @@
             // Read into buffer and act (uses less memory)
             using (Stream stream = await file.OpenReadAsync())
             {
-                StreamReader reader = new StreamReader(stream);
-                string contents = await reader.ReadToEndAsync();
-
-                _activityDefinitions =
-                    ActivityDefinition.ReadActivityDefinitionsFromString(contents);
+                _activityDefinitions = await activityDefinitionService.ReadActivityDefinitionsAsync(
+                    stream);
                 _output += $"Found {_activityDefinitions.Count} activity definitions";
             }
         }
@@ -98,6 +96,6 @@
         // so use a Javascript function.
         await JSRuntime.InvokeAsync<object>(
             "FileSaveAs", _fileName,
-            ActivityDefinition.WriteActivityDefinitionsToString(_activityDefinitions));
+            activityDefinitionService.WriteActivityDefinitionsToString(_activityDefinitions));
     }
 }

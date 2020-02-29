@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -23,7 +24,9 @@ namespace Camp
         /// </summary>
         /// <param name="camperList">List of campers</param>
         /// <param name="outputFilePath">Path to the CSV file</param>
-        public static void WriteScheduleToCsvFile(IEnumerable<Camper> camperList, string outputFilePath)
+        /// <param name="logger">Logger for messages</param>
+        public static void WriteScheduleToCsvFile(IEnumerable<Camper> camperList, 
+            string outputFilePath, ILogger logger)
         {
             try
             {
@@ -69,8 +72,7 @@ namespace Camp
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Exception writing output file {0}: {1}", outputFilePath,
-                    e.Message);
+                logger.LogError($"Exception writing output file {outputFilePath}: {e.Message}");
             }
         }
 

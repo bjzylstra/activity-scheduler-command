@@ -5,6 +5,7 @@ using System.IO;
 using Camp;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace ScheduleToSpreadsheet
 {
@@ -22,19 +23,87 @@ namespace ScheduleToSpreadsheet
 			public String ActivityDefinitionsPath { get; set; }
 
 		}
+
+		class LoggerConverter : ILogger
+		{
+			private readonly NLog.ILogger _nlogger;
+
+			public LoggerConverter(NLog.ILogger nlogger)
+			{
+				_nlogger = nlogger;
+			}
+
+			public IDisposable BeginScope<TState>(TState state)
+			{
+				throw new NotImplementedException();
+			}
+
+			public bool IsEnabled(LogLevel logLevel)
+			{
+				switch (logLevel)
+				{
+					case LogLevel.Critical:
+						return _nlogger.IsFatalEnabled;
+					case LogLevel.Error:
+						return _nlogger.IsErrorEnabled;
+					case LogLevel.Warning:
+						return _nlogger.IsWarnEnabled;
+					case LogLevel.Information:
+						return _nlogger.IsInfoEnabled;
+					case LogLevel.Debug:
+						return _nlogger.IsDebugEnabled;
+					case LogLevel.Trace:
+					default:
+						return _nlogger.IsTraceEnabled;
+				}
+			}
+
+			public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+			{
+				string message = formatter.Invoke(state, exception);
+				switch (logLevel)
+				{
+					case LogLevel.Critical:
+						_nlogger.Fatal(message);
+						break;
+					case LogLevel.Error:
+						_nlogger.Error(message);
+						break;
+					case LogLevel.Warning:
+						_nlogger.Warn(message);
+						break;
+					case LogLevel.Information:
+						_nlogger.Info(message);
+						break;
+					case LogLevel.Debug:
+						_nlogger.Debug(message);
+						break;
+					case LogLevel.Trace:
+					default:
+						_nlogger.Trace(message);
+						break;
+				}
+			}
+		}
+
 		static void Main(string[] args)
 		{
+			var logger = new LoggerConverter(NLog.Web.NLogBuilder
+				.ConfigureNLog("nlog.config")
+				.GetCurrentClassLogger());
 			Parser.Default.ParseArguments<Options>(args).WithParsed(opts =>
 			{
 				List<ActivityDefinition> activitySchedule =
-					ActivityDefinition.ReadScheduleFromCsvFile(opts.ActivityScheduleCsvPath);
+					ActivityDefinition.ReadScheduleFromCsvFile(
+						opts.ActivityScheduleCsvPath, logger);
 
 				if (activitySchedule == null) Environment.Exit(-2);
 
 				// If activity definition is included, fold in the limit numbers into the schedule
 				if (!String.IsNullOrEmpty(opts.ActivityDefinitionsPath))
 				{
-					var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(opts.ActivityDefinitionsPath);
+					var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(
+						opts.ActivityDefinitionsPath, logger);
 
 					if (activityDefinitions == null) Environment.Exit(-2);
 

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Camp;
+using Microsoft.Extensions.Logging;
 
 namespace ActivitySchedulerUnitTests
 {
@@ -35,11 +36,19 @@ namespace ActivitySchedulerUnitTests
             new ActivityDefinition { Name = "Wall Climbing", MaximumCapacity = 12, OptimalCapacity = 10 }
         };
 
+        private ILogger _logger;
+
+        [SetUp]
+        public void SetupLogger()
+        {
+            _logger = NSubstitute.Substitute.For<ILogger>();
+        }
+
         [Test]
         public void ReadActivityDefinitions_fileNotFound_returnsNull()
         {
             // Act
-            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(NonExistentDefinitionFileLocation);
+            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(NonExistentDefinitionFileLocation, _logger);
 
             // Assert
             Assert.IsNull(activityDefinitions, "Return from ReadActivityDefinitions");
@@ -49,7 +58,7 @@ namespace ActivitySchedulerUnitTests
         public void ReadActivityDefinitions_invalidInput_returnsNull()
         {
             // Act
-            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(NonExistentDefinitionFileLocation);
+            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(NonExistentDefinitionFileLocation, _logger);
 
             // Assert
             Assert.IsNull(activityDefinitions, "Return from ReadActivityDefinitions");
@@ -59,7 +68,7 @@ namespace ActivitySchedulerUnitTests
         public void ReadActivityDefinitions_validInput_loadsList()
         {
             // Act
-            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(GoodDefinitionFileLocation);
+            var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(GoodDefinitionFileLocation, _logger);
 
             // Assert
             Assert.IsNotNull(activityDefinitions, "Return from ReadActivityDefinitions");
@@ -193,7 +202,7 @@ namespace ActivitySchedulerUnitTests
         public void ReadScheduleFromCsvFile_MultipleActivitiesAndCampers_ScheduledLoaded()
         {
             // Act 
-            var activityDefinitions = ActivityDefinition.ReadScheduleFromCsvFile(GoodScheduleCsvFileLocation);
+            var activityDefinitions = ActivityDefinition.ReadScheduleFromCsvFile(GoodScheduleCsvFileLocation, _logger);
 
             // Assert
             Assert.IsNotNull(activityDefinitions, "Activity Definitions");
@@ -210,7 +219,7 @@ namespace ActivitySchedulerUnitTests
         public void ReadScheduleFromCsvFile_FileNotFound_NoScheduleLoaded()
         {
             // Act 
-            var activityDefinitions = ActivityDefinition.ReadScheduleFromCsvFile(NonExistentDefinitionFileLocation);
+            var activityDefinitions = ActivityDefinition.ReadScheduleFromCsvFile(NonExistentDefinitionFileLocation, _logger);
             Assert.That(activityDefinitions, Is.Null, "Activity Definitions");
         }
 
@@ -218,7 +227,7 @@ namespace ActivitySchedulerUnitTests
         public void ReadScheduleFromCsvFile_BadCsvFile_NoScheduleLoaded()
         {
             // Act 
-            var activityDefinitions = ActivityDefinition.ReadScheduleFromCsvFile(BadContentFileLocation);
+            var activityDefinitions = ActivityDefinition.ReadScheduleFromCsvFile(BadContentFileLocation, _logger);
             Assert.That(activityDefinitions, Is.Null, "Activity Definitions");
         }
 

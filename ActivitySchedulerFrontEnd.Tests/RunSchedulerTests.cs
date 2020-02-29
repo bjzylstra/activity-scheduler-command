@@ -5,6 +5,7 @@ using Blazored.LocalStorage;
 using Camp;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Testing;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using NSubstitute;
 using NUnit.Framework;
@@ -28,6 +29,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			new Dictionary<string, List<ActivityDefinition>>();
 		private ILocalStorageService _localStorage;
 		private IFileReaderService _fileReaderService;
+		private ILogger<ActivityDefinitionService> _logger;
 
 		private byte[] _missingActivityCamperRequestsBuffer;
 		private byte[] _overSubscribedCamperRequestsBuffer;
@@ -49,7 +51,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 		public void PreloadActivityService()
 		{
 			// Arrange - use constructor to create directory with 1 file.
-			ActivityDefinitionService service = new ActivityDefinitionService(_applicationName);
+			_logger = Substitute.For<ILogger<ActivityDefinitionService>>();
+			ActivityDefinitionService service = new ActivityDefinitionService(_applicationName, _logger);
 			// Create a couple copies of the default.
 			List<string> expectedActivitySets = new List<string>
 			{
@@ -63,7 +66,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			foreach (string addSet in expectedActivitySets.Skip(1))
 			{
 				activityDefinitions.RemoveAt(0);
-				string content = ActivityDefinition.WriteActivityDefinitionsToString(activityDefinitions);
+				string content = ActivityDefinition.WriteActivityDefinitionsToString(activityDefinitions, _logger);
 				File.WriteAllText($"{ApplicationDirectoryInfo.FullName}\\{addSet}.xml", content);
 				_expectedActivitySets.Add(addSet, new List<ActivityDefinition>(activityDefinitions));
 			}
@@ -84,8 +87,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 		private void ServiceSetup()
 		{
-			IActivityDefinitionService activityDefinitionService = new ActivityDefinitionService(_applicationName);
+			IActivityDefinitionService activityDefinitionService = new ActivityDefinitionService(
+				_applicationName, _logger);
 			_host.AddService(activityDefinitionService);
+			ILogger<SchedulerService> schedulerServiceLogger = Substitute.For<ILogger<SchedulerService>>();
+			ISchedulerService schedulerService = new SchedulerService(schedulerServiceLogger);
+			_host.AddService(schedulerService);
 			IJSRuntime jsRuntime = Substitute.For<IJSRuntime>();
 			_host.AddService(jsRuntime);
 			_fileReaderService = Substitute.For<IFileReaderService>();

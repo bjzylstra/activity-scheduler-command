@@ -9,6 +9,7 @@ using Blazor.FileReader;
 using Blazored.LocalStorage;
 using Camp;
 using Microsoft.AspNetCore.Components.Testing;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using NSubstitute;
 using NUnit.Framework;
@@ -21,6 +22,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 		private const string DefaultSetName = "DefaultActivities";
 		private const string ActivitySetKey = "activitySet";
 		private string _applicationName = Guid.NewGuid().ToString();
+		private ILogger<ActivityDefinitionService> _logger;
 		private TestHost _host = new TestHost();
 		private Dictionary<string, List<ActivityDefinition>> _expectedActivitySets = 
 			new Dictionary<string, List<ActivityDefinition>>();
@@ -42,7 +44,9 @@ namespace ActivitySchedulerFrontEnd.Tests
 		public void PreloadActivityService()
 		{
 			// Arrange - use constructor to create directory with 1 file.
-			ActivityDefinitionService service = new ActivityDefinitionService(_applicationName);
+			_logger = Substitute.For<ILogger<ActivityDefinitionService>>();
+			ActivityDefinitionService service = new ActivityDefinitionService(
+				_applicationName, _logger);
 			// Create a couple copies of the default.
 			List<string> expectedActivitySets = new List<string>
 			{
@@ -56,7 +60,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 			foreach (string addSet in expectedActivitySets.Skip(1))
 			{
 				activityDefinitions.RemoveAt(0);
-				string content = ActivityDefinition.WriteActivityDefinitionsToString(activityDefinitions);
+				string content = ActivityDefinition.WriteActivityDefinitionsToString(
+					activityDefinitions, _logger);
 				File.WriteAllText($"{ApplicationDirectoryInfo.FullName}\\{addSet}.xml", content);
 				_expectedActivitySets.Add(addSet, new List<ActivityDefinition>(activityDefinitions));
 			}
@@ -76,7 +81,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 		public void ServiceSetup()
 		{
-			IActivityDefinitionService activityDefinitionService = new ActivityDefinitionService(_applicationName);
+			IActivityDefinitionService activityDefinitionService = new ActivityDefinitionService(
+				_applicationName, _logger);
 			_host.AddService(activityDefinitionService);
 			IJSRuntime jsRuntime = Substitute.For<IJSRuntime>();
 			_host.AddService(jsRuntime);

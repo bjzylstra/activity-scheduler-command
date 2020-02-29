@@ -1,5 +1,6 @@
 ﻿using ActivitySchedulerFrontEnd.Services;
 using Camp;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 	{
 		private const string DefaultSetName = "DefaultActivities";
 		private string _applicationName = Guid.NewGuid().ToString();
+		private ILogger<ActivityDefinitionService> _logger;
 
 		private DirectoryInfo ApplicationDirectoryInfo
 		{
@@ -43,7 +45,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 			RemoveApplicationData();
 
 			// Act - construct the activity service
-			ActivityDefinitionService service = new ActivityDefinitionService(_applicationName);
+			_logger = NSubstitute.Substitute.For<ILogger<ActivityDefinitionService>>();
+			ActivityDefinitionService service = new ActivityDefinitionService(_applicationName, _logger);
 
 			// Assert - verify the directory is created
 			DirectoryInfo applicationDirectoryInfo = ApplicationDirectoryInfo;
@@ -57,7 +60,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 			// Verify activity file is readable and not empty
 			List<ActivityDefinition> defaultActivities = ActivityDefinition.ReadActivityDefinitions(
-				activityFiles[0].FullName);
+				activityFiles[0].FullName, _logger);
 			Assert.That(defaultActivities, Has.Count.GreaterThan(0), "Number of default activities");
 
 			// Verify the activity set contains just the default
@@ -70,7 +73,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 		public void Construct_HasAppData_ActivitySetsIncludesAllFiles()
 		{
 			// Arrange - use constructor to create directory with 1 file.
-			new ActivityDefinitionService(_applicationName);
+			new ActivityDefinitionService(_applicationName, _logger);
 			// Create a couple copies of the default.
 			List<string> expectedActivitySets = new List<string>
 			{
@@ -86,7 +89,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 			}
 
 			// Act - create the activity service
-			ActivityDefinitionService service = new ActivityDefinitionService(_applicationName);
+			ActivityDefinitionService service = new ActivityDefinitionService(
+				_applicationName, _logger);
 
 			// Assert - activity sets should match the expected
 			List<string> activitySets = new List<string>(service.GetActivitySetNames());

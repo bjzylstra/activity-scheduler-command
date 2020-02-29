@@ -1,5 +1,6 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -34,8 +35,10 @@ namespace Camp
         /// Read the activity schedule from a CSV file.
         /// </summary>
         /// <param name="inputFilePath">Path to the activity schedule file</param>
+        /// <param name="logger">Logger</param>
         /// <returns>List of activity definitions describing the schedule</returns>
-        public static List<ActivityDefinition> ReadScheduleFromCsvFile(String inputFilePath)
+        public static List<ActivityDefinition> ReadScheduleFromCsvFile(String inputFilePath,
+            ILogger logger)
         {
             List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>();
             try
@@ -103,26 +106,23 @@ namespace Camp
             }
             catch (FileNotFoundException e)
             {
-                Console.Error.WriteLine("Could not open Activity Schedule CSV file {0}", e.FileName);
+                logger.LogError($"Could not open Activity Schedule CSV file {e.FileName}");
             }
             catch (CsvHelperException e)
             {
                 KeyNotFoundException keyNotFoundException = e.InnerException as KeyNotFoundException;
                 if (keyNotFoundException != null)
                 {
-                    Console.Error.WriteLine("Error parsing input file {0}: {1}", inputFilePath,
-                        keyNotFoundException.Message);
+                    logger.LogError($"Error parsing input file {inputFilePath}: {keyNotFoundException.Message}");
                 }
                 else
                 {
-                    Console.Error.WriteLine("Exception parsing input file {0}: {1}", inputFilePath,
-                        e.Message);
+                    logger.LogError($"Exception parsing input file {inputFilePath}: {e.Message}");
                 }
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Exception parsing input file {0}: {1}", inputFilePath,
-                    e.Message);
+                logger.LogError($"Exception parsing input file {inputFilePath}: {e.Message}");
             }
             return null;
         }
@@ -132,7 +132,9 @@ namespace Camp
         /// </summary>
         /// <param name="activityDefinitions">List of activity defintions</param>
         /// <param name="outputFilePath">Path to the CSV file</param>
-        public static void WriteScheduleToCsvFile(List<ActivityDefinition> activityDefinitions, String outputFilePath)
+        /// <param name="logger">Logger</param>
+        public static void WriteScheduleToCsvFile(List<ActivityDefinition> activityDefinitions, String outputFilePath,
+            ILogger logger)
         {
             try
             {
@@ -175,8 +177,7 @@ namespace Camp
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Exception writing output file {0}: {1}", outputFilePath,
-                    e.Message);
+                logger.LogError($"Exception writing output file {outputFilePath}: {e.Message}");
             }
         }
 
@@ -184,8 +185,10 @@ namespace Camp
         /// Read the activity definition XML file to generate a list of activity definitions
         /// </summary>
         /// <param name="xmlPath">Path to the activity definition XML file</param>
+        /// <param name="logger">Logger</param>
         /// <returns>List of activity defintions found in the file. Returns null if unsuccessful</returns>
-        public static List<ActivityDefinition> ReadActivityDefinitions(String xmlPath)
+        public static List<ActivityDefinition> ReadActivityDefinitions(String xmlPath,
+           ILogger logger)
         {
             try
             {
@@ -197,12 +200,11 @@ namespace Camp
             }
             catch (FileNotFoundException e)
             {
-                Console.Error.WriteLine("Could not open Activity Definitions file {0}", e.FileName);
+                logger.LogError($"Could not open Activity Definitions file {e.FileName}");
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Exception parsing input file {0}: {1}", xmlPath,
-                        e.Message);
+                logger.LogError($"Exception parsing input file {xmlPath}: {e.Message}");
             }
             return null;
         }
@@ -211,8 +213,10 @@ namespace Camp
         /// Read the activity definition XML from a string to generate a list of activity definitions
         /// </summary>
         /// <param name="buffer">String containing the activity definition XML file</param>
+        /// <param name="logger">Logger</param>
         /// <returns>List of activity definitions found. Returns null if unsuccessful</returns>
-        public static List<ActivityDefinition> ReadActivityDefinitionsFromString(String contents)
+        public static List<ActivityDefinition> ReadActivityDefinitionsFromString(String contents,
+            ILogger logger)
         {
             try
             {
@@ -222,8 +226,7 @@ namespace Camp
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Exception parsing ActivityDefinitions: {0}", 
-                        e.Message);
+                logger.LogError($"Exception parsing ActivityDefinitions: {e.Message}");
             }
             return null;
         }
@@ -232,8 +235,10 @@ namespace Camp
         /// Write the activity definition list as XML to a string.
         /// </summary>
         /// <param name="activityDefinitions">List of activity definitions</param>
+        /// <param name="logger">Logger</param>
         /// <returns>XML representation of the activity definitions</returns>
-        public static string WriteActivityDefinitionsToString(List<ActivityDefinition> activityDefinitions)
+        public static string WriteActivityDefinitionsToString(List<ActivityDefinition> activityDefinitions,
+            ILogger logger)
         {
             try
             {
@@ -248,8 +253,7 @@ namespace Camp
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Exception parsing ActivityDefinitions: {0}",
-                        e.Message);
+                logger.LogError($"Exception parsing ActivityDefinitions: {e.Message}");
             }
             return null;
         }

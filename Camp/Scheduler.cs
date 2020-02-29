@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,8 +10,15 @@ namespace Camp
     /// </summary>
     public static class Scheduler
     {
+		/// <summary>
+		/// Generate a schedule for the camper requests
+		/// </summary>
+		/// <param name="camperRequests">Camper requests - updated by scheduling</param>
+		/// <param name="activityDefinitions">Activity definitions - updated by scheduling</param>
+		/// <param name="logger">Logger</param>
+		/// <returns>List of unsuccessful camper requests</returns>
 		public static List<CamperRequests> ScheduleActivities(List<CamperRequests> camperRequests,
-			List<ActivityDefinition> activityDefinitions)
+			List<ActivityDefinition> activityDefinitions, ILogger logger)
 		{
 			// Sort the campers by difficulty to resolve activity list.
 			// Most difficult go first.
@@ -22,22 +30,24 @@ namespace Camp
 				activity.PreloadBlocks();
 			}
 
-			List<CamperRequests> unsuccessfulCamperRequests = Scheduler.ScheduleActivities(camperRequests, true);
+			List<CamperRequests> unsuccessfulCamperRequests = Scheduler.ScheduleActivities(camperRequests,
+				true, logger);
 			if (unsuccessfulCamperRequests.Any())
 			{
 				//Console.Out.WriteLine($"Attempting to resolve {unsuccessfulCamperRequests.Count} " +
 				//	$"unsuccessful camper requests using the activity maximum limits");
-				unsuccessfulCamperRequests = Scheduler.ScheduleActivities(unsuccessfulCamperRequests, false);
+				unsuccessfulCamperRequests = Scheduler.ScheduleActivities(unsuccessfulCamperRequests,
+					false, logger);
 			}
-			//foreach (var activity in activityDefinitions)
-			//{
-			//	foreach (var activityBlock in activity.ScheduledBlocks)
-			//	{
-			//		Console.Out.WriteLine($"Scheduled '{activity.Name}' " +
-			//			$"in block {activityBlock.TimeSlot} " +
-			//			$"with {activityBlock.AssignedCampers.Count} campers");
-			//	}
-			//}
+			foreach (var activity in activityDefinitions)
+			{
+				foreach (var activityBlock in activity.ScheduledBlocks)
+				{
+					logger.LogDebug($"Scheduled '{activity.Name}' " +
+						$"in block {activityBlock.TimeSlot} " +
+						$"with {activityBlock.AssignedCampers.Count} campers");
+				}
+			}
 			return unsuccessfulCamperRequests;
 		}
 
@@ -46,10 +56,11 @@ namespace Camp
 		/// </summary>
 		/// <param name="camperRequestList">List of camper requests</param>
 		/// <param name="useOptimalAsLimit">Use the activity optimal as the maximum</param>
+		/// <param name="logger">Logger</param>
 		/// <returns>List of camper requests that did not get placed</returns>
-		public static List<CamperRequests> ScheduleActivities(List<CamperRequests> camperRequestList, 
-			bool useOptimalAsLimit = false)
-        {
+		public static List<CamperRequests> ScheduleActivities(List<CamperRequests> camperRequestList,
+			bool useOptimalAsLimit, ILogger logger)
+		{
             List<CamperRequests> unsuccessfulCamperRequests = new List<CamperRequests>();
             foreach (var camperRequest in camperRequestList)
 			{
@@ -62,12 +73,12 @@ namespace Camp
 					// Handle missing activity requests by logging and skipping.
 					if (activityRequest?.Activity == null)
 					{
-						Console.Out.WriteLine($"Camper '{camper}' has no activity in rank '{activityRequest?.Rank}'. Skipping to next activity.");
+						logger.LogDebug($"Camper '{camper}' has no activity in rank '{activityRequest?.Rank}'. Skipping to next activity.");
 						continue;
 					}
 					if (activityRequest.Activity.TryAssignCamperToExistingActivityBlock(camper, useOptimalAsLimit))
 					{
-						Console.Out.WriteLine($"Placed camper '{camper}' in existing activity block in slot " +
+						logger.LogDebug($"Placed camper '{camper}' in existing activity block in slot " +
 							$"'{activityRequest.Activity.ScheduledBlocks.Where(sb => sb.AssignedCampers.Contains(camper)).Select(sb => sb.TimeSlot).First()}' " +
 							$"for '{activityRequest}'");
 					}
@@ -85,7 +96,7 @@ namespace Camp
 				{
 					if (activityRequest.Activity.TryAssignCamperToNewActivityBlock(camper))
 					{
-						Console.Out.WriteLine($"Placed camper '{camper}' in new activity block in slot " +
+						logger.LogDebug($"Placed camper '{camper}' in new activity block in slot " +
 							$"'{activityRequest.Activity.ScheduledBlocks.Where(sb => sb.AssignedCampers.Contains(camper)).Select(sb => sb.TimeSlot).First()}' " +
 							$"for '{activityRequest}'");
 					}
@@ -94,13 +105,13 @@ namespace Camp
 						if (activityRequest.Rank > 2)
 						{
 							noFitActivities.Add(activityRequest);
-							Console.Out.WriteLine($"Trying alternate for camper '{camper}' {activityRequest}" +
+							logger.LogDebug($"Trying alternate for camper '{camper}' {activityRequest}" +
 								$"camper has activities in blocks: " +
 								$"'{String.Join(',', camper.ScheduledBlocks.Select(b => b.TimeSlot).ToArray())}'");
 						}
 						else
 						{
-							Console.Out.WriteLine($"Failed to place camper '{camper}' in {activityRequest}" +
+							logger.LogDebug($"Failed to place camper '{camper}' in {activityRequest}" +
 								$"camper has activities in blocks: " +
 								$"'{String.Join(',', camper.ScheduledBlocks.Select(b => b.TimeSlot).ToArray())}'");
 							unsuccessfulCamperRequests.Add(camperRequest);
@@ -115,7 +126,7 @@ namespace Camp
 				// If fitting the alternate won't complete the schedule, fail.
 				if (camperRequest.ScheduledAlternateActivity || noFitActivities.Count > 1)
 				{
-					Console.Out.WriteLine($"Failed to place camper '{camper}' in " +
+					logger.LogWarning($"Failed to place camper '{camper}' in " +
 						$"'{String.Join(',', noFitActivities.Select(a => a.ToString()).ToArray())}' " +
 						$"camper has activities in blocks: " +
 						$"'{String.Join(',', camper.ScheduledBlocks.Select(b => b.TimeSlot).ToArray())}'");
@@ -128,14 +139,14 @@ namespace Camp
 				{
 					if (camperRequest.AlternateActivity.TryAssignCamperToExistingActivityBlock(camper, useOptimalAsLimit))
 					{
-						Console.Out.WriteLine($"Used alternate to place camper '{camper}' in existing activity block in slot " +
+						logger.LogDebug($"Used alternate to place camper '{camper}' in existing activity block in slot " +
 							$"'{camperRequest.AlternateActivity.ScheduledBlocks.Where(sb => sb.AssignedCampers.Contains(camper)).Select(sb => sb.TimeSlot).First()}' " +
 							$"for '{camperRequest.AlternateActivity.Name}'");
 						continue;
 					}
 					if (camperRequest.AlternateActivity.TryAssignCamperToNewActivityBlock(camper))
 					{
-						Console.Out.WriteLine($"Placed camper '{camper}' in new activity block in slot " +
+						logger.LogDebug($"Placed camper '{camper}' in new activity block in slot " +
 							$"'{camperRequest.AlternateActivity.ScheduledBlocks.Where(sb => sb.AssignedCampers.Contains(camper)).Select(sb => sb.TimeSlot).First()}' " +
 							$"for '{camperRequest.AlternateActivity.Name}'");
 						continue;
@@ -143,7 +154,7 @@ namespace Camp
 				}
 
 				// Alternate did not fit. FAIL
-				Console.Out.WriteLine($"Failed to place camper '{camper}' " +
+				logger.LogWarning($"Failed to place camper '{camper}' " +
 					$"in alternate '{camperRequest.AlternateActivity?.Name}' " +
 					$"after trying '{String.Join(',', noFitActivities.Select(a => a.ToString()).ToArray())}' " +
 					$"camper has activities in blocks: " +
