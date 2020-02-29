@@ -159,8 +159,9 @@ namespace ActivitySchedulerFrontEnd.Services
 
 		public IEnumerable<ActivityDefinition> GetActivityDefinition(string activitySetName)
 		{
-			_activitySets.TryGetValue(activitySetName, out List<ActivityDefinition> activityDefinitions);
-			return activityDefinitions;
+			return _activitySets.TryGetValue(activitySetName, out List<ActivityDefinition> activityDefinitions)
+				? activityDefinitions.Select(ad => new ActivityDefinition(ad)).ToList()
+				: new List<ActivityDefinition>();
 		}
 	}
 

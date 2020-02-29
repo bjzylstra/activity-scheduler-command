@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,9 +7,17 @@
 
   <ItemGroup>
     <None Remove="CamperRequests.csv" />
+    <None Remove="CamperRequestsOversubscribed.csv" />
+    <None Remove="CamperRequestsUnknownActivity.csv" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="CamperRequestsOversubscribed.csv">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CamperRequestsUnknownActivity.csv">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="CamperRequests.csv">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>

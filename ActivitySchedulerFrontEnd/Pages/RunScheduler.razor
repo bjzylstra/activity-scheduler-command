@@ -4,6 +4,7 @@
 
 @using System.IO;
 @using System.Text;
+@using CsvHelper;
 @inject IFileReaderService fileReaderService;
 @inject IJSRuntime  JSRuntime
 @inject ILocalStorageService localStorage
@@ -76,16 +77,36 @@
                 byte[] encodedContents = Encoding.ASCII.GetBytes(contents);
                 MemoryStream memoryStream = new MemoryStream(encodedContents);
 
-                List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(memoryStream, activityDefinitions);
-                Output += $"Loaded {camperRequests.Count} camper requests{Environment.NewLine}";
+                try
+                {
+                    List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(memoryStream, activityDefinitions);
+                    Output += $"Loaded {camperRequests.Count} camper requests{Environment.NewLine}";
 
-                List<CamperRequests> unhappyCampers = Scheduler.ScheduleActivities(camperRequests, activityDefinitions);
-                Output += $"{camperRequests.Count - unhappyCampers.Count} campers scheduled. {unhappyCampers.Count} campers could not be scheduled";
+                    List<CamperRequests> unhappyCampers = Scheduler.ScheduleActivities(camperRequests, activityDefinitions);
+                    Output += $"{camperRequests.Count - unhappyCampers.Count} campers scheduled{Environment.NewLine}";
 
+                    if (unhappyCampers.Count > 0)
+                    {
+                        Output += $"{unhappyCampers.Count} campers could not be scheduled{Environment.NewLine}";
+                        // TODO: put out details
+                    }
 
-                // TODO: If successful Generate a cookie with a unique ID
-                // Push camperRequests and ActivityDefinitions to services on that GUID
-                // Navigate to the ActivityDefinitions page.
+                    // TODO: Generate a cookie with a unique ID
+                    // Push camperRequests and ActivityDefinitions to services on that GUID
+                    // Navigate to the ActivityDefinitions page.
+                }
+                catch (CsvHelperException e)
+                {
+                    KeyNotFoundException keyNotFoundException = e.InnerException as KeyNotFoundException;
+                    if (keyNotFoundException != null)
+                    {
+                        Output += $"{keyNotFoundException.Message}. Are you using the correct activity set?{Environment.NewLine}";
+                    }
+                    else
+                    {
+                        Output += $"{e.Message} while reading the camper requests. Yikes!{Environment.NewLine}";
+                    }
+                }
             }
         }
     }

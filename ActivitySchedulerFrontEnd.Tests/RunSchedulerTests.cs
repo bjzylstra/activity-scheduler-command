@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ActivitySchedulerFrontEnd.Tests
@@ -29,7 +28,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 			new Dictionary<string, List<ActivityDefinition>>();
 		private ILocalStorageService _localStorage;
 		private IFileReaderService _fileReaderService;
-		private byte[] _camperRequestsBuffer;
+
+		private byte[] _missingActivityCamperRequestsBuffer;
+		private byte[] _overSubscribedCamperRequestsBuffer;
+		private byte[] _validCamperRequestsBuffer;
 
 		private DirectoryInfo ApplicationDirectoryInfo
 		{
@@ -67,6 +69,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			}
 
 			ServiceSetup();
+			LoadTestFiles();
 		}
 
 		[OneTimeTearDown]
@@ -79,7 +82,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			}
 		}
 
-		public void ServiceSetup()
+		private void ServiceSetup()
 		{
 			IActivityDefinitionService activityDefinitionService = new ActivityDefinitionService(_applicationName);
 			_host.AddService(activityDefinitionService);
@@ -89,13 +92,32 @@ namespace ActivitySchedulerFrontEnd.Tests
 			_host.AddService(_fileReaderService);
 			_localStorage = Substitute.For<ILocalStorageService>();
 			_host.AddService(_localStorage);
+		}
 
+		private void LoadTestFiles()
+		{
 			Assembly assembly = typeof(RunSchedulerTests).Assembly;
+
+			using (Stream camperRequests = assembly.GetManifestResourceStream(
+				"ActivitySchedulerFrontEnd.Tests.CamperRequestsUnknownActivity.csv"))
+			{
+				_missingActivityCamperRequestsBuffer = new byte[camperRequests.Length];
+				int bytesRead = camperRequests.Read(_missingActivityCamperRequestsBuffer, 0,
+					_missingActivityCamperRequestsBuffer.Length);
+			}
+			using (Stream camperRequests = assembly.GetManifestResourceStream(
+				"ActivitySchedulerFrontEnd.Tests.CamperRequestsOversubscribed.csv"))
+			{
+				_overSubscribedCamperRequestsBuffer = new byte[camperRequests.Length];
+				int bytesRead = camperRequests.Read(_overSubscribedCamperRequestsBuffer, 0,
+					_overSubscribedCamperRequestsBuffer.Length);
+			}
 			using (Stream camperRequests = assembly.GetManifestResourceStream(
 				"ActivitySchedulerFrontEnd.Tests.CamperRequests.csv"))
 			{
-				_camperRequestsBuffer = new byte[camperRequests.Length];
-				int bytesRead = camperRequests.Read(_camperRequestsBuffer, 0, _camperRequestsBuffer.Length);
+				_validCamperRequestsBuffer = new byte[camperRequests.Length];
+				int bytesRead = camperRequests.Read(_validCamperRequestsBuffer, 0, 
+					_validCamperRequestsBuffer.Length);
 			}
 		}
 
@@ -164,16 +186,16 @@ namespace ActivitySchedulerFrontEnd.Tests
 		}
 
 		[Test]
-		public void RunSchedule_ReadFile_ReadsFile()
+		public void RunSchedule_ScheduleValidFile_GeneratesSchedule()
 		{
 			// Arrange
 			RenderedComponent<RunScheduler> component =
 				_host.AddComponent<RunScheduler>();
-			MemoryStream fakeFile = new MemoryStream(_camperRequestsBuffer);
-			IFileReference inputFile = Substitute.For<IFileReference>();
-			inputFile.OpenReadAsync().Returns(fakeFile);
+			MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer);
+			IFileReference camperRequestFile = Substitute.For<IFileReference>();
+			camperRequestFile.OpenReadAsync().Returns(camperRequestStream);
 			IFileReaderRef fileReaderRef = Substitute.For<IFileReaderRef>();
-			fileReaderRef.EnumerateFilesAsync().Returns(new IFileReference[] { inputFile });
+			fileReaderRef.EnumerateFilesAsync().Returns(new IFileReference[] { camperRequestFile });
 			_fileReaderService.CreateReference(Arg.Any<ElementReference>()).Returns(fileReaderRef);
 
 			// Act - execute scheduler
@@ -188,5 +210,51 @@ namespace ActivitySchedulerFrontEnd.Tests
 			Assert.That(component.Instance.Output, Contains.Substring("98 campers scheduled"),
 				"Messages after scheduling");
 		}
+
+		[Test]
+		public void RunSchedule_ScheduleMissingActivityFile_IndicatesUnknownActivity()
+		{
+			// Arrange
+			RenderedComponent<RunScheduler> component =
+				_host.AddComponent<RunScheduler>();
+			MemoryStream camperRequestStream = new MemoryStream(_missingActivityCamperRequestsBuffer);
+			IFileReference camperRequestFile = Substitute.For<IFileReference>();
+			camperRequestFile.OpenReadAsync().Returns(camperRequestStream);
+			IFileReaderRef fileReaderRef = Substitute.For<IFileReaderRef>();
+			fileReaderRef.EnumerateFilesAsync().Returns(new IFileReference[] { camperRequestFile });
+			_fileReaderService.CreateReference(Arg.Any<ElementReference>()).Returns(fileReaderRef);
+
+			// Act - execute scheduler
+			HtmlAgilityPack.HtmlNode runSchedulerButton = component.Find("button");
+			runSchedulerButton.Click();
+
+			// Assert error message
+			Assert.That(component.Instance.Output, 
+				Contains.Substring("requested unknown activity: 'Horseplay'"),
+				"Messages after scheduling");
+		}
+
+		[Test]
+		public void RunSchedule_ScheduleOversubscribed_OutputsUnhappyCampers()
+		{
+			// Arrange
+			RenderedComponent<RunScheduler> component =
+				_host.AddComponent<RunScheduler>();
+			MemoryStream camperRequestStream = new MemoryStream(_overSubscribedCamperRequestsBuffer);
+			IFileReference camperRequestFile = Substitute.For<IFileReference>();
+			camperRequestFile.OpenReadAsync().Returns(camperRequestStream);
+			IFileReaderRef fileReaderRef = Substitute.For<IFileReaderRef>();
+			fileReaderRef.EnumerateFilesAsync().Returns(new IFileReference[] { camperRequestFile });
+			_fileReaderService.CreateReference(Arg.Any<ElementReference>()).Returns(fileReaderRef);
+
+			// Act - execute scheduler
+			HtmlAgilityPack.HtmlNode runSchedulerButton = component.Find("button");
+			runSchedulerButton.Click();
+
+			// Assert file is loaded
+			Assert.That(component.Instance.Output, Contains.Substring("3 campers could not be scheduled"),
+				"Messages after scheduling");
+		}
+
 	}
 }

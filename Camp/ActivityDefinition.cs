@@ -281,6 +281,18 @@ namespace Camp
         }
 
         /// <summary>
+        /// Copy constructor. Does not copy schedule information
+        /// </summary>
+        /// <param name="that">Activity Definition to copy</param>
+        public ActivityDefinition(ActivityDefinition that) : this()
+        {
+            Name = that.Name;
+            MaximumCapacity = that.MaximumCapacity;
+            MinimumCapacity = that.MinimumCapacity;
+            OptimalCapacity = that.OptimalCapacity;
+        }
+
+        /// <summary>
         /// Prebuild the blocks
         /// </summary>
         public void PreloadBlocks()
