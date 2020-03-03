@@ -16,5 +16,12 @@ namespace ActivitySchedulerFrontEnd.ColumnCollections
             c.Add(ad => ad.OptimalCapacity).Titled(nameof(ActivityDefinition.OptimalCapacity)).SetWidth(5)
                 .RenderValueAs(ad => ad.OptimalCapacity > 0 ? ad.OptimalCapacity.ToString() : "");
         };
+
+        public static Action<IGridColumnCollection<IActivityBlock>> ActivityScheduleColumns = c =>
+        {
+            c.Add(ab => ab.ActivityDefinition.Name).Titled(nameof(ActivityDefinition.Name)).SetWidth(20);
+            c.Add(ab => ab.TimeSlot).Titled("Block").SetWidth(5);
+            c.Add(ab => ab.AssignedCampers.Count).Titled("# of Campers").SetWidth(5);
+        };
     }
 }

@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActivitySchedulerFrontEnd",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.AspNetCore.Components.Testing", "..\BlazorUnitTestingPrototype\Microsoft.AspNetCore.Components.Testing\Microsoft.AspNetCore.Components.Testing.csproj", "{8A1FD956-58EA-4A83-98DA-607B50684CDB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActivitySchedulerFrontEnd.Tests", "ActivitySchedulerFrontEnd.Tests\ActivitySchedulerFrontEnd.Tests.csproj", "{1C0DCF81-25A4-4CD9-9C64-48D1B8B40D17}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActivitySchedulerFrontEnd.Tests", "ActivitySchedulerFrontEnd.Tests\ActivitySchedulerFrontEnd.Tests.csproj", "{1C0DCF81-25A4-4CD9-9C64-48D1B8B40D17}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

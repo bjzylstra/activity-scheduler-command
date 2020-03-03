@@ -1,0 +1,55 @@
+﻿@page "/activity-schedules"
+
+@inject ISchedulerService schedulerService
+
+<h3>Activity Schedule Grid</h3>
+
+@if (_task.IsCompleted)
+{
+    <div class="row">
+        <div class="col-md-12">
+            <GridComponent @ref="_component" T="IActivityBlock" Grid="@_grid"></GridComponent>
+        </div>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@code {
+    private CGrid<IActivityBlock> _grid;
+    private Task _task;
+    private GridComponent<IActivityBlock> _component;
+
+
+    [Parameter]
+    public string ScheduleId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var query = new QueryDictionary<StringValues>();
+        if (_component == null)
+        {
+            var columns = schedulerService.GetActivityScheduleColumns();
+            IGridClient<IActivityBlock> gridClient = new GridClient<IActivityBlock>(q => 
+            schedulerService.GetActivityBlocksGridRows(
+                ScheduleId,
+                columns, q), query, false, "activityScheduleGrid",
+                columns)
+                .SetStriped(true);
+            _grid = gridClient.Grid;
+            // Set new items to grid
+            _task = gridClient.UpdateGrid();
+            await _task;
+        }
+        else
+        {
+            // Parameter on an existing grid has changed -
+            // tell the underlying component to update
+            await _component.UpdateGrid();
+        }
+
+    }
+
+}

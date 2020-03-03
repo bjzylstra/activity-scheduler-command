@@ -13,6 +13,8 @@ namespace Camp
 
         List<Camper> AssignedCampers { get; }
 
+        string GetCamperName(int camperIndex);
+
         bool TryAddCamper(Camper camper);
     }
 
@@ -34,6 +36,19 @@ namespace Camp
         /// Campers that are assigned to the block.
         /// </summary>
         public List<Camper> AssignedCampers { get { return _assignedCampers; } }
+
+        /// <summary>
+        /// Normalized function to get the camper name that handles index out of bounds.
+        /// Required for the grid display
+        /// </summary>
+        /// <param name="camperIndex">Index in AssignedCampers</param>
+        /// <returns>Formatted name of camper at camperIndex or empty string if out of bounds</returns>
+        public string GetCamperName(int camperIndex)
+        {
+            return camperIndex < _assignedCampers.Count 
+                ? _assignedCampers[camperIndex].ToString() 
+                : string.Empty;
+        }
 
         /// <summary>
         /// Try to add a camper to an activity block. Checks the max capacity for the defn
