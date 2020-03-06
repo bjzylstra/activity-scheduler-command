@@ -191,3 +191,11 @@ app {
 .red {
     background-color: red;
 }
+
+.activity-camper-set {
+    padding: 0px 0px 0px 0px !important;
+}
+
+.activity-camper-cell {
+    border: 1px solid gray;
+}

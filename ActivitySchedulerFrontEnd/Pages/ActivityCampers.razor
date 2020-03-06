@@ -1,0 +1,18 @@
+﻿@using GridShared.Columns
+@implements ICustomGridComponent<IActivityBlock>
+
+<table>
+    <tr>
+        @foreach (var camper in Item.AssignedCampers)
+        {
+            <td class="activity-camper-cell" draggable="true" title="@camper.ToString()">
+        @camper.ToString()
+            </td>
+        }
+    </tr>
+</table>
+
+@code {
+    [Parameter]
+    public IActivityBlock Item { get; set; }
+}
