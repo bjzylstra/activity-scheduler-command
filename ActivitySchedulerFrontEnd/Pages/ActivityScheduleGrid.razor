@@ -27,16 +27,26 @@ else
     [Parameter]
     public string ScheduleId { get; set; }
 
+    public (IActivityBlock activityBlock, Camper camper) DragPayload { get; set; }
+
+    public async Task UpdateGrid()
+    {
+        if (_component != null)
+        {
+            await _component.UpdateGrid();
+        }
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         var query = new QueryDictionary<StringValues>();
         if (_component == null)
         {
-            IGridClient<IActivityBlock> gridClient = new GridClient<IActivityBlock>(q => 
+            IGridClient<IActivityBlock> gridClient = new GridClient<IActivityBlock>(q =>
             schedulerService.GetActivityBlocksGridRows(
                 ScheduleId,
-                ColumnCollections.ActivityScheduleColumns, q), query, false, "activityScheduleGrid",
-                ColumnCollections.ActivityScheduleColumns)
+                ColumnCollections.ActivityScheduleColumns(this), q), query, false, "activityScheduleGrid",
+                ColumnCollections.ActivityScheduleColumns(this))
                 .SetStriped(true);
             _grid = gridClient.Grid;
             // Set new items to grid

@@ -5,8 +5,8 @@ using System;
 
 namespace ActivitySchedulerFrontEnd.ColumnCollections
 {
-	public class ColumnCollections
-	{
+    public class ColumnCollections
+    {
         public static Action<IGridColumnCollection<ActivityDefinition>> ActivityDefinitionColumns = c =>
         {
             c.Add(ad => ad.Name).Titled(nameof(ActivityDefinition.Name)).SetWidth(20);
@@ -18,26 +18,39 @@ namespace ActivitySchedulerFrontEnd.ColumnCollections
                 .RenderValueAs(ad => ad.OptimalCapacity > 0 ? ad.OptimalCapacity.ToString() : "");
         };
 
-        public static Action<IGridColumnCollection<IActivityBlock>> ActivityScheduleColumns = c =>
+        public static Action<IGridColumnCollection<IActivityBlock>> ActivityScheduleColumns(object context)
         {
-            Func<IActivityBlock, int, string> CssForCount = (IActivityBlock block, int index) =>
+            return c =>
             {
-                return index > block.ActivityDefinition.OptimalCapacity
-                                ? index > block.ActivityDefinition.MaximumCapacity
-                                ? "red" : "yellow" : "";
+                Func<IActivityBlock, int, string> CssForCount = (IActivityBlock block, int index) =>
+                {
+                    string style = "";
+                    if (index > block.ActivityDefinition.MaximumCapacity)
+                    {
+                        style = "capacity-over";
+                    }
+                    else if (index > block.ActivityDefinition.OptimalCapacity)
+                    {
+                        style = "capacity-warning";
+                    }
+                    else if (index < block.ActivityDefinition.MinimumCapacity)
+                    {
+                        style = "capacity-under";
+                    }
+                    return style;
+                };
+
+                c.Add(ab => ab.ActivityDefinition.Name).Titled(nameof(ActivityDefinition.Name)).SetWidth(15);
+
+                c.Add(ab => ab.TimeSlot).RenderValueAs(ab => $"{ab.TimeSlot+1}").Titled("Block").SetWidth(5);
+
+                c.Add(ab => ab.AssignedCampers.Count).Titled("#").SetWidth(3)
+                .SetCellCssClassesContraint(ab => CssForCount(ab, ab.AssignedCampers.Count));
+
+                c.Add().SetWidth(20).Titled("Campers")
+                .RenderComponentAs<ActivityCampers>(context)
+                .Css("activity-camper-set");
             };
-
-            c.Add(ab => ab.ActivityDefinition.Name).Titled(nameof(ActivityDefinition.Name)).SetWidth(15);
-
-            c.Add(ab => ab.TimeSlot).RenderComponentAs<ActivityBlockDropZone>().Titled("Block").SetWidth(5);
-
-            c.Add(ab => ab.AssignedCampers.Count).Titled("#").SetWidth(3)
-            .SetCellCssClassesContraint(ab => CssForCount(ab, ab.AssignedCampers.Count));
-
-            c.Add().SetWidth(20).Titled("Campers")
-            .RenderComponentAs<ActivityCampers>()
-            .Css("activity-camper-set");
-        };
-
+        }
     }
 }

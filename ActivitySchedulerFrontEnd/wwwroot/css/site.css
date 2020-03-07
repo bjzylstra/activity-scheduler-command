@@ -182,14 +182,17 @@ app {
     }
 }
 
-.green {
-    background-color: green;
-}
-.yellow {
+.capacity-warning {
     background-color: yellow;
+    font-weight: normal
 }
-.red {
+.capacity-over {
     background-color: red;
+    font-weight: bold;
+}
+.capacity-under {
+    background-color: red;
+    font-weight: normal
 }
 
 .activity-camper-set {
@@ -198,4 +201,12 @@ app {
 
 .activity-camper-cell {
     border: 1px solid gray;
+}
+
+.can-drop {
+    background-color: lightgreen;
+}
+
+.no-drop {
+    background-color: lightcoral;
 }

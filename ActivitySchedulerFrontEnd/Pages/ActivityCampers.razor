@@ -2,17 +2,77 @@
 @implements ICustomGridComponent<IActivityBlock>
 
 <table>
-    <tr>
-        @foreach (var camper in Item.AssignedCampers)
-        {
-            <td class="activity-camper-cell" draggable="true" title="@camper.ToString()">
-        @camper.ToString()
-            </td>
-        }
+    <tr class="dropzone @dropClass"
+             ondragover="event.preventDefault();"
+             @ondrop="HandleDrop"
+             @ondragenter="HandleDragEnter"
+             @ondragleave="HandleDragLeave">
+            @foreach (var camper in Item.AssignedCampers)
+            {
+                <td class="activity-camper-cell" draggable="true" title="@camper.ToString()"
+                    @ondragstart="@(() => HandleDragStart(camper))">
+                    @camper.ToString()
+                </td>
+            }
     </tr>
 </table>
 
 @code {
     [Parameter]
     public IActivityBlock Item { get; set; }
+
+    [Parameter]
+    public object Object { get; set; }
+
+    private string dropClass;
+
+    private void HandleDragStart(Camper camper)
+    {
+        ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
+        if (scheduleGrid != null)
+        {
+            scheduleGrid.DragPayload = (Item, camper);
+        }
+    }
+
+    private bool PayloadIsValid
+    {
+        get
+        {
+            ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
+
+            return (scheduleGrid != null &&
+                scheduleGrid.DragPayload.activityBlock != null &&
+                scheduleGrid.DragPayload.camper != null &&
+                scheduleGrid.DragPayload.activityBlock.TimeSlot == Item.TimeSlot);
+        }
+    }
+
+    private void HandleDragEnter()
+    {
+        dropClass = PayloadIsValid ? "can-drop" : "no-drop";
+    }
+
+    private void HandleDragLeave()
+    {
+        dropClass = "";
+    }
+
+    private async Task HandleDrop()
+    {
+        if (PayloadIsValid)
+        {
+            ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
+            // Received a camper. Add the camper to our activity block
+            // and remove the camper from the other activity block.
+            scheduleGrid.DragPayload.camper.ScheduledBlocks[Item.TimeSlot] = Item;
+            scheduleGrid.DragPayload.activityBlock.AssignedCampers.Remove(
+                scheduleGrid.DragPayload.camper);
+            Item.AssignedCampers.Add(scheduleGrid.DragPayload.camper);
+
+            scheduleGrid.DragPayload = (null, null);
+
+            await scheduleGrid.UpdateGrid();
+        }
+    }
 }

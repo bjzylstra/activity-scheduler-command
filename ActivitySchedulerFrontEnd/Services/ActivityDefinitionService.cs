@@ -103,7 +103,7 @@ namespace ActivitySchedulerFrontEnd.Services
 			}
 			catch (Exception e)
 			{
-				// TODO: nice log message here
+				_logger.LogError(e, "InitializeActivitySets failed");
 			}
 			return activitySets;
 		}
