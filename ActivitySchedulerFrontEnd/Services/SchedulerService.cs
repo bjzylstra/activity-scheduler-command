@@ -1,5 +1,4 @@
-﻿using ActivitySchedulerFrontEnd.Pages;
-using Camp;
+﻿using Camp;
 using GridMvc.Server;
 using GridShared;
 using GridShared.Utility;
@@ -52,30 +51,6 @@ namespace ActivitySchedulerFrontEnd.Services
 
 			return server.ItemsToDisplay;
 		}
-
-		public Action<IGridColumnCollection<IActivityBlock>> GetActivityScheduleColumns()
-		{
-			return c =>
-			{
-				Func<IActivityBlock, int, string> CssForCount = (IActivityBlock block, int index) =>
-				{
-					return index > block.ActivityDefinition.OptimalCapacity
-									? index > block.ActivityDefinition.MaximumCapacity
-									? "red" : "yellow" : "";
-				};
-
-				c.Add(ab => ab.ActivityDefinition.Name).Titled(nameof(ActivityDefinition.Name)).SetWidth(15);
-
-				c.Add(ab => ab.TimeSlot).RenderComponentAs<ActivityBlockDropZone>().Titled("Block").SetWidth(5);
-
-				c.Add(ab => ab.AssignedCampers.Count).Titled("#").SetWidth(3)
-				.SetCellCssClassesContraint(ab => CssForCount(ab, ab.AssignedCampers.Count));
-
-				c.Add().SetWidth(20).Titled("Campers")
-				.RenderComponentAs<ActivityCampers>()
-				.Css("activity-camper-set");
-			};
-		}
 	}
 
 	public interface ISchedulerService
@@ -95,6 +70,5 @@ namespace ActivitySchedulerFrontEnd.Services
 		ItemsDTO<IActivityBlock> GetActivityBlocksGridRows(string scheduleId,
 			QueryDictionary<StringValues> query);
 
-		Action<IGridColumnCollection<IActivityBlock>> GetActivityScheduleColumns();
 	}
 }

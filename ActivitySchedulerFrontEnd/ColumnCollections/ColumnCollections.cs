@@ -1,4 +1,5 @@
-﻿using Camp;
+﻿using ActivitySchedulerFrontEnd.Pages;
+using Camp;
 using GridShared;
 using System;
 
@@ -19,9 +20,24 @@ namespace ActivitySchedulerFrontEnd.ColumnCollections
 
         public static Action<IGridColumnCollection<IActivityBlock>> ActivityScheduleColumns = c =>
         {
-            c.Add(ab => ab.ActivityDefinition.Name).Titled(nameof(ActivityDefinition.Name)).SetWidth(20);
-            c.Add(ab => ab.TimeSlot).Titled("Block").SetWidth(5);
-            c.Add(ab => ab.AssignedCampers.Count).Titled("# of Campers").SetWidth(5);
+            Func<IActivityBlock, int, string> CssForCount = (IActivityBlock block, int index) =>
+            {
+                return index > block.ActivityDefinition.OptimalCapacity
+                                ? index > block.ActivityDefinition.MaximumCapacity
+                                ? "red" : "yellow" : "";
+            };
+
+            c.Add(ab => ab.ActivityDefinition.Name).Titled(nameof(ActivityDefinition.Name)).SetWidth(15);
+
+            c.Add(ab => ab.TimeSlot).RenderComponentAs<ActivityBlockDropZone>().Titled("Block").SetWidth(5);
+
+            c.Add(ab => ab.AssignedCampers.Count).Titled("#").SetWidth(3)
+            .SetCellCssClassesContraint(ab => CssForCount(ab, ab.AssignedCampers.Count));
+
+            c.Add().SetWidth(20).Titled("Campers")
+            .RenderComponentAs<ActivityCampers>()
+            .Css("activity-camper-set");
         };
+
     }
 }
