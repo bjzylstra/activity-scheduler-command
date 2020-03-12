@@ -140,6 +140,31 @@ namespace Camp
             {
                 using (var outTextWriter = new StreamWriter(outputFilePath))
                 {
+                    string csvText = WriteScheduleToCsvString(activityDefinitions, logger);
+                    if (!string.IsNullOrEmpty(csvText))
+                    {
+                        outTextWriter.Write(csvText);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError($"Exception writing output file {outputFilePath}: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Write the activity schedules to a CSV string.
+        /// </summary>
+        /// <param name="activityDefinitions">List of activity defintions</param>
+        /// <param name="logger">Logger</param>
+        public static string WriteScheduleToCsvString(List<ActivityDefinition> activityDefinitions,
+            ILogger logger)
+        {
+            try
+            {
+                using (var outTextWriter = new StringWriter())
+                {
                     using (var csvWriter = new CsvWriter(outTextWriter, CultureInfo.InvariantCulture))
                     {
                         // Write the header
@@ -173,11 +198,13 @@ namespace Camp
                             }
                         }
                     }
+                    return outTextWriter.ToString();
                 }
             }
             catch (Exception e)
             {
-                logger.LogError($"Exception writing output file {outputFilePath}: {e.Message}");
+                logger.LogError($"Exception writing activity schedule: {e.Message}");
+                return string.Empty;
             }
         }
 

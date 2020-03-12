@@ -73,6 +73,20 @@ namespace ActivitySchedulerFrontEnd.Services
 
 			return server.ItemsToDisplay;
 		}
+
+		public string WriteActivityScheduleToCsv()
+		{
+			return ActivityDefinition.WriteScheduleToCsvString(_scheduledActivities,
+				_logger);
+		}
+
+		public string WriteCamperScheduleToCsv()
+		{
+			List<Camper> campers = _scheduledActivities.SelectMany(ad => 
+			ad.ScheduledBlocks.SelectMany(b => b.AssignedCampers))
+				.Distinct().ToList();
+			return Camper.WriteScheduleToCsvString(campers, _logger);
+		}
 	}
 
 	public interface ISchedulerService
@@ -85,6 +99,18 @@ namespace ActivitySchedulerFrontEnd.Services
 		/// <returns>List of unsuccessful camper requests</returns>
 		List<CamperRequests> ScheduleActivities(List<CamperRequests> camperRequests,
 			List<ActivityDefinition> activityDefinitions);
+
+		/// <summary>
+		/// Generates the CSV for the activity schedule.
+		/// </summary>
+		/// <returns>CSV text of the activity schedule</returns>
+		string WriteActivityScheduleToCsv();
+
+		/// <summary>
+		/// Generates the CSV for the camper schedule.
+		/// </summary>
+		/// <returns>CSV text of the camper schedule.</returns>
+		string WriteCamperScheduleToCsv();
 
 		ItemsDTO<IActivityBlock> GetActivityBlocksGridRows(string scheduleId,
 			Action<IGridColumnCollection<IActivityBlock>> columns,

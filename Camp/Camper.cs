@@ -30,6 +30,31 @@ namespace Camp
         {
             try
             {
+                using (var outTextWriter = new StreamWriter(outputFilePath))
+                {
+                    string csvText = WriteScheduleToCsvString(camperList, logger);
+                    if (!string.IsNullOrEmpty(csvText))
+                    {
+                        outTextWriter.Write(csvText);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError($"Exception writing output file {outputFilePath}: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Write the camper schedules to a CSV file.
+        /// </summary>
+        /// <param name="camperList">List of campers</param>
+        /// <param name="logger">Logger for messages</param>
+        public static string WriteScheduleToCsvString(IEnumerable<Camper> camperList,
+           ILogger logger)
+        {
+            try
+            {
                 List<Camper> campers = camperList.ToList();
                 campers.Sort((c1, c2) =>
                 {
@@ -40,9 +65,9 @@ namespace Camp
                     }
                     return compareValue;
                 });
-                using (var outTextWriter = new StreamWriter(outputFilePath))
+                using (var outTextWriter = new StringWriter())
                 {
-                    using (var csvWriter = new CsvHelper.CsvWriter(outTextWriter, 
+                    using (var csvWriter = new CsvHelper.CsvWriter(outTextWriter,
                         CultureInfo.InvariantCulture))
                     {
                         // Write the header
@@ -68,11 +93,13 @@ namespace Camp
                             csvWriter.NextRecord();
                         }
                     }
+                    return outTextWriter.ToString();
                 }
             }
             catch (Exception e)
             {
-                logger.LogError($"Exception writing output file {outputFilePath}: {e.Message}");
+                logger.LogError($"Exception writing camper schedule: {e.Message}");
+                return string.Empty;
             }
         }
 
