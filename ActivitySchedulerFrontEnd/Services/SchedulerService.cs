@@ -23,9 +23,31 @@ namespace ActivitySchedulerFrontEnd.Services
 
 		public List<CamperRequests> ScheduleActivities(List<CamperRequests> camperRequests, List<ActivityDefinition> activityDefinitions)
 		{
-			List<CamperRequests> unscheduledCampers = Scheduler.ScheduleActivities(camperRequests, activityDefinitions, _logger);
+			List<CamperRequests> unscheduledCamperRequests = Scheduler.ScheduleActivities(camperRequests, activityDefinitions, _logger);
 			_scheduledActivities = activityDefinitions;
-			return unscheduledCampers;
+			if (unscheduledCamperRequests.Any())
+			{
+				// Put the unscheduled blocks into a special unscheduled activity
+				ActivityDefinition unscheduledActivity = new ActivityDefinition
+				{
+					Name = " Unscheduled",
+					MaximumCapacity = int.MaxValue,
+					OptimalCapacity = 0
+				};
+				unscheduledActivity.PreloadBlocks();
+				foreach (Camper unscheduledCamper in unscheduledCamperRequests.Select(cr => cr.Camper))
+				{
+					int[] blockIds = { 0, 1, 2, 3 };
+					foreach (int unscheduledBlockId in blockIds
+						.Except(unscheduledCamper.ScheduledBlocks.Select(b => b.TimeSlot)))
+					{
+						unscheduledActivity.TryAssignCamperToExistingActivityBlock(unscheduledCamper, false);
+					}
+				}
+				// Put unscheduled activity at the top of the grid
+				_scheduledActivities.Insert(0, unscheduledActivity);
+			}
+			return unscheduledCamperRequests;
 		}
 
 		public ItemsDTO<IActivityBlock> GetActivityBlocksGridRows(string scheduleId, Action<IGridColumnCollection<IActivityBlock>> columns, QueryDictionary<StringValues> query)
