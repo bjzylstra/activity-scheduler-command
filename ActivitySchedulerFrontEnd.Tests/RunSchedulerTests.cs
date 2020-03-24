@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace ActivitySchedulerFrontEnd.Tests
 {
 	[TestFixture]
-	public class RunSchedulerTests :ActivitySchedulerTestsBase
+	public class RunSchedulerTests : ActivitySchedulerTestsBase
 	{
 		private const string ActivitySetKey = "activitySet";
 		private TestHost _host = new TestHost();
