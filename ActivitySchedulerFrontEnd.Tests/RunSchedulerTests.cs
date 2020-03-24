@@ -2,94 +2,42 @@
 using ActivitySchedulerFrontEnd.Services;
 using Blazor.FileReader;
 using Blazored.LocalStorage;
-using Camp;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Testing;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using NSubstitute;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace ActivitySchedulerFrontEnd.Tests
 {
 	[TestFixture]
-	public class RunSchedulerTests
+	public class RunSchedulerTests :ActivitySchedulerTestsBase
 	{
-		private const string DefaultSetName = "DefaultActivities";
 		private const string ActivitySetKey = "activitySet";
-		private string _applicationName = Guid.NewGuid().ToString();
 		private TestHost _host = new TestHost();
-		private Dictionary<string, List<ActivityDefinition>> _expectedActivitySets =
-			new Dictionary<string, List<ActivityDefinition>>();
 		private ILocalStorageService _localStorage;
 		private IFileReaderService _fileReaderService;
-		private ILogger<ActivityDefinitionService> _logger;
-
-		private byte[] _missingActivityCamperRequestsBuffer;
-		private byte[] _overSubscribedCamperRequestsBuffer;
-		private byte[] _validCamperRequestsBuffer;
-
-		private DirectoryInfo ApplicationDirectoryInfo
-		{
-			get
-			{
-				DirectoryInfo dataDirectoryInfo = new DirectoryInfo(
-					Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
-				DirectoryInfo applicationDirectoryInfo = dataDirectoryInfo.GetDirectories().FirstOrDefault(d =>
-					d.Name.Equals(_applicationName, StringComparison.OrdinalIgnoreCase));
-				return applicationDirectoryInfo;
-			}
-		}
 
 		[OneTimeSetUp]
 		public void PreloadActivityService()
 		{
-			// Arrange - use constructor to create directory with 1 file.
-			_logger = Substitute.For<ILogger<ActivityDefinitionService>>();
-			ActivityDefinitionService service = new ActivityDefinitionService(_applicationName, _logger);
-			// Create a couple copies of the default.
-			List<string> expectedActivitySets = new List<string>
-			{
-				DefaultSetName,
-				"AnotherSet",
-				"OneMore"
-			};
-			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
-				service.GetActivityDefinition(DefaultSetName));
-			_expectedActivitySets.Add(DefaultSetName, new List<ActivityDefinition>(activityDefinitions));
-			foreach (string addSet in expectedActivitySets.Skip(1))
-			{
-				activityDefinitions.RemoveAt(0);
-				string content = ActivityDefinition.WriteActivityDefinitionsToString(activityDefinitions, _logger);
-				File.WriteAllText($"{ApplicationDirectoryInfo.FullName}\\{addSet}.xml", content);
-				_expectedActivitySets.Add(addSet, new List<ActivityDefinition>(activityDefinitions));
-			}
-
+			SetUpActivityService();
 			ServiceSetup();
-			LoadTestFiles();
+			LoadTestCamperRequests();
 		}
 
 		[OneTimeTearDown]
 		public void CleanupApplicationData()
 		{
-			DirectoryInfo applicationDirectoryInfo = ApplicationDirectoryInfo;
-			if (applicationDirectoryInfo != null)
-			{
-				applicationDirectoryInfo.Delete(true);
-			}
+			CleanupActivityService();
 		}
 
 		private void ServiceSetup()
 		{
-			IActivityDefinitionService activityDefinitionService = new ActivityDefinitionService(
-				_applicationName, _logger);
-			_host.AddService(activityDefinitionService);
+			_host.AddService(_activityDefinitionService);
 			ILogger<SchedulerService> schedulerServiceLogger = Substitute.For<ILogger<SchedulerService>>();
 			ISchedulerService schedulerService = new SchedulerService(schedulerServiceLogger);
 			_host.AddService(schedulerService);
@@ -99,33 +47,6 @@ namespace ActivitySchedulerFrontEnd.Tests
 			_host.AddService(_fileReaderService);
 			_localStorage = Substitute.For<ILocalStorageService>();
 			_host.AddService(_localStorage);
-		}
-
-		private void LoadTestFiles()
-		{
-			Assembly assembly = typeof(RunSchedulerTests).Assembly;
-
-			using (Stream camperRequests = assembly.GetManifestResourceStream(
-				"ActivitySchedulerFrontEnd.Tests.CamperRequestsUnknownActivity.csv"))
-			{
-				_missingActivityCamperRequestsBuffer = new byte[camperRequests.Length];
-				int bytesRead = camperRequests.Read(_missingActivityCamperRequestsBuffer, 0,
-					_missingActivityCamperRequestsBuffer.Length);
-			}
-			using (Stream camperRequests = assembly.GetManifestResourceStream(
-				"ActivitySchedulerFrontEnd.Tests.CamperRequestsOversubscribed.csv"))
-			{
-				_overSubscribedCamperRequestsBuffer = new byte[camperRequests.Length];
-				int bytesRead = camperRequests.Read(_overSubscribedCamperRequestsBuffer, 0,
-					_overSubscribedCamperRequestsBuffer.Length);
-			}
-			using (Stream camperRequests = assembly.GetManifestResourceStream(
-				"ActivitySchedulerFrontEnd.Tests.CamperRequests.csv"))
-			{
-				_validCamperRequestsBuffer = new byte[camperRequests.Length];
-				int bytesRead = camperRequests.Read(_validCamperRequestsBuffer, 0, 
-					_validCamperRequestsBuffer.Length);
-			}
 		}
 
 		[Test]
