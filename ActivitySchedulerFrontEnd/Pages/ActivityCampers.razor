@@ -2,7 +2,7 @@
 @implements ICustomGridComponent<IActivityBlock>
 
 <table>
-    <tr class="dropzone @dropClass"
+    <tr class="dropzone @dropClass" id="@Id" 
              ondragover="event.preventDefault();"
              @ondrop="HandleDrop"
              @ondragenter="HandleDragEnter"
@@ -23,6 +23,11 @@
 
     [Parameter]
     public object Object { get; set; }
+
+    /// <summary>
+    /// Id to find the HTML by.
+    /// </summary>
+    public string Id => $"{Item.ActivityDefinition.Name}-{Item.TimeSlot}";
 
     private string dropClass;
 
@@ -60,9 +65,9 @@
 
     private async Task HandleDrop()
     {
+        ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
         if (PayloadIsValid)
         {
-            ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
             // Received a camper. Add the camper to our activity block
             // and remove the camper from the other activity block.
             scheduleGrid.DragPayload.camper.ScheduledBlocks[Item.TimeSlot] = Item;
@@ -73,6 +78,11 @@
             scheduleGrid.DragPayload = (null, null);
 
             await scheduleGrid.UpdateGrid();
+        }
+        else 
+        {
+            // Cancel the drag
+            scheduleGrid.DragPayload = (null, null);
         }
     }
 }

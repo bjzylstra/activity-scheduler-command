@@ -149,5 +149,114 @@ namespace ActivitySchedulerFrontEnd.Tests
 				Is.EqualTo(component.Instance.DragPayload.camper.LastName), "Dragged campers last name");
 		}
 
+		[Test]
+		public void ActivityScheduleGrid_DropCamperInDifferentTimeSlot_CamperIsNotMoved()
+		{
+			// Arrange - run schedule with successful data set and start a drag
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			List<CamperRequests> camperRequests;
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				_schedulerService.ScheduleActivities(camperRequests, activityDefinitions);
+			}
+			RenderedComponent<ActivityScheduleGrid> component =
+				_host.AddComponent<ActivityScheduleGrid>();
+			List<HtmlNode> camperActivityCells = component.FindAll("td")
+				.Where(node => node.Attributes.AttributesWithName("class")
+				.Any(a => a.Value.Equals("activity-camper-cell"))).ToList();
+			Assert.That(camperActivityCells, Has.Count.EqualTo(camperRequests.Count() * 4),
+				"Number of camper activity cells");
+			// Gather up the activity block drop zones.
+			List<HtmlNode> activityBlockCampers = component.FindAll("tr")
+				.Where(node => node.Attributes.AttributesWithName("ondrop").Any())
+				.ToList();
+			Assert.That(activityBlockCampers, Has.Count.EqualTo(activityDefinitions.Count * 4),
+				"Number of activity rows");
+			// Start a drag on a camper in the first activity block
+			HtmlNode sourceCamperActivity = camperActivityCells.First(
+				node => node.ParentNode.GetAttributeValue("id", "") == 
+				activityBlockCampers[0].GetAttributeValue("id", "NotDefined"));
+			sourceCamperActivity.TriggerEventAsync("ondragstart", new DragEventArgs());
+			Camper camper = component.Instance.DragPayload.camper;
+			List<string> initialCamperActivities = camper.ScheduledBlocks
+				.Select(block => block.ActivityDefinition.Name).ToList();
+
+			// Act - Drop on block 1 (source was block 0) for next activity
+			HtmlNode dropTarget = activityBlockCampers.First(n =>
+				n.GetAttributeValue("id", "")
+				.Equals($"{activityDefinitions[1].Name}-1"));
+			dropTarget.TriggerEventAsync("ondrop", new DragEventArgs());
+
+			// Assert - Grid pay load is reset.
+			Assert.That(component.Instance.DragPayload.activityBlock, Is.EqualTo(null), 
+				"Drag payload activity block");
+			Assert.That(component.Instance.DragPayload.camper, Is.EqualTo(null),
+				"Drag payload camper");
+
+			// Verify camper activities have not changed
+			List<string> finalCamperActivities = camper.ScheduledBlocks
+				.Select(block => block.ActivityDefinition.Name).ToList();
+			Assert.That(finalCamperActivities, Is.EquivalentTo(initialCamperActivities),
+				"Final camper activity set");
+		}
+
+		[Test]
+		public void ActivityScheduleGrid_DropCamperInSameTimeSlot_CamperIsMoved()
+		{
+			// Arrange - run schedule with successful data set and start a drag
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			List<CamperRequests> camperRequests;
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				_schedulerService.ScheduleActivities(camperRequests, activityDefinitions);
+			}
+			RenderedComponent<ActivityScheduleGrid> component =
+				_host.AddComponent<ActivityScheduleGrid>();
+			List<HtmlNode> camperActivityCells = component.FindAll("td")
+				.Where(node => node.Attributes.AttributesWithName("class")
+				.Any(a => a.Value.Equals("activity-camper-cell"))).ToList();
+			Assert.That(camperActivityCells, Has.Count.EqualTo(camperRequests.Count() * 4),
+				"Number of camper activity cells");
+			// Gather up the activity block drop zones.
+			List<HtmlNode> activityBlockCampers = component.FindAll("tr")
+				.Where(node => node.Attributes.AttributesWithName("ondrop").Any())
+				.ToList();
+			Assert.That(activityBlockCampers, Has.Count.EqualTo(activityDefinitions.Count * 4),
+				"Number of activity rows");
+			// Start a drag on a camper in the first activity block
+			HtmlNode sourceCamperActivity = camperActivityCells.First(
+				node => node.ParentNode.GetAttributeValue("id", "") ==
+				activityBlockCampers[0].GetAttributeValue("id", "NotDefined"));
+			sourceCamperActivity.TriggerEventAsync("ondragstart", new DragEventArgs());
+			Camper camper = component.Instance.DragPayload.camper;
+			List<string> expectedCamperActivities = camper.ScheduledBlocks
+				.Select(block => block.ActivityDefinition.Name).ToList();
+
+			// Act - Drop on the block 0 for the next activity
+			HtmlNode dropTarget = activityBlockCampers.First(n =>
+				n.GetAttributeValue("id", "")
+				.Equals($"{activityDefinitions[1].Name}-0"));
+			dropTarget.TriggerEventAsync("ondrop", new DragEventArgs());
+			expectedCamperActivities[0] = activityDefinitions[1].Name;
+
+			// Assert - Grid pay load is reset.
+			Assert.That(component.Instance.DragPayload.activityBlock, Is.EqualTo(null),
+				"Drag payload activity block");
+			Assert.That(component.Instance.DragPayload.camper, Is.EqualTo(null),
+				"Drag payload camper");
+
+			// Verify camper activities have not changed
+			List<string> finalCamperActivities = camper.ScheduledBlocks
+				.Select(block => block.ActivityDefinition.Name).ToList();
+			Assert.That(finalCamperActivities, Is.EquivalentTo(expectedCamperActivities),
+				"Final camper activity set");
+		}
+
 	}
 }
