@@ -15,7 +15,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 		protected const string DefaultSetName = "DefaultActivities";
 
 		private string _applicationName = Guid.NewGuid().ToString();
-		private Dictionary<string, List<ActivityDefinition>> _expectedActivitySets =
+		protected Dictionary<string, List<ActivityDefinition>> _expectedActivitySets =
 			new Dictionary<string, List<ActivityDefinition>>();
 
 		protected IActivityDefinitionService _activityDefinitionService;
@@ -67,7 +67,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 		{
 		// Arrange - use constructor to create directory with 1 file.
 			ILogger<ActivityDefinitionService> logger = Substitute.For<ILogger<ActivityDefinitionService>>();
-			_activityDefinitionService = new ActivityDefinitionService(_applicationName, logger);
+			ActivityDefinitionService activityDefinitionService = new ActivityDefinitionService(_applicationName, logger);
 			// Create a couple copies of the default.
 			List<string> expectedActivitySets = new List<string>
 			{
@@ -76,7 +76,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 				"OneMore"
 			};
 			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
-				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+				activityDefinitionService.GetActivityDefinition(DefaultSetName));
 			_expectedActivitySets.Add(DefaultSetName, new List<ActivityDefinition>(activityDefinitions));
 			foreach (string addSet in expectedActivitySets.Skip(1))
 			{
@@ -85,6 +85,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 				File.WriteAllText($"{ApplicationDirectoryInfo.FullName}\\{addSet}.xml", content);
 				_expectedActivitySets.Add(addSet, new List<ActivityDefinition>(activityDefinitions));
 			}
+			_activityDefinitionService = new ActivityDefinitionService(_applicationName, logger);
 		}
 
 		protected void CleanupActivityService()

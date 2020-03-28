@@ -18,8 +18,6 @@ namespace ActivitySchedulerFrontEnd.Tests
 	{
 		private const string ActivitySetKey = "activitySet";
 		private TestHost _host = new TestHost();
-		private Dictionary<string, List<ActivityDefinition>> _expectedActivitySets = 
-			new Dictionary<string, List<ActivityDefinition>>();
 		private ILocalStorageService _localStorage;
 
 		[OneTimeSetUp]
