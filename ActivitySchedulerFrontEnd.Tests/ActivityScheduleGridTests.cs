@@ -1,5 +1,6 @@
 ﻿using ActivitySchedulerFrontEnd.Pages;
 using ActivitySchedulerFrontEnd.Services;
+using Blazored.LocalStorage;
 using Camp;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Components.Testing;
@@ -11,6 +12,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ActivitySchedulerFrontEnd.Tests
 {
@@ -18,12 +20,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 	public class ActivityScheduleGridTests : ActivitySchedulerTestsBase
 	{
 		private TestHost _host = new TestHost();
-		private ISchedulerService _schedulerService;
+		private ILocalStorageService _localStorage;
 
 		[OneTimeSetUp]
 		public void PreloadActivityService()
 		{
-			SetUpActivityService();
+			SetUpApplicationServices();
 			ServiceSetup();
 			LoadTestCamperRequests();
 		}
@@ -31,16 +33,16 @@ namespace ActivitySchedulerFrontEnd.Tests
 		[OneTimeTearDown]
 		public void CleanupApplicationData()
 		{
-			CleanupActivityService();
+			CleanupApplicationServices();
 		}
 
 		private void ServiceSetup()
 		{
-			ILogger<SchedulerService> schedulerServiceLogger = Substitute.For<ILogger<SchedulerService>>();
-			_schedulerService = new SchedulerService(schedulerServiceLogger);
 			_host.AddService(_schedulerService);
 			IJSRuntime jsRuntime = Substitute.For<IJSRuntime>();
 			_host.AddService(jsRuntime);
+			_localStorage = Substitute.For<ILocalStorageService>();
+			_host.AddService(_localStorage);
 		}
 
 		[Test]
@@ -53,7 +55,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 			{
 				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				_schedulerService.ScheduleActivities(camperRequests, activityDefinitions);
+				string scheduleId = "MySchedule";
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
 			}
 
 			// Act - load the grid component
@@ -82,7 +87,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 			{
 				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				_schedulerService.ScheduleActivities(camperRequests, activityDefinitions);
+				string scheduleId = "MySchedule";
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
 			}
 
 			// Act - load the grid component
@@ -96,7 +104,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 				.Except(originalActivityNames).ToList();
 			Assert.That(addedActivityNames, Has.Count.EqualTo(1),
 				"Number of activity definitions added by scheduling");
-			Assert.That(addedActivityNames[0], Is.EqualTo(" Unscheduled"), 
+			Assert.That(addedActivityNames[0], Is.EqualTo(SchedulerService.UnscheduledActivityName), 
 				"Name of activity added by scheduling");
 
 			// Check that all of the activities included the added 1 are on the grid
@@ -122,7 +130,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 			{
 				camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				_schedulerService.ScheduleActivities(camperRequests, activityDefinitions);
+				string scheduleId = "MySchedule";
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
 			}
 			RenderedComponent<ActivityScheduleGrid> component =
 				_host.AddComponent<ActivityScheduleGrid>();
@@ -160,7 +171,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 			{
 				camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				_schedulerService.ScheduleActivities(camperRequests, activityDefinitions);
+				string scheduleId = "MySchedule";
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
 			}
 			RenderedComponent<ActivityScheduleGrid> component =
 				_host.AddComponent<ActivityScheduleGrid>();
@@ -214,7 +228,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 			{
 				camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				_schedulerService.ScheduleActivities(camperRequests, activityDefinitions);
+				string scheduleId = "MySchedule";
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
 			}
 			RenderedComponent<ActivityScheduleGrid> component =
 				_host.AddComponent<ActivityScheduleGrid>();

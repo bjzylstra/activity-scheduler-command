@@ -19,6 +19,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			new Dictionary<string, List<ActivityDefinition>>();
 
 		protected IActivityDefinitionService _activityDefinitionService;
+		protected ISchedulerService _schedulerService;
 
 		protected byte[] _overSubscribedCamperRequestsBuffer;
 		protected byte[] _missingActivityCamperRequestsBuffer;
@@ -63,7 +64,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			}
 		}
 
-		protected void SetUpActivityService()
+		protected void SetUpApplicationServices()
 		{
 		// Arrange - use constructor to create directory with 1 file.
 			ILogger<ActivityDefinitionService> logger = Substitute.For<ILogger<ActivityDefinitionService>>();
@@ -86,9 +87,11 @@ namespace ActivitySchedulerFrontEnd.Tests
 				_expectedActivitySets.Add(addSet, new List<ActivityDefinition>(activityDefinitions));
 			}
 			_activityDefinitionService = new ActivityDefinitionService(_applicationName, logger);
+			_schedulerService = new SchedulerService(_applicationName,
+				Substitute.For<ILogger<SchedulerService>>());
 		}
 
-		protected void CleanupActivityService()
+		protected void CleanupApplicationServices()
 		{
 			DirectoryInfo applicationDirectoryInfo = ApplicationDirectoryInfo;
 			if (applicationDirectoryInfo != null)

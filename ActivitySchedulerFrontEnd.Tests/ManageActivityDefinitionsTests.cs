@@ -23,14 +23,14 @@ namespace ActivitySchedulerFrontEnd.Tests
 		[OneTimeSetUp]
 		public void Setup()
 		{
-			SetUpActivityService();
+			SetUpApplicationServices();
 			ServiceSetup();
 		}
 
 		[OneTimeTearDown]
 		public void CleanupApplicationData()
 		{
-			CleanupActivityService();
+			CleanupApplicationServices();
 		}
 
 		public void ServiceSetup()

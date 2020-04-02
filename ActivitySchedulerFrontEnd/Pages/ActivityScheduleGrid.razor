@@ -2,11 +2,12 @@
 
 @inject ISchedulerService schedulerService
 @inject IJSRuntime  JSRuntime
+@inject ILocalStorageService localStorage
 
 <h3>Activity Schedule Grid</h3>
 
 <p>
-    File name: 
+    File name:
     <input @bind="_fileName" />
     <button @onclick="DownloadFile">Export as CSV file</button>
 </p>
@@ -25,14 +26,33 @@ else
 }
 
 @code {
+    /// <summary>
+    /// Name of the cookie to record the schedule across pages.
+    /// </summary>
+    private const string ScheduleIdKey = "scheduleId";
+
     private CGrid<IActivityBlock> _grid;
     private Task _task;
     private GridComponent<IActivityBlock> _component;
     private string _fileName;
 
-
-    [Parameter]
-    public string ScheduleId { get; set; }
+    /// <summary>
+    /// Track the schedule ID and update the cookie for persistence
+    /// </summary>
+    private string _scheduleId;
+    public string ScheduleId
+    {
+        get => _scheduleId;
+        set
+        {
+            if (value != _scheduleId)
+            {
+                _scheduleId = value;
+                // This cannot be async so fire and hope it gets there in time.
+                localStorage.SetItemAsync(ScheduleIdKey, value);
+            }
+        }
+    }
 
     public (IActivityBlock activityBlock, Camper camper) DragPayload { get; set; }
 
@@ -44,9 +64,18 @@ else
         }
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Schedule set comes from cookie if present.
+        ScheduleId = await localStorage.GetItemAsync<string>(ScheduleIdKey);
+        _fileName = string.IsNullOrEmpty(ScheduleId)
+            ? "activitySchedule.csv"
+            : $"{ScheduleId}.csv";
+        await base.OnInitializedAsync();
+    }
+
     protected override async Task OnParametersSetAsync()
     {
-        _fileName = "activitySchedule.csv";
         var query = new QueryDictionary<StringValues>();
         if (_component == null)
         {
@@ -77,9 +106,9 @@ else
         // so use a Javascript function.
         await JSRuntime.InvokeAsync<object>(
             "FileSaveAs", _fileName,
-            schedulerService.WriteActivityScheduleToCsv());
+            schedulerService.WriteActivityScheduleToCsv(ScheduleId));
         await JSRuntime.InvokeAsync<object>(
             "FileSaveAs", "camperSchedule.csv",
-            schedulerService.WriteCamperScheduleToCsv());
+            schedulerService.WriteCamperScheduleToCsv(ScheduleId));
     }
 }

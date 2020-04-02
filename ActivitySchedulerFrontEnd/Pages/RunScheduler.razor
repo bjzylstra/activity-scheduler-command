@@ -83,7 +83,13 @@
                     List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(memoryStream, activityDefinitions);
                     Output += $"Loaded {camperRequests.Count} camper requests{Environment.NewLine}";
 
-                    List<CamperRequests> unhappyCampers = schedulerService.ScheduleActivities(camperRequests, activityDefinitions);
+                    string scheduleId = DateTime.Now.ToString("YYYY.MM.dd");
+                    List<ActivityDefinition> schedule = schedulerService.CreateSchedule(scheduleId, camperRequests,
+                        activityDefinitions);
+                    List<Camper> unhappyCampers = schedule
+                        .Where(ad => ad.Name == SchedulerService.UnscheduledActivityName)
+                        .SelectMany(ad => ad.ScheduledBlocks.SelectMany(b => b.AssignedCampers))
+                        .Distinct().ToList();
                     Output += $"{camperRequests.Count - unhappyCampers.Count} campers scheduled{Environment.NewLine}";
 
                     if (unhappyCampers.Count > 0)

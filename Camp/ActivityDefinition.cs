@@ -43,66 +43,69 @@ namespace Camp
             List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>();
             try
             {
-                var inFileStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read);
-                var streamReader = new StreamReader(inFileStream);
-                var csvReader = new CsvReader(streamReader, new CsvConfiguration(CultureInfo.InvariantCulture)
+                using (var inFileStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read))
                 {
-                    HasHeaderRecord = true,
-                    HeaderValidated = null
-                });
 
-                // Skip over the header line
-                csvReader.Read();
-
-                ActivityDefinition currentActivityDefinition = null;
-                Dictionary<string, Camper> campersByName = new Dictionary<string, Camper>();
-
-                while (csvReader.Read())
-                {
-                    string activityName = csvReader.GetField(0);
-                    if (!string.IsNullOrWhiteSpace(activityName))
+                    var streamReader = new StreamReader(inFileStream);
+                    var csvReader = new CsvReader(streamReader, new CsvConfiguration(CultureInfo.InvariantCulture)
                     {
-                        currentActivityDefinition = new ActivityDefinition { Name = activityName };
-                        activityDefinitions.Add(currentActivityDefinition);
-                    }
-                    if (currentActivityDefinition == null)
-                    {
-                        throw new Exception("Malformed file: no activity at start");
-                    }
-                    int timeSlot = csvReader.GetField<int>(1);
-                    currentActivityDefinition._scheduledBlocks.Add(new ActivityBlock
-                    {
-                        ActivityDefinition = currentActivityDefinition,
-                        TimeSlot = timeSlot
+                        HasHeaderRecord = true,
+                        HeaderValidated = null
                     });
-                    // Next is the collection of camper names.
-                    int camperIndex = 0;
-                    object camperFullNameObject;
-                    while (csvReader.TryGetField(typeof(string), 2 + camperIndex, out camperFullNameObject))
+
+                    // Skip over the header line
+                    csvReader.Read();
+
+                    ActivityDefinition currentActivityDefinition = null;
+                    Dictionary<string, Camper> campersByName = new Dictionary<string, Camper>();
+
+                    while (csvReader.Read())
                     {
-                        // Find or create the camper
-                        string camperFullName = (string)camperFullNameObject;
-                        Camper camper;
-                        if (!campersByName.TryGetValue(camperFullName, out camper))
+                        string activityName = csvReader.GetField(0);
+                        if (!string.IsNullOrWhiteSpace(activityName))
                         {
-                            string[] camperNameParts = camperFullName.Split(',');
-                            camper = new Camper
-                            {
-                                FirstName = camperNameParts[1].Trim('"'),
-                                LastName = camperNameParts[0].Trim('"')
-                            };
-                            campersByName.Add(camperFullName, camper);
+                            currentActivityDefinition = new ActivityDefinition { Name = activityName };
+                            activityDefinitions.Add(currentActivityDefinition);
                         }
-                        // Add camper to activity
-                        currentActivityDefinition.ScheduledBlocks[timeSlot].AssignedCampers.Add(camper);
+                        if (currentActivityDefinition == null)
+                        {
+                            throw new Exception("Malformed file: no activity at start");
+                        }
+                        int timeSlot = csvReader.GetField<int>(1);
+                        currentActivityDefinition._scheduledBlocks.Add(new ActivityBlock
+                        {
+                            ActivityDefinition = currentActivityDefinition,
+                            TimeSlot = timeSlot
+                        });
+                        // Next is the collection of camper names.
+                        int camperIndex = 0;
+                        object camperFullNameObject;
+                        while (csvReader.TryGetField(typeof(string), 2 + camperIndex, out camperFullNameObject))
+                        {
+                            // Find or create the camper
+                            string camperFullName = (string)camperFullNameObject;
+                            Camper camper;
+                            if (!campersByName.TryGetValue(camperFullName, out camper))
+                            {
+                                string[] camperNameParts = camperFullName.Split(',');
+                                camper = new Camper
+                                {
+                                    FirstName = camperNameParts[1].Trim('"'),
+                                    LastName = camperNameParts[0].Trim('"')
+                                };
+                                campersByName.Add(camperFullName, camper);
+                            }
+                            // Add camper to activity
+                            currentActivityDefinition.ScheduledBlocks[timeSlot].AssignedCampers.Add(camper);
 
-                        // Add activity to camper
-                        camper.ScheduledBlocks.Add(currentActivityDefinition.ScheduledBlocks[timeSlot]);
+                            // Add activity to camper
+                            camper.ScheduledBlocks.Add(currentActivityDefinition.ScheduledBlocks[timeSlot]);
 
-                        camperIndex++;
+                            camperIndex++;
+                        }
                     }
+                    return activityDefinitions;
                 }
-                return activityDefinitions;
             }
             catch (FileNotFoundException e)
             {
@@ -138,12 +141,17 @@ namespace Camp
         {
             try
             {
-                using (var outTextWriter = new StreamWriter(outputFilePath))
+                using (FileStream fileStream = new FileStream(outputFilePath, FileMode.OpenOrCreate))
                 {
-                    string csvText = WriteScheduleToCsvString(activityDefinitions, logger);
-                    if (!string.IsNullOrEmpty(csvText))
+                    // Empty the file before updating.
+                    fileStream.SetLength(0);
+                    using (var outTextWriter = new StreamWriter(fileStream))
                     {
-                        outTextWriter.Write(csvText);
+                        string csvText = WriteScheduleToCsvString(activityDefinitions, logger);
+                        if (!string.IsNullOrEmpty(csvText))
+                        {
+                            outTextWriter.Write(csvText);
+                        }
                     }
                 }
             }

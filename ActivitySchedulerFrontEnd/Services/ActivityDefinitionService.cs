@@ -32,7 +32,7 @@ namespace ActivitySchedulerFrontEnd.Services
 		}
 
 		/// <summary>
-		/// Construct with a fixed application name for testing
+		/// Constructor with a fixed application name for testing
 		/// </summary>
 		/// <param name="folderName">Application name for local application data folder</param>
 		/// <param name="logger">Logger</param>
@@ -88,8 +88,7 @@ namespace ActivitySchedulerFrontEnd.Services
 				}
 
 				foreach (var activityFile in applicationDirectoryInfo.EnumerateFiles()
-					.Where(f => f.Extension.Equals(ActivityFileExtension, StringComparison.OrdinalIgnoreCase))
-					)
+					.Where(f => f.Extension.Equals(ActivityFileExtension, StringComparison.OrdinalIgnoreCase)))
 				{
 					var activityDefinitions = ActivityDefinition.ReadActivityDefinitions(
 						activityFile.FullName, _logger);

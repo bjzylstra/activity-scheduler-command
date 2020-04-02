@@ -28,6 +28,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 			}
 		}
 
+		[SetUp]
+		public void SetupLogger()
+		{
+			_logger = NSubstitute.Substitute.For<ILogger<ActivityDefinitionService>>();
+		}
+
 		[TearDown]
 		public void RemoveApplicationData()
 		{
@@ -45,7 +51,6 @@ namespace ActivitySchedulerFrontEnd.Tests
 			RemoveApplicationData();
 
 			// Act - construct the activity service
-			_logger = NSubstitute.Substitute.For<ILogger<ActivityDefinitionService>>();
 			ActivityDefinitionService service = new ActivityDefinitionService(_applicationName, _logger);
 
 			// Assert - verify the directory is created

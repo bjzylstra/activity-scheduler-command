@@ -24,7 +24,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 		[OneTimeSetUp]
 		public void PreloadActivityService()
 		{
-			SetUpActivityService();
+			SetUpApplicationServices();
 			ServiceSetup();
 			LoadTestCamperRequests();
 		}
@@ -32,15 +32,13 @@ namespace ActivitySchedulerFrontEnd.Tests
 		[OneTimeTearDown]
 		public void CleanupApplicationData()
 		{
-			CleanupActivityService();
+			CleanupApplicationServices();
 		}
 
 		private void ServiceSetup()
 		{
 			_host.AddService(_activityDefinitionService);
-			ILogger<SchedulerService> schedulerServiceLogger = Substitute.For<ILogger<SchedulerService>>();
-			ISchedulerService schedulerService = new SchedulerService(schedulerServiceLogger);
-			_host.AddService(schedulerService);
+			_host.AddService(_schedulerService);
 			IJSRuntime jsRuntime = Substitute.For<IJSRuntime>();
 			_host.AddService(jsRuntime);
 			_fileReaderService = Substitute.For<IFileReaderService>();
