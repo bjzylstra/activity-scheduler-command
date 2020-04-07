@@ -20,7 +20,7 @@ namespace ActivitySchedulerFrontEnd.Services
 		private readonly string _applicationName;
 		private readonly ILogger<SchedulerService> _logger;
 		private Dictionary<string,List<ActivityDefinition>> _schedulesById = new Dictionary<string,List<ActivityDefinition>>();
-		private const string ScheduleFileExtension = ".csv";
+		public const string ScheduleFileExtension = ".sch";
 
 		/// <summary>
 		/// Default constructor used by dependency injection.
@@ -69,13 +69,66 @@ namespace ActivitySchedulerFrontEnd.Services
 				foreach (var scheduleFile in applicationDirectoryInfo.EnumerateFiles()
 					.Where(f => f.Extension.Equals(ScheduleFileExtension, StringComparison.OrdinalIgnoreCase)))
 				{
-					List<ActivityDefinition> schedule = ActivityDefinition.ReadScheduleFromCsvFile(
-						scheduleFile.FullName, _logger);
-					if (schedule != null)
+					using (StreamReader scheduleFileReader = new StreamReader(scheduleFile.FullName))
 					{
-						string scheduleId = scheduleFile.Name.Substring(0,
-							scheduleFile.Name.Length - ScheduleFileExtension.Length);
-						schedulesById.Add(scheduleId, schedule);
+						// Read the length of the definitions section from the first line
+						// If anything goes wrong, log and ignore.
+						if (int.TryParse(scheduleFileReader.ReadLine(), out int definitionLength))
+						{
+							char[] buffer = new char[definitionLength];
+							int charactersRead = scheduleFileReader.Read(buffer, 0, definitionLength);
+							if (charactersRead != definitionLength)
+							{
+								// Ran out of characters
+								_logger.LogError($"{scheduleFile.FullName} specified definition length of {definitionLength} " +
+									$"but found only {charactersRead} characters after the lenght specifier.");
+								continue;
+							}
+							List<ActivityDefinition> activityDefinitions = ActivityDefinition.ReadActivityDefinitionsFromString(
+								new string(buffer), _logger);
+							if (activityDefinitions == null || activityDefinitions.Count == 0)
+							{
+								// Could not read the activity definitions
+								_logger.LogError($"{scheduleFile.FullName} could not parse the activity definitions");
+								continue;
+							}
+							List<ActivityDefinition> schedule = ActivityDefinition.ReadScheduleFromCsvString(
+								scheduleFileReader.ReadToEnd(), _logger);
+							if (schedule == null || schedule.Count == 0)
+							{
+								// Could not read the schedule
+								_logger.LogError($"{scheduleFile.FullName} could not parse the schedule csv");
+								continue;
+							}
+							// Merge the limits into the schedule.
+							bool mergeSuccessful = true;
+							foreach (ActivityDefinition scheduleActivity in schedule)
+							{
+								ActivityDefinition activityDefinition = activityDefinitions
+									.FirstOrDefault(ad => ad.Name.Equals(scheduleActivity.Name));
+								if (activityDefinition == null)
+								{
+									// Did not find the activity definition for a scheduled activity
+									mergeSuccessful = false;
+									_logger.LogError($"{scheduleFile.FullName} did not contain a definition for" +
+										$"scheduled activity '{scheduleActivity.Name}'");
+									break;
+								}
+								scheduleActivity.MaximumCapacity = activityDefinition.MaximumCapacity;
+								scheduleActivity.MinimumCapacity = activityDefinition.MinimumCapacity;
+								scheduleActivity.OptimalCapacity = activityDefinition.OptimalCapacity;
+							}
+							if (mergeSuccessful)
+							{
+								string scheduleId = scheduleFile.Name.Substring(0,
+									scheduleFile.Name.Length - ScheduleFileExtension.Length);
+								schedulesById.Add(scheduleId, schedule);
+							}
+						}
+						else
+						{
+							_logger.LogError($"{scheduleFile.FullName} is missing the definition length");
+						}
 					}
 				}
 			}
@@ -138,7 +191,16 @@ namespace ActivitySchedulerFrontEnd.Services
 			DirectoryInfo applicationDirectoryInfo = dataDirectoryInfo.GetDirectories().FirstOrDefault(d =>
 				d.Name.Equals(_applicationName, StringComparison.OrdinalIgnoreCase));
 			string fileName = $"{applicationDirectoryInfo.FullName}\\{scheduleId}{ScheduleFileExtension}";
-			ActivityDefinition.WriteScheduleToCsvFile(schedule, fileName, _logger);
+			using (StreamWriter scheduleFileWriter = new StreamWriter(fileName))
+			{
+				// Empty the file before writing
+				scheduleFileWriter.BaseStream.SetLength(0);
+				string definitions = ActivityDefinition.WriteActivityDefinitionsToString(schedule, _logger);
+				string scheduleCsv = ActivityDefinition.WriteScheduleToCsvString(schedule, _logger);
+				scheduleFileWriter.WriteLine(definitions.Length);
+				scheduleFileWriter.Write(definitions);
+				scheduleFileWriter.Write(scheduleCsv);
+			}
 			_schedulesById[scheduleId] = schedule;
 		}
 

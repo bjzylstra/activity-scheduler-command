@@ -12,7 +12,7 @@
     <button @onclick="DownloadFile">Export as CSV file</button>
 </p>
 
-@if (_task.IsCompleted)
+@if (_task != null && _task.IsCompleted)
 {
     <div class="row">
         <div class="col-md-12">

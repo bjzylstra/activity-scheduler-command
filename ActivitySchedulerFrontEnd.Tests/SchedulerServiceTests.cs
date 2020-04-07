@@ -67,12 +67,18 @@ namespace ActivitySchedulerFrontEnd.Tests
 		}
 
 		[Test]
-		public void Construct_HasAppData_SchedulesSetIncludesAllSchedules()
+		public void Construct_HasAppData_SchedulesSetIncludesAllValidSchedules()
 		{
 			// Arrange - generate a schedule and save a couple of copies
 			// in the application directory
 			string[] expectedScheduleIds = new[] { "Schedule1", "Another schedule", "2020.04.01" };
 			LoadSchedulesIntoAppData(expectedScheduleIds);
+			// Throw a garbage file into the app data folder
+			string junkFileName = $"{ApplicationDirectoryInfo.FullName}\\Junk{SchedulerService.ScheduleFileExtension}";
+			using (StreamWriter junkFileWriter = new StreamWriter(junkFileName))
+			{
+				junkFileWriter.WriteLine("Junk content");
+			}
 
 			// Act - create the schedule service
 			SchedulerService service = new SchedulerService(_applicationName, _logger);
@@ -205,10 +211,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 		{
 			List<ActivityDefinition> schedule = GenerateSchedule();
 			DirectoryInfo applicationDirectoryInfo = ApplicationDirectoryInfo;
+			ISchedulerService loaderScheduler = new SchedulerService(_applicationName, _logger);
 			foreach (string scheduleId in scheduleIds)
 			{
-				ActivityDefinition.WriteScheduleToCsvFile(schedule,
-					$"{applicationDirectoryInfo.FullName}\\{scheduleId}.csv", _logger);
+				loaderScheduler.UpdateSchedule(scheduleId, schedule);
 			}
 		}
 

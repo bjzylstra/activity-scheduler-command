@@ -26,7 +26,6 @@ namespace ActivitySchedulerFrontEnd.Tests
 		{
 			SetUpApplicationServices();
 			ServiceSetup();
-			LoadTestCamperRequests();
 		}
 
 		[OneTimeTearDown]

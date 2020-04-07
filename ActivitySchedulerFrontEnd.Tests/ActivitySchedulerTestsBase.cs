@@ -13,6 +13,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 	public class ActivitySchedulerTestsBase
 	{
 		protected const string DefaultSetName = "DefaultActivities";
+		protected const string PrebuiltScheduleId = "PrebuiltSchedule";
 
 		private string _applicationName = Guid.NewGuid().ToString();
 		protected Dictionary<string, List<ActivityDefinition>> _expectedActivitySets =
@@ -37,7 +38,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			}
 		}
 
-		protected void LoadTestCamperRequests()
+		private void LoadTestCamperRequests()
 		{
 			Assembly assembly = typeof(ActivitySchedulerTestsBase).Assembly;
 
@@ -66,7 +67,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 		protected void SetUpApplicationServices()
 		{
-		// Arrange - use constructor to create directory with 1 file.
+			LoadTestCamperRequests();
+			// Arrange - use constructor to create directory with 1 file.
 			ILogger<ActivityDefinitionService> logger = Substitute.For<ILogger<ActivityDefinitionService>>();
 			ActivityDefinitionService activityDefinitionService = new ActivityDefinitionService(_applicationName, logger);
 			// Create a couple copies of the default.
@@ -86,9 +88,22 @@ namespace ActivitySchedulerFrontEnd.Tests
 				File.WriteAllText($"{ApplicationDirectoryInfo.FullName}\\{addSet}.xml", content);
 				_expectedActivitySets.Add(addSet, new List<ActivityDefinition>(activityDefinitions));
 			}
-			_activityDefinitionService = new ActivityDefinitionService(_applicationName, logger);
+
+			ISchedulerService preloadScheduler = new SchedulerService(_applicationName,
+				Substitute.For<ILogger<SchedulerService>>());
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				activityDefinitions = activityDefinitionService.GetActivityDefinition(
+					DefaultSetName).ToList();
+				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				preloadScheduler.CreateSchedule(PrebuiltScheduleId, 
+					camperRequests, activityDefinitions);
+			}
+
 			_schedulerService = new SchedulerService(_applicationName,
 				Substitute.For<ILogger<SchedulerService>>());
+			_activityDefinitionService = new ActivityDefinitionService(_applicationName, logger);
 		}
 
 		protected void CleanupApplicationServices()

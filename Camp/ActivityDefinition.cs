@@ -40,13 +40,33 @@ namespace Camp
         public static List<ActivityDefinition> ReadScheduleFromCsvFile(String inputFilePath,
             ILogger logger)
         {
-            List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>();
             try
             {
                 using (var inFileStream = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read))
                 {
-
                     var streamReader = new StreamReader(inFileStream);
+                    return ReadScheduleFromCsvString(streamReader.ReadToEnd(), logger);
+                }
+            }
+            catch (FileNotFoundException e)
+            {
+                logger.LogError($"Could not open Activity Schedule CSV file {e.FileName}");
+            }
+            catch (Exception e)
+            {
+                logger.LogError($"Exception parsing input file {inputFilePath}: {e.Message}");
+            }
+            return null;
+        }
+
+        public static List<ActivityDefinition> ReadScheduleFromCsvString(String csvSchedule,
+            ILogger logger)
+        {
+            try
+            {
+                List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>();
+                using (var streamReader = new StringReader(csvSchedule))
+                {
                     var csvReader = new CsvReader(streamReader, new CsvConfiguration(CultureInfo.InvariantCulture)
                     {
                         HasHeaderRecord = true,
@@ -104,28 +124,24 @@ namespace Camp
                             camperIndex++;
                         }
                     }
-                    return activityDefinitions;
                 }
-            }
-            catch (FileNotFoundException e)
-            {
-                logger.LogError($"Could not open Activity Schedule CSV file {e.FileName}");
+                return activityDefinitions;
             }
             catch (CsvHelperException e)
             {
                 KeyNotFoundException keyNotFoundException = e.InnerException as KeyNotFoundException;
                 if (keyNotFoundException != null)
                 {
-                    logger.LogError($"Error parsing input file {inputFilePath}: {keyNotFoundException.Message}");
+                    logger.LogError($"Error parsing input text {csvSchedule}: {keyNotFoundException.Message}");
                 }
                 else
                 {
-                    logger.LogError($"Exception parsing input file {inputFilePath}: {e.Message}");
+                    logger.LogError($"Exception parsing input text {csvSchedule}: {e.Message}");
                 }
             }
             catch (Exception e)
             {
-                logger.LogError($"Exception parsing input file {inputFilePath}: {e.Message}");
+                logger.LogError($"Exception parsing input text {csvSchedule}: {e.Message}");
             }
             return null;
         }

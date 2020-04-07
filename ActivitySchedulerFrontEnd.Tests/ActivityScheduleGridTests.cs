@@ -27,7 +27,6 @@ namespace ActivitySchedulerFrontEnd.Tests
 		{
 			SetUpApplicationServices();
 			ServiceSetup();
-			LoadTestCamperRequests();
 		}
 
 		[OneTimeTearDown]
@@ -75,6 +74,63 @@ namespace ActivitySchedulerFrontEnd.Tests
 				c.InnerText).Distinct().ToList();
 			Assert.That(cellActivityNames, Is.EquivalentTo(activityDefinitions.Select(ad => ad.Name)),
 				"Activity row names");
+		}
+
+		[Test]
+		public void ActivityScheduleGrid_ValidSchedule_NoCapacityErrorStyles()
+		{
+			// Arrange - run schedule with successful data set
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				string scheduleId = "MySchedule";
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
+			}
+
+			// Act - load the grid component
+			RenderedComponent<ActivityScheduleGrid> component =
+				_host.AddComponent<ActivityScheduleGrid>();
+
+			// Assert - none are marked over-subscribed or under-subscribed
+			List<HtmlNode> countNodes = component.FindAll("td")
+				.Where(node => node.Attributes.AttributesWithName("data-name")
+				.Any(a => a.Value.Equals("AssignedCampers.Count"))).ToList();
+			List<string> countClass = countNodes
+				.Select(node => node.Attributes["class"].Value)
+				.ToList();
+			Assert.That(countClass, Has.None.Contains("capacity-over"),
+				"Activity block styles");
+			Assert.That(countClass, Has.None.Contains("capacity-under"),
+				"Activity block styles");
+		}
+
+		[Test]
+		public void ActivityScheduleGrid_PrebuiltValidSchedule_NoCapacityErrorStyles()
+		{
+			// Arrange - run schedule with successful data set
+			_localStorage.GetItemAsync<string>(Arg.Any<string>())
+				.Returns(Task.FromResult(PrebuiltScheduleId));
+
+			// Act - load the grid component
+			RenderedComponent<ActivityScheduleGrid> component =
+				_host.AddComponent<ActivityScheduleGrid>();
+
+			// Assert - none are marked over-subscribed or under-subscribed
+			List<HtmlNode> countNodes = component.FindAll("td")
+				.Where(node => node.Attributes.AttributesWithName("data-name")
+				.Any(a => a.Value.Equals("AssignedCampers.Count"))).ToList();
+			List<string> countClass = countNodes
+				.Select(node => node.Attributes["class"].Value)
+				.ToList();
+			Assert.That(countClass, Has.None.Contains("capacity-over"),
+				"Activity block styles");
+			Assert.That(countClass, Has.None.Contains("capacity-under"),
+				"Activity block styles");
 		}
 
 		[Test]

@@ -16,6 +16,10 @@
     Select camper requests CSV file -
     <input type="file" @ref=camperRequestsFileElement accept=".csv" />
 </p>
+<p>
+    Schedule ID:
+    <input @bind="ScheduleId" />
+</p>
 <button @onclick=ScheduleCampers>Generate Schedule</button>
 <hr />
 <textarea style="max-width: 100%;" cols="60" rows="20">@Output</textarea>
@@ -26,6 +30,11 @@
     /// Name of the cookie to record the activity set across pages.
     /// </summary>
     private const string ActivitySetKey = "activitySet";
+
+    /// <summary>
+    /// Name of the cookie to record the schedule across pages.
+    /// </summary>
+    private const string ScheduleIdKey = "scheduleId";
 
     /// <summary>
     /// Track the activity set and update the cookie for persistence across pages.
@@ -45,6 +54,11 @@
         }
     }
 
+    /// <summary>
+    /// Schedule ID for the generated schedule.
+    /// </summary>
+    public string ScheduleId;
+
     ElementReference camperRequestsFileElement;
 
     public string Output { get; set; }
@@ -57,6 +71,8 @@
         {
             ActivitySet = "DefaultActivities";
         }
+
+        ScheduleId = DateTime.Now.ToString("yyyy.MM.dd");
 
         await base.OnInitializedAsync();
     }
@@ -83,9 +99,10 @@
                     List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(memoryStream, activityDefinitions);
                     Output += $"Loaded {camperRequests.Count} camper requests{Environment.NewLine}";
 
-                    string scheduleId = DateTime.Now.ToString("YYYY.MM.dd");
-                    List<ActivityDefinition> schedule = schedulerService.CreateSchedule(scheduleId, camperRequests,
+                    List<ActivityDefinition> schedule = schedulerService.CreateSchedule(ScheduleId, camperRequests,
                         activityDefinitions);
+                    // Store the schedule ID for the other pages.
+                    await localStorage.SetItemAsync(ScheduleIdKey, ScheduleId);
                     List<Camper> unhappyCampers = schedule
                         .Where(ad => ad.Name == SchedulerService.UnscheduledActivityName)
                         .SelectMany(ad => ad.ScheduledBlocks.SelectMany(b => b.AssignedCampers))
@@ -95,12 +112,7 @@
                     if (unhappyCampers.Count > 0)
                     {
                         Output += $"{unhappyCampers.Count} campers could not be scheduled{Environment.NewLine}";
-                        // TODO: put out details
                     }
-
-                    // TODO: Generate a cookie with a unique ID
-                    // Push camperRequests and ActivityDefinitions to services on that GUID
-                    // Navigate to the ActivityDefinitions page.
                 }
                 catch (CsvHelperException e)
                 {
