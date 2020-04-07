@@ -48,11 +48,11 @@ namespace ActivitySchedulerFrontEnd.ColumnCollections
                 int[] slotIds = { 0, 1, 2, 3 };
                 SelectItem[] blockNumbers = slotIds.Select(b => new SelectItem($"{b}", $"Block {b+1}")).ToArray();
                 c.Add(ab => ab.TimeSlot).RenderValueAs(ab => $"{ab.TimeSlot+1}").Titled("Block").SetWidth(5)
-                .Filterable(true).SetListFilter(blockNumbers);
+                .Sortable(true).Filterable(true).SetListFilter(blockNumbers);
 
                 c.Add(ab => ab.AssignedCampers.Count).Titled("#").SetWidth(3)
                 .SetCellCssClassesContraint(ab => CssForCount(ab, ab.AssignedCampers.Count))
-                .Filterable(true);
+                .Sortable(true).Filterable(true);
 
                 c.Add().SetWidth(20).Titled("Campers")
                 .RenderComponentAs<ActivityCampers>(context)
