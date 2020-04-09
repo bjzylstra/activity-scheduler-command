@@ -4,11 +4,9 @@
 @inject IJSRuntime  JSRuntime
 @inject ILocalStorageService localStorage
 
-<h3>Activity Schedule Grid</h3>
+<h3>Activity Schedule Grid - @ScheduleId</h3>
 
 <p>
-    File name:
-    <input @bind="_fileName" />
     <button @onclick="DownloadFile">Export as CSV file</button>
 </p>
 
@@ -34,7 +32,7 @@ else
     private CGrid<IActivityBlock> _grid;
     private Task _task;
     private GridComponent<IActivityBlock> _component;
-    private string _fileName;
+    private List<ActivityDefinition> _schedule;
 
     /// <summary>
     /// Track the schedule ID and update the cookie for persistence
@@ -60,6 +58,7 @@ else
     {
         if (_component != null)
         {
+            schedulerService.UpdateSchedule(ScheduleId, _schedule);
             await _component.UpdateGrid();
         }
     }
@@ -68,9 +67,7 @@ else
     {
         // Schedule set comes from cookie if present.
         ScheduleId = await localStorage.GetItemAsync<string>(ScheduleIdKey);
-        _fileName = string.IsNullOrEmpty(ScheduleId)
-            ? "activitySchedule.csv"
-            : $"{ScheduleId}.csv";
+        _schedule = schedulerService.GetSchedule(ScheduleId);
         await base.OnInitializedAsync();
     }
 
@@ -99,16 +96,22 @@ else
 
     }
 
-
     public async void DownloadFile()
     {
         // Blazor native does not currently support downloading a file to the client
         // so use a Javascript function.
+        string activityScheduleFile = string.IsNullOrEmpty(ScheduleId)
+            ? "activitySchedule.csv"
+            : $"{ScheduleId}ActivitySchedule.csv";
+        string camperScheduleFile = string.IsNullOrEmpty(ScheduleId)
+            ? "camperSchedule.csv"
+            : $"{ScheduleId}CamperSchedule.csv";
+
         await JSRuntime.InvokeAsync<object>(
-            "FileSaveAs", _fileName,
+            "FileSaveAs", activityScheduleFile,
             schedulerService.WriteActivityScheduleToCsv(ScheduleId));
         await JSRuntime.InvokeAsync<object>(
-            "FileSaveAs", "camperSchedule.csv",
+            "FileSaveAs", camperScheduleFile,
             schedulerService.WriteCamperScheduleToCsv(ScheduleId));
     }
 }
