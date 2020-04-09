@@ -1,4 +1,4 @@
-﻿@inject IActivityDefinitionService ActivityDefinitionService
+﻿@inject IActivityDefinitionService activityDefinitionService
 
 
 <h4>Select an Activity Definition Set</h4>
@@ -46,8 +46,8 @@ else
     [Parameter]
     public EventCallback<string> CurrentActivitySetChanged { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        _activitySets = new List<string>(ActivityDefinitionService.GetActivitySetNames());
+        _activitySets = new List<string>(activityDefinitionService.GetActivitySetNames());
     }
 }
