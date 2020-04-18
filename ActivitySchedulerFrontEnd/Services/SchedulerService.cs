@@ -69,66 +69,11 @@ namespace ActivitySchedulerFrontEnd.Services
 				foreach (var scheduleFile in applicationDirectoryInfo.EnumerateFiles()
 					.Where(f => f.Extension.Equals(ScheduleFileExtension, StringComparison.OrdinalIgnoreCase)))
 				{
-					using (StreamReader scheduleFileReader = new StreamReader(scheduleFile.FullName))
+					List<ActivityDefinition> schedule = LoadSchedule(scheduleFile.FullName);
+					if (schedule != null)
 					{
-						// Read the length of the definitions section from the first line
-						// If anything goes wrong, log and ignore.
-						if (int.TryParse(scheduleFileReader.ReadLine(), out int definitionLength))
-						{
-							char[] buffer = new char[definitionLength];
-							int charactersRead = scheduleFileReader.Read(buffer, 0, definitionLength);
-							if (charactersRead != definitionLength)
-							{
-								// Ran out of characters
-								_logger.LogError($"{scheduleFile.FullName} specified definition length of {definitionLength} " +
-									$"but found only {charactersRead} characters after the lenght specifier.");
-								continue;
-							}
-							List<ActivityDefinition> activityDefinitions = ActivityDefinition.ReadActivityDefinitionsFromString(
-								new string(buffer), _logger);
-							if (activityDefinitions == null || activityDefinitions.Count == 0)
-							{
-								// Could not read the activity definitions
-								_logger.LogError($"{scheduleFile.FullName} could not parse the activity definitions");
-								continue;
-							}
-							List<ActivityDefinition> schedule = ActivityDefinition.ReadScheduleFromCsvString(
-								scheduleFileReader.ReadToEnd(), _logger);
-							if (schedule == null || schedule.Count == 0)
-							{
-								// Could not read the schedule
-								_logger.LogError($"{scheduleFile.FullName} could not parse the schedule csv");
-								continue;
-							}
-							// Merge the limits into the schedule.
-							bool mergeSuccessful = true;
-							foreach (ActivityDefinition scheduleActivity in schedule)
-							{
-								ActivityDefinition activityDefinition = activityDefinitions
-									.FirstOrDefault(ad => ad.Name.Equals(scheduleActivity.Name));
-								if (activityDefinition == null)
-								{
-									// Did not find the activity definition for a scheduled activity
-									mergeSuccessful = false;
-									_logger.LogError($"{scheduleFile.FullName} did not contain a definition for" +
-										$"scheduled activity '{scheduleActivity.Name}'");
-									break;
-								}
-								scheduleActivity.MaximumCapacity = activityDefinition.MaximumCapacity;
-								scheduleActivity.MinimumCapacity = activityDefinition.MinimumCapacity;
-								scheduleActivity.OptimalCapacity = activityDefinition.OptimalCapacity;
-							}
-							if (mergeSuccessful)
-							{
-								string scheduleId = scheduleFile.Name.Substring(0,
-									scheduleFile.Name.Length - ScheduleFileExtension.Length);
-								schedulesById.Add(scheduleId, schedule);
-							}
-						}
-						else
-						{
-							_logger.LogError($"{scheduleFile.FullName} is missing the definition length");
-						}
+						string scheduleId = scheduleFile.Name.Substring(0, scheduleFile.Name.Length - ScheduleFileExtension.Length);
+						schedulesById.Add(scheduleId, schedule);
 					}
 				}
 			}
@@ -137,6 +82,75 @@ namespace ActivitySchedulerFrontEnd.Services
 				_logger.LogError(e, "LoadSchedulesFromPersistence failed");
 			}
 			return schedulesById;
+		}
+
+		/// <summary>
+		/// Load a schedule from persistence.
+		/// </summary>
+		/// <param name="scheduleFileLocation">Full path to the schedule file</param>
+		/// <returns>Schedule if load is successful, otherwise null</returns>
+		private List<ActivityDefinition> LoadSchedule(string scheduleFileLocation)
+		{
+			using (StreamReader scheduleFileReader = new StreamReader(scheduleFileLocation))
+			{
+				// Read the length of the definitions section from the first line
+				// If anything goes wrong, log and ignore.
+				if (int.TryParse(scheduleFileReader.ReadLine(), out int definitionLength))
+				{
+					char[] buffer = new char[definitionLength];
+					int charactersRead = scheduleFileReader.Read(buffer, 0, definitionLength);
+					if (charactersRead != definitionLength)
+					{
+						// Ran out of characters
+						_logger.LogError($"{scheduleFileLocation} specified definition length of {definitionLength} " +
+							$"but found only {charactersRead} characters after the lenght specifier.");
+						return null;
+					}
+					List<ActivityDefinition> activityDefinitions = ActivityDefinition.ReadActivityDefinitionsFromString(
+						new string(buffer), _logger);
+					if (activityDefinitions == null || activityDefinitions.Count == 0)
+					{
+						// Could not read the activity definitions
+						_logger.LogError($"{scheduleFileLocation} could not parse the activity definitions");
+						return null;
+					}
+					List<ActivityDefinition> schedule = ActivityDefinition.ReadScheduleFromCsvString(
+						scheduleFileReader.ReadToEnd(), _logger);
+					if (schedule == null || schedule.Count == 0)
+					{
+						// Could not read the schedule
+						_logger.LogError($"{scheduleFileLocation} could not parse the schedule csv");
+						return null;
+					}
+					// Merge the limits into the schedule.
+					bool mergeSuccessful = true;
+					foreach (ActivityDefinition scheduleActivity in schedule)
+					{
+						ActivityDefinition activityDefinition = activityDefinitions
+							.FirstOrDefault(ad => ad.Name.Equals(scheduleActivity.Name));
+						if (activityDefinition == null)
+						{
+							// Did not find the activity definition for a scheduled activity
+							mergeSuccessful = false;
+							_logger.LogError($"{scheduleFileLocation} did not contain a definition for" +
+								$"scheduled activity '{scheduleActivity.Name}'");
+							break;
+						}
+						scheduleActivity.MaximumCapacity = activityDefinition.MaximumCapacity;
+						scheduleActivity.MinimumCapacity = activityDefinition.MinimumCapacity;
+						scheduleActivity.OptimalCapacity = activityDefinition.OptimalCapacity;
+					}
+					if (mergeSuccessful)
+					{
+						return schedule;
+					}
+				}
+				else
+				{
+					_logger.LogError($"{scheduleFileLocation} is missing the definition length");
+				}
+				return null;
+			}
 		}
 
 		public List<string> GetScheduleIds()
@@ -201,7 +215,52 @@ namespace ActivitySchedulerFrontEnd.Services
 				scheduleFileWriter.Write(definitions);
 				scheduleFileWriter.Write(scheduleCsv);
 			}
-			_schedulesById[scheduleId] = schedule;
+			// Generate a fresh copy of the schedule by reloading from persistence.
+			// This effectively performs a deep copy so that the client data is
+			// kept out of the service.
+			_schedulesById[scheduleId] = LoadSchedule(fileName);
+		}
+
+		public void MoveCamperToBlock(string scheduleId, string camperName, int timeSlot, string newActivityName)
+		{
+			string context = $"{nameof(MoveCamperToBlock)} for schedule '{scheduleId}'," +
+				$"camper '{camperName}',timeSlot '{timeSlot}',activity '{newActivityName}'";
+			_logger.LogDebug($"+{context}");
+
+			List<ActivityDefinition> schedule = LookupScheduleById(scheduleId);
+			if (schedule == null || !schedule.Any())
+			{
+				_logger.LogInformation($"{context}: could not find schedule");
+				throw new ArgumentException("Unknown schedule ID", nameof(scheduleId));
+			}
+
+			ActivityDefinition targetActivity = schedule.FirstOrDefault(ad => ad.Name.Equals(newActivityName));
+			if (targetActivity == null)
+			{
+				_logger.LogInformation($"{context}: could not find target activity");
+				throw new ArgumentException("Unknown activity name", nameof(newActivityName));
+			}
+			if (!targetActivity.ScheduledBlocks.Select(b => b.TimeSlot).Contains(timeSlot))
+			{
+				_logger.LogInformation($"{context}: could not find time slot");
+				throw new ArgumentException("Unknown time slot", nameof(timeSlot));
+			}
+
+			// Find the camper by name and current activity block in the schedule.
+			foreach (var sourceBlock in schedule.Select(ad => ad.ScheduledBlocks[timeSlot]))
+			{
+				Camper camper = sourceBlock.AssignedCampers.FirstOrDefault(c => camperName.Equals(c.ToString()));
+				if (camper != null)
+				{
+					// Found the camper and the source block. Make the move.
+					camper.ReAssignBlock(targetActivity.ScheduledBlocks[timeSlot]);
+					UpdateSchedule(scheduleId, schedule);
+					_logger.LogDebug($"-{context}: Camper re-assigned");
+					return;
+				}
+			}
+
+			throw new ArgumentException("Unknown camper", nameof(camperName));
 		}
 
 		private List<ActivityDefinition> LookupScheduleById(string scheduleId)
@@ -280,6 +339,15 @@ namespace ActivitySchedulerFrontEnd.Services
 		/// <returns>Activity definitions with schedule information</returns>
 		List<ActivityDefinition> CreateSchedule(string scheduleId, List<CamperRequests> camperRequests,
 			List<ActivityDefinition> activityDefinitions);
+
+		/// <summary>
+		/// Move a camper to a new activity block
+		/// </summary>
+		/// <param name="scheduleId">Id for the schedule</param>
+		/// <param name="camperName">Full cmaper name</param>
+		/// <param name="blockNumber">Block number to move</param>
+		/// <param name="newActivityName">Activity name to move to</param>
+		void MoveCamperToBlock(string scheduleId, string camperName, int blockNumber, string newActivityName);
 
 		/// <summary>
 		/// Generates the CSV for the activity schedule.

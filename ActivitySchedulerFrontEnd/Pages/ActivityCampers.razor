@@ -44,7 +44,8 @@
         ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
         if (scheduleGrid != null)
         {
-            scheduleGrid.DragPayload = (Item, camper);
+            scheduleGrid.DragPayload = (Item.ActivityDefinition.Name,
+                Item.TimeSlot, camper.ToString());
         }
     }
 
@@ -55,9 +56,9 @@
             ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
 
             return (scheduleGrid != null &&
-                scheduleGrid.DragPayload.activityBlock != null &&
-                scheduleGrid.DragPayload.camper != null &&
-                scheduleGrid.DragPayload.activityBlock.TimeSlot == Item.TimeSlot);
+                scheduleGrid.DragPayload.ActivityName != null &&
+                scheduleGrid.DragPayload.CamperName != null &&
+                scheduleGrid.DragPayload.TimeSlot == Item.TimeSlot);
         }
     }
 
@@ -78,19 +79,12 @@
         {
             // Received a camper. Add the camper to our activity block
             // and remove the camper from the other activity block.
-            scheduleGrid.DragPayload.camper.ScheduledBlocks[Item.TimeSlot] = Item;
-            scheduleGrid.DragPayload.activityBlock.AssignedCampers.Remove(
-                scheduleGrid.DragPayload.camper);
-            Item.AssignedCampers.Add(scheduleGrid.DragPayload.camper);
-
-            scheduleGrid.DragPayload = (null, null);
-
-            await scheduleGrid.UpdateGrid();
+            await scheduleGrid.ReAssignDraggedCamperToBlockAsync(Item);
         }
         else
         {
             // Cancel the drag
-            scheduleGrid.DragPayload = (null, null);
+            scheduleGrid.DragPayload = (null, 0, null);
         }
     }
 }

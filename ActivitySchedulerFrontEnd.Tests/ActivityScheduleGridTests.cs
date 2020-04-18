@@ -5,11 +5,11 @@ using Camp;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Components.Testing;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -203,17 +203,13 @@ namespace ActivitySchedulerFrontEnd.Tests
 			camperActivityCells[0].TriggerEventAsync("ondragstart", new DragEventArgs());
 
 			// Assert - Grid pay load is set.
-			Assert.That(component.Instance.DragPayload, Is.Not.Null, "Drag payload");
 			// The first cell should be archery block 0
-			Assert.That(component.Instance.DragPayload.activityBlock.ActivityDefinition.Name,
+			Assert.That(component.Instance.DragPayload.ActivityName,
 				Is.EqualTo("Archery"), "Drag payload activity name");
-			Assert.That(component.Instance.DragPayload.activityBlock.TimeSlot,
+			Assert.That(component.Instance.DragPayload.TimeSlot,
 				Is.EqualTo(0), "Drag pay load time slot");
-			// Camper should be set to first assigned camper.
-			Assert.That(component.Instance.DragPayload.activityBlock.AssignedCampers[0].FirstName,
-				Is.EqualTo(component.Instance.DragPayload.camper.FirstName), "Dragged campers first name");
-			Assert.That(component.Instance.DragPayload.activityBlock.AssignedCampers[0].LastName,
-				Is.EqualTo(component.Instance.DragPayload.camper.LastName), "Dragged campers last name");
+			Assert.That(component.Instance.DragPayload.CamperName,
+				Is.Not.Null, "Drag pay load camper name");
 		}
 
 		[Test]
@@ -223,11 +219,11 @@ namespace ActivitySchedulerFrontEnd.Tests
 			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
 				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
 			List<CamperRequests> camperRequests;
+			string scheduleId = "MySchedule";
 			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
 			{
 				camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				string scheduleId = "MySchedule";
 				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
 				_localStorage.GetItemAsync<string>(Arg.Any<string>())
 					.Returns(Task.FromResult(scheduleId));
@@ -250,9 +246,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 				node => node.ParentNode.GetAttributeValue("id", "") == 
 				activityBlockCampers[0].GetAttributeValue("id", "NotDefined"));
 			sourceCamperActivity.TriggerEventAsync("ondragstart", new DragEventArgs());
-			Camper camper = component.Instance.DragPayload.camper;
-			List<string> initialCamperActivities = camper.ScheduledBlocks
-				.Select(block => block.ActivityDefinition.Name).ToList();
+			string camperName = component.Instance.DragPayload.CamperName;
 
 			// Act - Drop on block 1 (source was block 0) for next activity
 			HtmlNode dropTarget = activityBlockCampers.First(n =>
@@ -261,16 +255,25 @@ namespace ActivitySchedulerFrontEnd.Tests
 			dropTarget.TriggerEventAsync("ondrop", new DragEventArgs());
 
 			// Assert - Grid pay load is reset.
-			Assert.That(component.Instance.DragPayload.activityBlock, Is.EqualTo(null), 
-				"Drag payload activity block");
-			Assert.That(component.Instance.DragPayload.camper, Is.EqualTo(null),
+			Assert.That(component.Instance.DragPayload.ActivityName, Is.EqualTo(null), 
+				"Drag payload activity name");
+			Assert.That(component.Instance.DragPayload.CamperName, Is.EqualTo(null),
 				"Drag payload camper");
+			Assert.That(component.Instance.DragPayload.TimeSlot, Is.EqualTo(0),
+				"Drag payload block number");
 
 			// Verify camper activities have not changed
-			List<string> finalCamperActivities = camper.ScheduledBlocks
-				.Select(block => block.ActivityDefinition.Name).ToList();
-			Assert.That(finalCamperActivities, Is.EquivalentTo(initialCamperActivities),
-				"Final camper activity set");
+			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
+			ActivityDefinition sourceActivity = schedule.Find(ad => ad.Name.Equals(activityDefinitions[0].Name));
+			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[component.Instance.DragPayload.TimeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
+				"Assigned campers on drag source");
+			ActivityDefinition targetActivity = schedule.Find(ad => ad.Name.Equals(activityDefinitions[1].Name));
+			assignedCampersByName = targetActivity.ScheduledBlocks[component.Instance.DragPayload.TimeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
+				"Assigned campers on drop target");
 		}
 
 		[Test]
@@ -280,11 +283,11 @@ namespace ActivitySchedulerFrontEnd.Tests
 			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
 				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
 			List<CamperRequests> camperRequests;
+			string scheduleId = "MySchedule";
 			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
 			{
 				camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				string scheduleId = "MySchedule";
 				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
 				_localStorage.GetItemAsync<string>(Arg.Any<string>())
 					.Returns(Task.FromResult(scheduleId));
@@ -307,28 +310,34 @@ namespace ActivitySchedulerFrontEnd.Tests
 				node => node.ParentNode.GetAttributeValue("id", "") ==
 				activityBlockCampers[0].GetAttributeValue("id", "NotDefined"));
 			sourceCamperActivity.TriggerEventAsync("ondragstart", new DragEventArgs());
-			Camper camper = component.Instance.DragPayload.camper;
-			List<string> expectedCamperActivities = camper.ScheduledBlocks
-				.Select(block => block.ActivityDefinition.Name).ToList();
+			string camperName = component.Instance.DragPayload.CamperName;
 
 			// Act - Drop on the block 0 for the next activity
 			HtmlNode dropTarget = activityBlockCampers.First(n =>
 				n.GetAttributeValue("id", "")
 				.Equals($"{activityDefinitions[1].Name}-0"));
 			dropTarget.TriggerEventAsync("ondrop", new DragEventArgs());
-			expectedCamperActivities[0] = activityDefinitions[1].Name;
 
 			// Assert - Grid pay load is reset.
-			Assert.That(component.Instance.DragPayload.activityBlock, Is.EqualTo(null),
-				"Drag payload activity block");
-			Assert.That(component.Instance.DragPayload.camper, Is.EqualTo(null),
+			Assert.That(component.Instance.DragPayload.ActivityName, Is.EqualTo(null),
+				"Drag payload activity");
+			Assert.That(component.Instance.DragPayload.CamperName, Is.EqualTo(null),
 				"Drag payload camper");
+			Assert.That(component.Instance.DragPayload.TimeSlot, Is.EqualTo(0),
+				"Drag payload time slot");
 
 			// Verify camper activities have not changed
-			List<string> finalCamperActivities = camper.ScheduledBlocks
-				.Select(block => block.ActivityDefinition.Name).ToList();
-			Assert.That(finalCamperActivities, Is.EquivalentTo(expectedCamperActivities),
-				"Final camper activity set");
+			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
+			ActivityDefinition sourceActivity = schedule.Find(ad => ad.Name.Equals(activityDefinitions[0].Name));
+			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[component.Instance.DragPayload.TimeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
+				"Assigned campers on drag source");
+			ActivityDefinition targetActivity = schedule.Find(ad => ad.Name.Equals(activityDefinitions[1].Name));
+			assignedCampersByName = targetActivity.ScheduledBlocks[component.Instance.DragPayload.TimeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
+				"Assigned campers on drop target");
 		}
 
 	}

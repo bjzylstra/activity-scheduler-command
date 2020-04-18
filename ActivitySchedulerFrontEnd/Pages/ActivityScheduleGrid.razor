@@ -6,6 +6,8 @@
 
 <h3>Activity Schedule Grid - @ScheduleId</h3>
 
+<ScheduleIdSelector @bind-CurrentScheduleId="@ScheduleId"/>
+
 <p>
     <button @onclick="DownloadFile">Export as CSV file</button>
 </p>
@@ -32,7 +34,6 @@ else
     private CGrid<IActivityBlock> _grid;
     private Task _task;
     private GridComponent<IActivityBlock> _component;
-    private List<ActivityDefinition> _schedule;
 
     /// <summary>
     /// Track the schedule ID and update the cookie for persistence
@@ -48,26 +49,35 @@ else
                 _scheduleId = value;
                 // This cannot be async so fire and hope it gets there in time.
                 localStorage.SetItemAsync(ScheduleIdKey, value);
+                if (_component != null)
+                {
+                    Task updateTask = _component.UpdateGrid();
+                }
             }
         }
     }
 
-    public (IActivityBlock activityBlock, Camper camper) DragPayload { get; set; }
+    public (string ActivityName, int TimeSlot, string CamperName) DragPayload { get; set; }
 
-    public async Task UpdateGrid()
+    public async Task ReAssignDraggedCamperToBlockAsync(IActivityBlock block)
     {
-        if (_component != null)
+        if (DragPayload.CamperName != null)
         {
-            schedulerService.UpdateSchedule(ScheduleId, _schedule);
-            await _component.UpdateGrid();
+            // Have scheduler service update the schedule.
+            schedulerService.MoveCamperToBlock(ScheduleId, DragPayload.CamperName,
+                block.TimeSlot, block.ActivityDefinition.Name);
+            if (_component != null)
+            {
+                await _component.UpdateGrid();
+            }
         }
+        DragPayload = (null, 0, null);
     }
 
     protected override async Task OnInitializedAsync()
     {
         // Schedule set comes from cookie if present.
         ScheduleId = await localStorage.GetItemAsync<string>(ScheduleIdKey);
-        _schedule = schedulerService.GetSchedule(ScheduleId);
         await base.OnInitializedAsync();
     }
 

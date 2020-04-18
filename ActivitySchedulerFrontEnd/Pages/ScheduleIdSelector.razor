@@ -1,0 +1,51 @@
+﻿@inject ISchedulerService schedulerService
+
+@if (_scheduleIds == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="col-6">
+        <div class="form-group">
+            <label for="activitySet">Schedule Id</label>
+            <select id="activitySet" @bind="CurrentScheduleId">
+                <option value="">Select</option>
+                @foreach (var scheduleId in _scheduleIds)
+                {
+                    <option value="@scheduleId">
+                        @scheduleId
+                    </option>
+                }
+            </select>
+        </div>
+    </div>
+}
+
+@code {
+    private List<string> _scheduleIds;
+    private string _currentScheduleId;
+
+    [Parameter]
+    public string CurrentScheduleId
+    {
+        get => _currentScheduleId;
+        set
+        {
+            // Update only if changed or an infinite loop will occur
+            if (value != _currentScheduleId)
+            {
+                _currentScheduleId = value;
+                CurrentScheduleIdChanged.InvokeAsync(value);
+            }
+        }
+    }
+
+    [Parameter]
+    public EventCallback<string> CurrentScheduleIdChanged { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _scheduleIds = new List<string>(schedulerService.GetScheduleIds());
+    }
+}

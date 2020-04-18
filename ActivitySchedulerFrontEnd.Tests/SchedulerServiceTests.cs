@@ -203,6 +203,159 @@ namespace ActivitySchedulerFrontEnd.Tests
 				"Number of activities in retrieved schedule");
 		}
 
+		[Test]
+		public void MoveCamperToBlock_ValidMove_CamperMoved()
+		{
+			// Arrange - generate a schedule in the service
+			string scheduleId = "MySchedule";
+			string[] expectedScheduleIds = new[] { scheduleId };
+			LoadSchedulesIntoAppData(expectedScheduleIds);
+			SchedulerService service = new SchedulerService(_applicationName, _logger);
+			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
+
+			// Act - move a camper
+			ActivityDefinition sourceActivity = schedule[0];
+			ActivityDefinition targetActivity = schedule[1];
+			int timeSlot = 0;
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			service.MoveCamperToBlock(scheduleId, camperName, timeSlot, targetActivity.Name);
+
+			// Assert - camper is moved.
+			schedule = service.GetSchedule(scheduleId);
+			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
+				"Assigned campers on move source");
+			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
+				"Assigned campers on move target");
+		}
+
+		[Test]
+		public void MoveCamperToBlock_BadScheduleId_CamperNotMoved()
+		{
+			// Arrange - generate a schedule in the service
+			string scheduleId = "MySchedule";
+			string[] expectedScheduleIds = new[] { scheduleId };
+			LoadSchedulesIntoAppData(expectedScheduleIds);
+			SchedulerService service = new SchedulerService(_applicationName, _logger);
+			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
+
+			// Act/Assert - move a camper
+			ActivityDefinition sourceActivity = schedule[0];
+			ActivityDefinition targetActivity = schedule[1];
+			int timeSlot = 0;
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+				service.MoveCamperToBlock("bogusScheduleId", camperName, timeSlot, targetActivity.Name));
+			Assert.That(exception.ParamName, Is.EqualTo("scheduleId"), "Exception parameter");
+
+			// Verify camper is not moved.
+			schedule = service.GetSchedule(scheduleId);
+			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
+				"Assigned campers on move source");
+			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
+				"Assigned campers on move target");
+		}
+
+		[Test]
+		public void MoveCamperToBlock_BadTargetActivity_CamperNotMoved()
+		{
+			// Arrange - generate a schedule in the service
+			string scheduleId = "MySchedule";
+			string[] expectedScheduleIds = new[] { scheduleId };
+			LoadSchedulesIntoAppData(expectedScheduleIds);
+			SchedulerService service = new SchedulerService(_applicationName, _logger);
+			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
+
+			// Act - move a camper
+			ActivityDefinition sourceActivity = schedule[0];
+			ActivityDefinition targetActivity = schedule[1];
+			int timeSlot = 0;
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+				service.MoveCamperToBlock(scheduleId, camperName, timeSlot, "No Such Activity"));
+			Assert.That(exception.ParamName, Is.EqualTo("newActivityName"), "Exception parameter");
+
+			// Verify camper is not moved.
+			schedule = service.GetSchedule(scheduleId);
+			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
+				"Assigned campers on move source");
+			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
+				"Assigned campers on move target");
+		}
+
+		[Test]
+		public void MoveCamperToBlock_BadTimeSlot_CamperNotMoved()
+		{
+			// Arrange - generate a schedule in the service
+			string scheduleId = "MySchedule";
+			string[] expectedScheduleIds = new[] { scheduleId };
+			LoadSchedulesIntoAppData(expectedScheduleIds);
+			SchedulerService service = new SchedulerService(_applicationName, _logger);
+			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
+
+			// Act - move a camper
+			ActivityDefinition sourceActivity = schedule[0];
+			ActivityDefinition targetActivity = schedule[1];
+			int timeSlot = 0;
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+				service.MoveCamperToBlock(scheduleId, camperName, Int16.MaxValue, targetActivity.Name));
+			Assert.That(exception.ParamName, Is.EqualTo("timeSlot"), "Exception parameter");
+
+			// Verify camper is not moved.
+			schedule = service.GetSchedule(scheduleId);
+			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
+				"Assigned campers on move source");
+			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
+				"Assigned campers on move target");
+		}
+
+		[Test]
+		public void MoveCamperToBlock_UnknownCamper_CamperNotMoved()
+		{
+			// Arrange - generate a schedule in the service
+			string scheduleId = "MySchedule";
+			string[] expectedScheduleIds = new[] { scheduleId };
+			LoadSchedulesIntoAppData(expectedScheduleIds);
+			SchedulerService service = new SchedulerService(_applicationName, _logger);
+			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
+
+			// Act - move a camper
+			ActivityDefinition sourceActivity = schedule[0];
+			ActivityDefinition targetActivity = schedule[1];
+			int timeSlot = 0;
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+				service.MoveCamperToBlock(scheduleId, "Unknown camper", timeSlot, targetActivity.Name));
+			Assert.That(exception.ParamName, Is.EqualTo("camperName"), "Exception parameter");
+
+			// Verify camper is not moved.
+			schedule = service.GetSchedule(scheduleId);
+			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
+				"Assigned campers on move source");
+			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
+				.AssignedCampers.Select(c => c.ToString()).ToList();
+			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
+				"Assigned campers on move target");
+		}
+
 		/// <summary>
 		/// Create a set of schedule files with the provided IDS
 		/// </summary>

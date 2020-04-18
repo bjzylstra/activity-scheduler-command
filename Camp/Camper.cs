@@ -164,6 +164,20 @@ namespace Camp
             return mayAssign;
         }
 
+        public void ReAssignBlock(IActivityBlock newActivity)
+        {
+            IActivityBlock previousActivity = _scheduledBlocks.FirstOrDefault(
+                b => b.TimeSlot == newActivity.TimeSlot);
+            if (previousActivity != null)
+            {
+                previousActivity.RemoveCamper(this);
+                _scheduledBlocks.Remove(previousActivity);
+            }
+            newActivity.AddCamper(this);
+            _scheduledBlocks.Add(newActivity);
+            _isAvailableBlocks[newActivity.TimeSlot] = false;
+        }
+
         public override string ToString()
         {
             return String.Format("{0}, {1}", LastName, FirstName);

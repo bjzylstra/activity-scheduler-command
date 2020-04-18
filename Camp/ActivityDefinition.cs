@@ -110,8 +110,8 @@ namespace Camp
                                 string[] camperNameParts = camperFullName.Split(',');
                                 camper = new Camper
                                 {
-                                    FirstName = camperNameParts[1].Trim('"'),
-                                    LastName = camperNameParts[0].Trim('"')
+                                    FirstName = camperNameParts[1].Trim('"').Trim(),
+                                    LastName = camperNameParts[0].Trim('"').Trim()
                                 };
                                 campersByName.Add(camperFullName, camper);
                             }

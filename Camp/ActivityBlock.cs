@@ -16,6 +16,10 @@ namespace Camp
         string GetCamperName(int camperIndex);
 
         bool TryAddCamper(Camper camper);
+
+        void AddCamper(Camper camper);
+
+        void RemoveCamper(Camper camper);
     }
 
     /// <summary>
@@ -64,6 +68,24 @@ namespace Camp
                 didAdd = true;
             }
             return didAdd;
+        }
+
+        /// <summary>
+        /// Add the camper without concern for limits
+        /// </summary>
+        /// <param name="camper">Camper to add</param>
+        public void AddCamper(Camper camper)
+        {
+            _assignedCampers.Add(camper);
+        }
+
+        /// <summary>
+        /// Remove the camper from the activity block
+        /// </summary>
+        /// <param name="camper">Camper to remove</param>
+        public void RemoveCamper(Camper camper)
+        {
+            _assignedCampers.Remove(camper);
         }
     }
 }
