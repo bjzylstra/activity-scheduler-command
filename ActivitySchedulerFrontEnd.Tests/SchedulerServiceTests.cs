@@ -217,17 +217,17 @@ namespace ActivitySchedulerFrontEnd.Tests
 			ActivityDefinition sourceActivity = schedule[0];
 			ActivityDefinition targetActivity = schedule[1];
 			int timeSlot = 0;
-			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].FullName;
 			service.MoveCamperToBlock(scheduleId, camperName, timeSlot, targetActivity.Name);
 
 			// Assert - camper is moved.
 			schedule = service.GetSchedule(scheduleId);
 			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
 				"Assigned campers on move source");
 			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
 				"Assigned campers on move target");
 		}
@@ -246,7 +246,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			ActivityDefinition sourceActivity = schedule[0];
 			ActivityDefinition targetActivity = schedule[1];
 			int timeSlot = 0;
-			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].FullName;
 			ArgumentException exception = Assert.Throws<ArgumentException>(() =>
 				service.MoveCamperToBlock("bogusScheduleId", camperName, timeSlot, targetActivity.Name));
 			Assert.That(exception.ParamName, Is.EqualTo("scheduleId"), "Exception parameter");
@@ -254,11 +254,11 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Verify camper is not moved.
 			schedule = service.GetSchedule(scheduleId);
 			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
 				"Assigned campers on move source");
 			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
 				"Assigned campers on move target");
 		}
@@ -277,7 +277,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			ActivityDefinition sourceActivity = schedule[0];
 			ActivityDefinition targetActivity = schedule[1];
 			int timeSlot = 0;
-			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].FullName;
 			ArgumentException exception = Assert.Throws<ArgumentException>(() =>
 				service.MoveCamperToBlock(scheduleId, camperName, timeSlot, "No Such Activity"));
 			Assert.That(exception.ParamName, Is.EqualTo("newActivityName"), "Exception parameter");
@@ -285,11 +285,11 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Verify camper is not moved.
 			schedule = service.GetSchedule(scheduleId);
 			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
 				"Assigned campers on move source");
 			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
 				"Assigned campers on move target");
 		}
@@ -308,7 +308,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			ActivityDefinition sourceActivity = schedule[0];
 			ActivityDefinition targetActivity = schedule[1];
 			int timeSlot = 0;
-			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].FullName;
 			ArgumentException exception = Assert.Throws<ArgumentException>(() =>
 				service.MoveCamperToBlock(scheduleId, camperName, Int16.MaxValue, targetActivity.Name));
 			Assert.That(exception.ParamName, Is.EqualTo("timeSlot"), "Exception parameter");
@@ -316,11 +316,11 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Verify camper is not moved.
 			schedule = service.GetSchedule(scheduleId);
 			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
 				"Assigned campers on move source");
 			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
 				"Assigned campers on move target");
 		}
@@ -339,7 +339,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			ActivityDefinition sourceActivity = schedule[0];
 			ActivityDefinition targetActivity = schedule[1];
 			int timeSlot = 0;
-			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].ToString();
+			string camperName = sourceActivity.ScheduledBlocks[timeSlot].AssignedCampers[0].FullName;
 			ArgumentException exception = Assert.Throws<ArgumentException>(() =>
 				service.MoveCamperToBlock(scheduleId, "Unknown camper", timeSlot, targetActivity.Name));
 			Assert.That(exception.ParamName, Is.EqualTo("camperName"), "Exception parameter");
@@ -347,11 +347,11 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Verify camper is not moved.
 			schedule = service.GetSchedule(scheduleId);
 			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
 				"Assigned campers on move source");
 			assignedCampersByName = targetActivity.ScheduledBlocks[timeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
 				"Assigned campers on move target");
 		}

@@ -25,7 +25,7 @@ namespace ScheduleToSpreadsheet
                 .SelectMany(block => block.AssignedCampers)
                 ).Distinct().ToList();
             Comparer<Camper> camperComparer = Comparer<Camper>
-                .Create((c1, c2) => c1.ToString().CompareTo(c2.ToString()));
+                .Create((c1, c2) => c1.FullName.CompareTo(c2.FullName));
             _camperSchedule.Sort(camperComparer);
 		}
 
@@ -56,7 +56,7 @@ namespace ScheduleToSpreadsheet
             foreach (var camper in _camperSchedule)
             {
                 column = _worksheet.Cells.Start.Column;
-                _worksheet.SetValue(row, column, camper.ToString());
+                _worksheet.SetValue(row, column, camper.FullName);
 				int numberOfScheduledBlocks = camper.ScheduledBlocks.Count(b => b != null);
 				if (numberOfScheduledBlocks < maxBlockNumber)
 				{

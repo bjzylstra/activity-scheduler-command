@@ -9,9 +9,9 @@
         @ondragleave="HandleDragLeave">
         @foreach (var camper in Item.AssignedCampers)
         {
-            <td class="activity-camper-cell" draggable="true" title="@camper.ToString()"
+            <td class="activity-camper-cell" draggable="true" title="@camper.FullName"
                 @ondragstart="@(() => HandleDragStart(camper))">
-                @camper.ToString()
+                @camper.FullName
             </td>
         }
     </tr>
@@ -35,7 +35,7 @@
     {
         // Sort the campers in the schedule
         Item.AssignedCampers.Sort((Camper a, Camper b) =>
-            String.Compare(a.ToString(), b.ToString()));
+            String.Compare(a.FullName, b.FullName));
         base.OnParametersSet();
     }
 
@@ -45,7 +45,7 @@
         if (scheduleGrid != null)
         {
             scheduleGrid.DragPayload = (Item.ActivityDefinition.Name,
-                Item.TimeSlot, camper.ToString());
+                Item.TimeSlot, camper.FullName);
         }
     }
 

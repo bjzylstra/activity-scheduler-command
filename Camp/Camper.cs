@@ -15,6 +15,8 @@ namespace Camp
         public String LastName { get; set; }
         public String FirstName { get; set; }
 
+        public String FullName { get => String.Format("{0}, {1}", LastName, FirstName); }
+
         private Boolean[] _isAvailableBlocks;
         private List<IActivityBlock> _scheduledBlocks = new List<IActivityBlock>();
         public List<IActivityBlock> ScheduledBlocks { get { return _scheduledBlocks; } }
@@ -180,7 +182,7 @@ namespace Camp
 
         public override string ToString()
         {
-            return String.Format("{0}, {1}", LastName, FirstName);
+            return FullName;
         }
     }
 }

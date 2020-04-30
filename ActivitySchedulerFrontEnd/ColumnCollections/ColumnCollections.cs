@@ -59,5 +59,24 @@ namespace ActivitySchedulerFrontEnd.ColumnCollections
                 .Css("activity-camper-set");
             };
         }
+
+        public static Action<IGridColumnCollection<Camper>> CamperScheduleColumns = c =>
+        {
+            c.Add(camper => camper.FullName).Titled("Camper Name").SetWidth(30)
+                .Sortable(true);
+            c.Add().Titled("Block 1").SetWidth(20).RenderValueAs(camper => 
+                camper.ScheduledBlocks.FirstOrDefault(sb => sb.TimeSlot == 0)
+                    ?.ActivityDefinition.Name);
+            c.Add().Titled("Block 2").SetWidth(20).RenderValueAs(camper =>
+                camper.ScheduledBlocks.FirstOrDefault(sb => sb.TimeSlot == 1)
+                    ?.ActivityDefinition.Name);
+            c.Add().Titled("Block 3").SetWidth(20).RenderValueAs(camper =>
+                camper.ScheduledBlocks.FirstOrDefault(sb => sb.TimeSlot == 2)
+                    ?.ActivityDefinition.Name);
+            c.Add().Titled("Block 4").SetWidth(20).RenderValueAs(camper =>
+                camper.ScheduledBlocks.FirstOrDefault(sb => sb.TimeSlot == 3)
+                    ?.ActivityDefinition.Name);
+        };
+
     }
 }

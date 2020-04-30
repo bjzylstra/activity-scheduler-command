@@ -266,12 +266,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
 			ActivityDefinition sourceActivity = schedule.Find(ad => ad.Name.Equals(activityDefinitions[0].Name));
 			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[component.Instance.DragPayload.TimeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
 				"Assigned campers on drag source");
 			ActivityDefinition targetActivity = schedule.Find(ad => ad.Name.Equals(activityDefinitions[1].Name));
 			assignedCampersByName = targetActivity.ScheduledBlocks[component.Instance.DragPayload.TimeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
 				"Assigned campers on drop target");
 		}
@@ -330,12 +330,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
 			ActivityDefinition sourceActivity = schedule.Find(ad => ad.Name.Equals(activityDefinitions[0].Name));
 			List<string> assignedCampersByName = sourceActivity.ScheduledBlocks[component.Instance.DragPayload.TimeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.None.EqualTo(camperName),
 				"Assigned campers on drag source");
 			ActivityDefinition targetActivity = schedule.Find(ad => ad.Name.Equals(activityDefinitions[1].Name));
 			assignedCampersByName = targetActivity.ScheduledBlocks[component.Instance.DragPayload.TimeSlot]
-				.AssignedCampers.Select(c => c.ToString()).ToList();
+				.AssignedCampers.Select(c => c.FullName).ToList();
 			Assert.That(assignedCampersByName, Has.One.EqualTo(camperName),
 				"Assigned campers on drop target");
 		}

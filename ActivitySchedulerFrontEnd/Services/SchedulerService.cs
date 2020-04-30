@@ -249,7 +249,7 @@ namespace ActivitySchedulerFrontEnd.Services
 			// Find the camper by name and current activity block in the schedule.
 			foreach (var sourceBlock in schedule.Select(ad => ad.ScheduledBlocks[timeSlot]))
 			{
-				Camper camper = sourceBlock.AssignedCampers.FirstOrDefault(c => camperName.Equals(c.ToString()));
+				Camper camper = sourceBlock.AssignedCampers.FirstOrDefault(c => camperName.Equals(c.FullName));
 				if (camper != null)
 				{
 					// Found the camper and the source block. Make the move.
@@ -283,12 +283,38 @@ namespace ActivitySchedulerFrontEnd.Services
 			return server.ItemsToDisplay;
 		}
 
-		public ItemsDTO<IActivityBlock> GetActivityBlocksGridRows(string scheduleId, QueryDictionary<StringValues> query)
+		private List<Camper> GetCampersForScheduleId(string scheduleId)
 		{
-			var server = new GridServer<IActivityBlock>(
-				LookupScheduleById(scheduleId).SelectMany(ad => ad.ScheduledBlocks),
+			List<ActivityDefinition> schedule = LookupScheduleById(scheduleId);
+
+			Dictionary<string, Camper> campersByName = new Dictionary<string, Camper>();
+
+			foreach (ActivityDefinition activity in schedule)
+			{
+				foreach (IActivityBlock activityBlock in activity.ScheduledBlocks)
+				{
+					foreach (Camper camper in activityBlock.AssignedCampers)
+					{
+						if (!campersByName.ContainsKey(camper.FullName))
+						{
+							campersByName.Add(camper.FullName, camper);
+						}
+					}
+				}
+			}
+
+			List<Camper> campers = campersByName.Values.ToList();
+			campers.Sort((a,b) => a.FullName.CompareTo(b.FullName));
+			return campers;
+		}
+
+		public ItemsDTO<Camper> GetCampersGridRows(string scheduleId, Action<IGridColumnCollection<Camper>> columns, QueryDictionary<StringValues> query)
+		{
+
+			var server = new GridServer<Camper>(
+				GetCampersForScheduleId(scheduleId),
 				new QueryCollection(query), true,
-			"activityScheduleGrid", null).AutoGenerateColumns();
+			"camperScheduleGrid", columns);
 
 			return server.ItemsToDisplay;
 		}
@@ -364,24 +390,25 @@ namespace ActivitySchedulerFrontEnd.Services
 		string WriteCamperScheduleToCsv(string scheduleId);
 
 		/// <summary>
-		/// Get grid rows for a schedule
+		/// Get grid rows for an activity schedule
 		/// </summary>
 		/// <param name="scheduleId">Id of schedule to show</param>
-		/// <param name="columns">Column details</param>
+		/// <param name="columns">Activity schedule column details</param>
 		/// <param name="query">Query</param>
-		/// <returns></returns>
+		/// <returns>Activity schedule Items</returns>
 		ItemsDTO<IActivityBlock> GetActivityBlocksGridRows(string scheduleId,
 			Action<IGridColumnCollection<IActivityBlock>> columns,
 			QueryDictionary<StringValues> query);
 
 		/// <summary>
-		/// Get grid rows for a schedule
+		/// Get grid rows for a camper schedule
 		/// </summary>
 		/// <param name="scheduleId">Id of schedule to show</param>
+		/// <param name="columns">Camper schedule column details</param>
 		/// <param name="query">Query</param>
-		/// <returns></returns>
-		ItemsDTO<IActivityBlock> GetActivityBlocksGridRows(string scheduleId,
+		/// <returns>Camper schedule Items</returns>
+		ItemsDTO<Camper> GetCampersGridRows(string scheduleId,
+			Action<IGridColumnCollection<Camper>> columns,
 			QueryDictionary<StringValues> query);
-
 	}
 }

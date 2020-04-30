@@ -8,12 +8,17 @@
 <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
     <ul class="nav flex-column">
         <li class="nav-item px-3">
-            <NavLink class="nav-link" href="">
-                <span class="oi oi-home" aria-hidden="true"></span> Activity Schedules
+            <NavLink class="nav-link" href="activity-schedule">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Activity Schedules
             </NavLink>
         </li>
         <li class="nav-item px-3">
-            <NavLink class="nav-link" href="schedule" Match="NavLinkMatch.All">
+            <NavLink class="nav-link" href="camper-schedule">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Camper Schedules
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="create-schedule" Match="NavLinkMatch.All">
                 <span class="oi oi-list-rich" aria-hidden="true"></span> Create a Schedule
             </NavLink>
         </li>

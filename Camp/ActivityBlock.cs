@@ -50,7 +50,7 @@ namespace Camp
         public string GetCamperName(int camperIndex)
         {
             return camperIndex < _assignedCampers.Count 
-                ? _assignedCampers[camperIndex].ToString() 
+                ? _assignedCampers[camperIndex].FullName 
                 : string.Empty;
         }
 
