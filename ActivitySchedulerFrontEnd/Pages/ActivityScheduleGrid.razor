@@ -1,16 +1,19 @@
-﻿@page "/activity-schedules"
-
-@inject ISchedulerService schedulerService
+﻿@inject ISchedulerService schedulerService
 @inject IJSRuntime  JSRuntime
 @inject ILocalStorageService localStorage
 
-<h3>Activity Schedule Grid - @ScheduleId</h3>
+<h3>Activity Schedule - @ScheduleId</h3>
 
-<ScheduleIdSelector @bind-CurrentScheduleId="@ScheduleId"/>
-
-<p>
-    <button @onclick="DownloadFile">Export as CSV file</button>
-</p>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <ScheduleIdSelector @bind-CurrentScheduleId="@ScheduleId" />
+        </div>
+        <div class="col">
+            <button @onclick="DownloadFile">Export as CSV file</button>
+        </div>
+    </div>
+</div>
 
 @if (_task != null && _task.IsCompleted)
 {
