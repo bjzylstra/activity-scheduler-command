@@ -77,8 +77,8 @@ else
             IGridClient<Camper> gridClient = new GridClient<Camper>(q =>
             schedulerService.GetCampersGridRows(
                 ScheduleId,
-                ColumnCollections.CamperScheduleColumns, q), query, false, "activityScheduleGrid",
-                ColumnCollections.CamperScheduleColumns)
+                ColumnCollections.CamperScheduleColumns(this, ScheduleId), q), query, false, "activityScheduleGrid",
+                ColumnCollections.CamperScheduleColumns(this, ScheduleId))
                 .SetStriped(true);
             _grid = gridClient.Grid;
             // Set new items to grid
@@ -91,7 +91,17 @@ else
             // tell the underlying component to update
             await _component.UpdateGrid();
         }
+    }
 
+    public async Task AssignActivityToCamperBlockAsync(string camperName, int timeSlot,
+        string activityDefinitionName)
+    {
+        schedulerService.MoveCamperToBlock(ScheduleId, camperName, timeSlot,
+            activityDefinitionName);
+        if (_component != null)
+        {
+            await _component.UpdateGrid();
+        }
     }
 
     public async void DownloadFile()

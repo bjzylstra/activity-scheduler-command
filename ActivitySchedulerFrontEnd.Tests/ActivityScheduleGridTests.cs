@@ -9,7 +9,6 @@ using Microsoft.JSInterop;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;

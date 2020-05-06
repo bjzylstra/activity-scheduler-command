@@ -1,0 +1,86 @@
+﻿@using GridShared.Columns
+@implements ICustomGridComponent<Camper>
+@inject ISchedulerService schedulerService
+
+@if (_activityNames == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <select id="@Id" @bind="CurrentActivityName">
+        @foreach (var activityName in _activityNames)
+        {
+            <option value="@activityName">
+                @activityName
+            </option>
+        }
+    </select>
+}
+
+@code {
+    public class Initializer
+    {
+        public CamperScheduleGrid ScheduleGrid { get; set; }
+        public int TimeSlot { get; set; }
+    }
+
+    private List<string> _activityNames;
+
+    [Parameter]
+    public Camper Item { get; set; }
+
+    [Parameter]
+    public object Object { get; set; }
+
+    private string Id
+    {
+        get
+        {
+            Initializer initializer = Object as Initializer;
+            return initializer == null ? ""
+                : $"{Item.FullName}-{initializer.TimeSlot}";
+        }
+    }
+
+    private string _currentActivityName;
+    private string CurrentActivityName
+    {
+        get => _currentActivityName;
+        set
+        {
+            if (value != _currentActivityName)
+            {
+                string previousActivityName = _currentActivityName;
+                _currentActivityName = value;
+                Initializer initializer = Object as Initializer;
+                if (initializer != null)
+                {
+                    // Setter cannot be async so fire and forget.
+                    Task updateTask = initializer.ScheduleGrid
+                        .AssignActivityToCamperBlockAsync(Item.FullName,
+                            initializer.TimeSlot, _currentActivityName);
+                }
+            }
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        Initializer initializer = Object as Initializer;
+        if (initializer != null)
+        {
+            List<ActivityDefinition> activityDefinitions = schedulerService.GetSchedule(
+                initializer.ScheduleGrid.ScheduleId);
+            _activityNames = activityDefinitions
+                .Where(ad => !ad.Name.Equals(SchedulerService.UnscheduledActivityName))
+                .Select(ad => ad.Name)
+                .ToList();
+            _currentActivityName = Item.ScheduledBlocks
+                .First(sb => sb.TimeSlot == initializer.TimeSlot)?
+                .ActivityDefinition.Name;
+        }
+
+        base.OnParametersSet();
+    }
+}
