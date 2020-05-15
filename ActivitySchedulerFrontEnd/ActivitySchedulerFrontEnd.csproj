@@ -1,7 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <DebugType>full</DebugType>
+    <Version>3.0.0</Version>
+    <ReleaseDirectory>..\$(MSBuildThisFileName)$(Version)</ReleaseDirectory>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,5 +37,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Camp\Camp.csproj" />
   </ItemGroup>
+
+  <Target Name="BuildRelease">
+    <MakeDir Directories="$(ReleaseDirectory)\publish" />
+    <Copy SourceFiles="launchChrome.bat;launchEdge.bat" DestinationFolder="$(ReleaseDirectory)" />
+    <Exec Command="dotnet publish ActivitySchedulerFrontEnd.csproj -o $(ReleaseDirectory)\publish" />
+    <ZipDirectory SourceDirectory="$(ReleaseDirectory)" DestinationFile="$(ReleaseDirectory).zip" />
+  </Target>
 
 </Project>
