@@ -1,0 +1,132 @@
+﻿@page "/activity-schedule"
+
+@inject ISchedulerService schedulerService
+@inject IJSRuntime  JSRuntime
+@inject ILocalStorageService localStorage
+
+<h3>Activity Schedule - @ScheduleId</h3>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <ScheduleIdSelector @bind-CurrentScheduleId="@ScheduleId" />
+        </div>
+        <div class="col">
+            <button @onclick="DownloadFile">Export as CSV file</button>
+        </div>
+    </div>
+</div>
+
+@if (_task != null && _task.IsCompleted)
+{
+    <div class="row">
+        <div class="col-md-12">
+            <GridComponent @ref="_component" T="IActivityBlock" Grid="@_grid"></GridComponent>
+        </div>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@code {
+    /// <summary>
+    /// Name of the cookie to record the schedule across pages.
+    /// </summary>
+    private const string ScheduleIdKey = "scheduleId";
+
+    private CGrid<IActivityBlock> _grid;
+    private Task _task;
+    private GridComponent<IActivityBlock> _component;
+
+    /// <summary>
+    /// Track the schedule ID and update the cookie for persistence
+    /// </summary>
+    private string _scheduleId;
+    public string ScheduleId
+    {
+        get => _scheduleId;
+        set
+        {
+            if (value != _scheduleId)
+            {
+                _scheduleId = value;
+                // This cannot be async so fire and hope it gets there in time.
+                localStorage.SetItemAsync(ScheduleIdKey, value);
+                if (_component != null)
+                {
+                    Task updateTask = _component.UpdateGrid();
+                }
+            }
+        }
+    }
+
+    public (string ActivityName, int TimeSlot, string CamperName) DragPayload { get; set; }
+
+    public async Task ReAssignDraggedCamperToBlockAsync(IActivityBlock block)
+    {
+        if (DragPayload.CamperName != null)
+        {
+            // Have scheduler service update the schedule.
+            schedulerService.MoveCamperToBlock(ScheduleId, DragPayload.CamperName,
+                block.TimeSlot, block.ActivityDefinition.Name);
+            if (_component != null)
+            {
+                await _component.UpdateGrid();
+            }
+        }
+        DragPayload = (null, 0, null);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Schedule set comes from cookie if present.
+        ScheduleId = await localStorage.GetItemAsync<string>(ScheduleIdKey);
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var query = new QueryDictionary<StringValues>();
+        if (_component == null)
+        {
+            IGridClient<IActivityBlock> gridClient = new GridClient<IActivityBlock>(q =>
+            schedulerService.GetActivityBlocksGridRows(
+                ScheduleId,
+                ColumnCollections.ActivityScheduleColumns(this), q), query, false, "activityScheduleGrid",
+                ColumnCollections.ActivityScheduleColumns(this))
+                .SetStriped(true);
+            _grid = gridClient.Grid;
+            // Set new items to grid
+            _task = gridClient.UpdateGrid();
+            await _task;
+        }
+        else
+        {
+            // Parameter on an existing grid has changed -
+            // tell the underlying component to update
+            await _component.UpdateGrid();
+        }
+
+    }
+
+    public async void DownloadFile()
+    {
+        // Blazor native does not currently support downloading a file to the client
+        // so use a Javascript function.
+        string activityScheduleFile = string.IsNullOrEmpty(ScheduleId)
+            ? "activitySchedule.csv"
+            : $"{ScheduleId}ActivitySchedule.csv";
+        string camperScheduleFile = string.IsNullOrEmpty(ScheduleId)
+            ? "camperSchedule.csv"
+            : $"{ScheduleId}CamperSchedule.csv";
+
+        await JSRuntime.InvokeAsync<object>(
+            "FileSaveAs", activityScheduleFile,
+            schedulerService.WriteActivityScheduleToCsv(ScheduleId));
+        await JSRuntime.InvokeAsync<object>(
+            "FileSaveAs", camperScheduleFile,
+            schedulerService.WriteCamperScheduleToCsv(ScheduleId));
+    }
+}

@@ -1,0 +1,99 @@
+﻿Camper's Last Name,Camper's First Name,Cabin Mate Request,Activity Choice #1,Activity Choice #2,Activity Choice #3,Activity Choice #4,Alternate Activity Choice
+A,1,S,Extreme Water Sports,Creation Exploration,Team Sports,Archery,Splash (beach activities)
+B,2,U,Horseplay,Archery,Wall Climbing,Creation Exploration,Team Sports
+C,3,Y,Extreme Water Sports,Horseplay,Creation Exploration,Wall Climbing,Archery
+D,4,X,Team Sports,Wall Climbing,Horseplay,Crafts,Archery
+E,5,A,Wall Climbing,Archery,Creation Exploration,Team Sports,Extreme Water Sports
+F,6,,Extreme Water Sports,Canoeing,Team Sports,Archery,Extreme Water Sports
+G,7,F,Extreme Water Sports,Crafts,Splash (beach activities),Canoeing,Horseplay
+H,8,,Canoeing,Team Sports,Extreme Water Sports,Wall Climbing,Splash (beach activities)
+I,9,G,Horseplay,Creation Exploration,Crafts,Archery,Wall Climbing
+J,10,,Archery,Canoeing,Crafts,Horseplay,Team Sports
+K,11,H,Horseplay,Creation Exploration,Canoeing,Splash (beach activities),Archery
+L,12,,Extreme Water Sports,Creation Exploration,Wall Climbing,Canoeing,Team Sports
+M,13,,Creation Exploration,Archery,Team Sports,Canoeing,Splash (beach activities)
+N,14,F,Extreme Water Sports,Horseplay,Creation Exploration,Canoeing,Team Sports
+O,15,E,Archery,Canoeing,Extreme Water Sports,Creation Exploration,Team Sports
+P,16,H,Wall Climbing,Archery,Splash (beach activities),Canoeing,Creation Exploration
+Q,17,,Extreme Water Sports,Archery,Wall Climbing,Team Sports,Horseplay
+R,18,D,Creation Exploration,Team Sports,Extreme Water Sports,Archery,Canoeing
+S,19,A,Team Sports,Wall Climbing,Extreme Water Sports,Crafts,Archery
+T,20,,Extreme Water Sports,Wall Climbing,Creation Exploration,Horseplay,Archery
+U,21,B,Splash (beach activities),Creation Exploration,Horseplay,Crafts,Wall Climbing
+V,22,B,Team Sports,Archery,Creation Exploration,Crafts,Wall Climbing
+W,23,,Horseplay,Archery,Crafts,Creation Exploration,Team Sports
+X,24,S,Extreme Water Sports,Wall Climbing,Archery,Canoeing,Team Sports
+Y,25,T,Extreme Water Sports,Horseplay,Creation Exploration,Canoeing,Wall Climbing
+Z,26,U,Horseplay,Extreme Water Sports,Wall Climbing,Creation Exploration,Archery
+AA,27,V,Horseplay,Extreme Water Sports,Wall Climbing,Creation Exploration,Archery
+AB,28,W,Team Sports,Wall Climbing,Horseplay,Crafts,Canoeing
+AC,29,X,Horseplay,Wall Climbing,Crafts,Team Sports,Splash (beach activities)
+AD,30,,Archery,Creation Exploration,Team Sports,Splash (beach activities),Crafts
+AE,31,Y,Creation Exploration,Extreme Water Sports,Wall Climbing,Team Sports,Canoeing
+AF,32,,Creation Exploration,Crafts,Splash (beach activities),Team Sports,Wall Climbing
+AG,33,,Horseplay,Canoeing,Splash (beach activities),Team Sports,Archery
+AH,34,T,Creation Exploration,Horseplay,Extreme Water Sports,Team Sports,Crafts
+AI,35,T,Creation Exploration,Horseplay,Extreme Water Sports,Team Sports,Crafts
+AJ,36,,Creation Exploration,Team Sports,Extreme Water Sports,Wall Climbing,Horseplay
+AK,37,V,Extreme Water Sports,Wall Climbing,Horseplay,Canoeing,Splash (beach activities)
+AL,38,,Wall Climbing,Creation Exploration,Archery,Team Sports,Extreme Water Sports
+AM,39,S,Extreme Water Sports,Archery,Team Sports,Canoeing,Creation Exploration
+AN,40,X,Horseplay,Extreme Water Sports,Crafts,Canoeing,Archery
+AO,41,W,Horseplay,Wall Climbing,Creation Exploration,Team Sports,Crafts
+AP,42,W,Extreme Water Sports,Archery,Splash (beach activities),Wall Climbing,Team Sports
+AQ,43,,Horseplay,Canoeing,Team Sports,Wall Climbing,Archery
+AR,44,Y,Archery,Team Sports,Wall Climbing,Canoeing,Horseplay
+AS,45,S,Archery,Canoeing,Crafts,Creation Exploration,Extreme Water Sports
+AT,46,U,Archery,Canoeing,Crafts,Creation Exploration,Extreme Water Sports
+AU,47,,Extreme Water Sports,Archery,Canoeing,Crafts,Creation Exploration
+AV,48,,Crafts,Extreme Water Sports,Splash (beach activities),Wall Climbing,Archery
+AW,49,,Canoeing,Crafts,Splash (beach activities),Team Sports,Extreme Water Sports
+AX,50,X,Horseplay,Extreme Water Sports,Wall Climbing,Canoeing,Creation Exploration
+AY,51,,Archery,Canoeing,Horseplay,Team Sports,Wall Climbing
+AZ,52,Y,Crafts,Horseplay,Splash (beach activities),Wall Climbing,Team Sports
+BA,53,,Creation Exploration,Extreme Water Sports,Wall Climbing,Canoeing,Crafts
+BB,54,,Splash (beach activities),Creation Exploration,Team Sports,Archery,Crafts
+BC,55,A,Canoeing,Creation Exploration,Wall Climbing,Extreme Water Sports,Crafts
+BD,56,G,Creation Exploration,Horseplay,Wall Climbing,Archery,Splash (beach activities)
+BE,57,H,Extreme Water Sports,Crafts,Archery,Splash (beach activities),Team Sports
+BF,58,E,Team Sports,Crafts,Creation Exploration,Splash (beach activities),Canoeing
+BG,59,D,Horseplay,Crafts,Creation Exploration,Canoeing,Splash (beach activities)
+BH,60,,Archery,Crafts,Creation Exploration,Splash (beach activities),Canoeing
+BI,61,,Archery,Team Sports,Creation Exploration,Canoeing,Wall Climbing
+BJ,62,,Archery,Canoeing,Extreme Water Sports,Wall Climbing,Crafts
+BK,63,S,Horseplay,Creation Exploration,Extreme Water Sports,Canoeing,Splash (beach activities)
+BL,64,T,Extreme Water Sports,Horseplay,Crafts,Archery,Splash (beach activities)
+BM,65,U,Extreme Water Sports,Archery,Splash (beach activities),Wall Climbing,Canoeing
+BN,66,X,Horseplay,Crafts,Archery,Team Sports,Wall Climbing
+BO,67,,Wall Climbing,Canoeing,Creation Exploration,Team Sports,Splash (beach activities)
+BP,68,,Crafts,Wall Climbing,Creation Exploration,Splash (beach activities),Team Sports
+BQ,69,,Horseplay,Archery,Crafts,Wall Climbing,Splash (beach activities)
+BR,70,Y,Extreme Water Sports,Team Sports,Wall Climbing,Horseplay,Canoeing
+BS,71,G,Archery,Horseplay,Extreme Water Sports,Wall Climbing,Splash (beach activities)
+BT,72,,Archery,Creation Exploration,Extreme Water Sports,Splash (beach activities),Wall Climbing
+BU,73,H,Horseplay,Crafts,Creation Exploration,Canoeing,Archery
+BV,74,,Splash (beach activities),Team Sports,Crafts,Wall Climbing,Horseplay
+BW,75,,Crafts,Horseplay,Splash (beach activities),Wall Climbing,Team Sports
+BX,76,,Extreme Water Sports,Archery,Wall Climbing,Canoeing,Team Sports
+BY,77,,Crafts,Wall Climbing,Canoeing,Extreme Water Sports,Archery
+BZ,78,,Archery,Splash (beach activities),Wall Climbing,Canoeing,Extreme Water Sports
+CA,79,S,Creation Exploration,Team Sports,Wall Climbing,Archery,Horseplay
+CB,80,D,Team Sports,Splash (beach activities),Extreme Water Sports,Wall Climbing,Horseplay
+CC,81,F,Horseplay,Extreme Water Sports,Crafts,Canoeing,Splash (beach activities)
+CD,82,,Archery,Wall Climbing,Extreme Water Sports,Horseplay,Team Sports
+CE,83,,Horseplay,Canoeing,Splash (beach activities),Extreme Water Sports,Team Sports
+CF,84,T,Horseplay,Archery,Canoeing,Extreme Water Sports,Splash (beach activities)
+CG,85,U,Extreme Water Sports,Horseplay,Creation Exploration,Wall Climbing,Archery
+CH,86,X,Crafts,Extreme Water Sports,Archery,Horseplay,Team Sports
+CI,87,V,Wall Climbing,Creation Exploration,Splash (beach activities),Crafts,Canoeing
+CJ,88,S,Creation Exploration,Horseplay,Wall Climbing,Archery,Crafts
+CK,89,A,Creation Exploration,Wall Climbing,Archery,Team Sports,Crafts
+CL,90,D,Horseplay,Crafts,Archery,Splash (beach activities),Team Sports
+CM,91,,Archery,Canoeing,Splash (beach activities),Horseplay,Wall Climbing
+CN,92,,Archery,Wall Climbing,Crafts,Team Sports,Creation Exploration
+CO,93,,Crafts,Canoeing,Creation Exploration,Horseplay,Wall Climbing
+CP,94,,Creation Exploration,Horseplay,Wall Climbing,Archery,Canoeing
+CQ,95,,Extreme Water Sports,Wall Climbing,Team Sports,Creation Exploration,Archery
+CR,96,E,Team Sports,Extreme Water Sports,Splash (beach activities),Creation Exploration,Archery
+CS,97,G,Archery,Wall Climbing,Horseplay,Team Sports,Splash (beach activities)
+CT,98,,Archery,Horseplay,Crafts,Team Sports,Creation Exploration

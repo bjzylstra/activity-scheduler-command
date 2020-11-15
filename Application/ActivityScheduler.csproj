@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <DebugType>full</DebugType>
     <Version>2.4.0</Version>
     <ReleaseDirectory>..\$(MSBuildThisFileName)$(Version)</ReleaseDirectory>
@@ -21,6 +21,9 @@
 
   <ItemGroup>
     <None Update="Activities.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="nlog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="ReleaseNotes.txt">

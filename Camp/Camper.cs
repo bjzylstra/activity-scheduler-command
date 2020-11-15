@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -13,6 +15,8 @@ namespace Camp
         public String LastName { get; set; }
         public String FirstName { get; set; }
 
+        public String FullName { get => String.Format("{0}, {1}", LastName, FirstName); }
+
         private Boolean[] _isAvailableBlocks;
         private List<IActivityBlock> _scheduledBlocks = new List<IActivityBlock>();
         public List<IActivityBlock> ScheduledBlocks { get { return _scheduledBlocks; } }
@@ -22,7 +26,34 @@ namespace Camp
         /// </summary>
         /// <param name="camperList">List of campers</param>
         /// <param name="outputFilePath">Path to the CSV file</param>
-        public static void WriteScheduleToCsvFile(IEnumerable<Camper> camperList, string outputFilePath)
+        /// <param name="logger">Logger for messages</param>
+        public static void WriteScheduleToCsvFile(IEnumerable<Camper> camperList, 
+            string outputFilePath, ILogger logger)
+        {
+            try
+            {
+                using (var outTextWriter = new StreamWriter(outputFilePath))
+                {
+                    string csvText = WriteScheduleToCsvString(camperList, logger);
+                    if (!string.IsNullOrEmpty(csvText))
+                    {
+                        outTextWriter.Write(csvText);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                logger.LogError($"Exception writing output file {outputFilePath}: {e.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Write the camper schedules to a CSV file.
+        /// </summary>
+        /// <param name="camperList">List of campers</param>
+        /// <param name="logger">Logger for messages</param>
+        public static string WriteScheduleToCsvString(IEnumerable<Camper> camperList,
+           ILogger logger)
         {
             try
             {
@@ -36,9 +67,10 @@ namespace Camp
                     }
                     return compareValue;
                 });
-                using (var outTextWriter = new StreamWriter(outputFilePath))
+                using (var outTextWriter = new StringWriter())
                 {
-                    using (var csvWriter = new CsvHelper.CsvWriter(outTextWriter))
+                    using (var csvWriter = new CsvHelper.CsvWriter(outTextWriter,
+                        CultureInfo.InvariantCulture))
                     {
                         // Write the header
                         csvWriter.WriteField("Camper");
@@ -63,12 +95,13 @@ namespace Camp
                             csvWriter.NextRecord();
                         }
                     }
+                    return outTextWriter.ToString();
                 }
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Exception writing output file {0}: {1}", outputFilePath,
-                    e.Message);
+                logger.LogError($"Exception writing camper schedule: {e.Message}");
+                return string.Empty;
             }
         }
 
@@ -133,9 +166,23 @@ namespace Camp
             return mayAssign;
         }
 
+        public void ReAssignBlock(IActivityBlock newActivity)
+        {
+            IActivityBlock previousActivity = _scheduledBlocks.FirstOrDefault(
+                b => b.TimeSlot == newActivity.TimeSlot);
+            if (previousActivity != null)
+            {
+                previousActivity.RemoveCamper(this);
+                _scheduledBlocks.Remove(previousActivity);
+            }
+            newActivity.AddCamper(this);
+            _scheduledBlocks.Add(newActivity);
+            _isAvailableBlocks[newActivity.TimeSlot] = false;
+        }
+
         public override string ToString()
         {
-            return String.Format("{0}, {1}", LastName, FirstName);
+            return FullName;
         }
     }
 }

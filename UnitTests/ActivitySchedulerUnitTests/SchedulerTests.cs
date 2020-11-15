@@ -1,8 +1,6 @@
-﻿using ActivityScheduler;
-using Camp;
+﻿using Camp;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,6 +9,14 @@ namespace ActivitySchedulerUnitTests
     [TestFixture]
     public class SchedulerTests
     {
+        private ILogger _logger;
+
+        [SetUp]
+        public void SetupLogger()
+        {
+            _logger = NSubstitute.Substitute.For<ILogger>();
+        }
+ 
         [Test]
         public void ScheduleActivities_NoCampers_SucceedsNoResults()
         {
@@ -20,7 +26,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
@@ -40,7 +46,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
@@ -60,7 +66,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
@@ -85,7 +91,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
@@ -113,7 +119,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
@@ -146,7 +152,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(1, unhappyCampers.Count, "Unhappy campers");
@@ -172,7 +178,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(0, unhappyCampers.Count, "Unhappy campers");
@@ -202,7 +208,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(1, unhappyCampers.Count, "Unhappy campers");
@@ -232,7 +238,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(1, unhappyCampers.Count, "Unhappy campers");
@@ -262,7 +268,7 @@ namespace ActivitySchedulerUnitTests
             };
 
             // Act
-            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList);
+            var unhappyCampers = Scheduler.ScheduleActivities(camperRequestsList, false, _logger);
 
             // Assert
             Assert.AreEqual(1, unhappyCampers.Count, "Unhappy campers");

@@ -13,7 +13,13 @@ namespace Camp
 
         List<Camper> AssignedCampers { get; }
 
+        string GetCamperName(int camperIndex);
+
         bool TryAddCamper(Camper camper);
+
+        void AddCamper(Camper camper);
+
+        void RemoveCamper(Camper camper);
     }
 
     /// <summary>
@@ -36,6 +42,19 @@ namespace Camp
         public List<Camper> AssignedCampers { get { return _assignedCampers; } }
 
         /// <summary>
+        /// Normalized function to get the camper name that handles index out of bounds.
+        /// Required for the grid display
+        /// </summary>
+        /// <param name="camperIndex">Index in AssignedCampers</param>
+        /// <returns>Formatted name of camper at camperIndex or empty string if out of bounds</returns>
+        public string GetCamperName(int camperIndex)
+        {
+            return camperIndex < _assignedCampers.Count 
+                ? _assignedCampers[camperIndex].FullName 
+                : string.Empty;
+        }
+
+        /// <summary>
         /// Try to add a camper to an activity block. Checks the max capacity for the defn
         /// </summary>
         /// <param name="camper">Camper to add</param>
@@ -49,6 +68,24 @@ namespace Camp
                 didAdd = true;
             }
             return didAdd;
+        }
+
+        /// <summary>
+        /// Add the camper without concern for limits
+        /// </summary>
+        /// <param name="camper">Camper to add</param>
+        public void AddCamper(Camper camper)
+        {
+            _assignedCampers.Add(camper);
+        }
+
+        /// <summary>
+        /// Remove the camper from the activity block
+        /// </summary>
+        /// <param name="camper">Camper to remove</param>
+        public void RemoveCamper(Camper camper)
+        {
+            _assignedCampers.Remove(camper);
         }
     }
 }

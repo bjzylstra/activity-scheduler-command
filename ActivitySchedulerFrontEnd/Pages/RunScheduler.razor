@@ -1,0 +1,132 @@
+﻿@page "/create-schedule"
+
+<h3>Create a Schedule</h3>
+
+@using System.IO;
+@using System.Text;
+@using CsvHelper;
+@inject IFileReaderService fileReaderService
+@inject IJSRuntime  JSRuntime
+@inject ILocalStorageService localStorage
+@inject IActivityDefinitionService activityService
+@inject ISchedulerService schedulerService
+
+<ActivitySetSelector @bind-CurrentActivitySet="ActivitySet" />
+<p>
+    Select camper requests CSV file -
+    <input type="file" @ref=camperRequestsFileElement accept=".csv" />
+</p>
+<p>
+    Schedule ID:
+    <input @bind="ScheduleId" />
+</p>
+<button @onclick=ScheduleCampers>Generate Schedule</button>
+<hr />
+<textarea style="max-width: 100%;" cols="60" rows="20">@Output</textarea>
+<hr />
+
+@code {
+    /// <summary>
+    /// Name of the cookie to record the activity set across pages.
+    /// </summary>
+    private const string ActivitySetKey = "activitySet";
+
+    /// <summary>
+    /// Name of the cookie to record the schedule across pages.
+    /// </summary>
+    private const string ScheduleIdKey = "scheduleId";
+
+    /// <summary>
+    /// Track the activity set and update the cookie for persistence across pages.
+    /// </summary>
+    private string _activitySet;
+    public string ActivitySet
+    {
+        get => _activitySet;
+        set
+        {
+            if (value != _activitySet)
+            {
+                _activitySet = value;
+                // This cannot be async so fire and hope it gets there in time.
+                localStorage.SetItemAsync(ActivitySetKey, value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Schedule ID for the generated schedule.
+    /// </summary>
+    public string ScheduleId;
+
+    ElementReference camperRequestsFileElement;
+
+    public string Output { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Activity set comes from cookie if present.
+        ActivitySet = await localStorage.GetItemAsync<string>(ActivitySetKey);
+        if (string.IsNullOrEmpty(ActivitySet))
+        {
+            ActivitySet = "DefaultActivities";
+        }
+
+        ScheduleId = DateTime.Now.ToString("yyyy.MM.dd");
+
+        await base.OnInitializedAsync();
+    }
+
+    public async Task ScheduleCampers()
+    {
+        Output = String.Empty;
+        List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+            activityService.GetActivityDefinition(ActivitySet));
+        Output += $"Loaded {activityDefinitions.Count} activity definitions from {ActivitySet}{Environment.NewLine}";
+        foreach (var file in await fileReaderService.CreateReference(camperRequestsFileElement).EnumerateFilesAsync())
+        {
+            // Read into buffer and act (uses less memory)
+            using (Stream stream = await file.OpenReadAsync())
+            {
+                // Need to copy into string stream so a sync read can be used with CSV reader
+                StreamReader reader = new StreamReader(stream);
+                string contents = await reader.ReadToEndAsync();
+                byte[] encodedContents = Encoding.ASCII.GetBytes(contents);
+                MemoryStream memoryStream = new MemoryStream(encodedContents);
+
+                try
+                {
+                    List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(memoryStream, activityDefinitions);
+                    Output += $"Loaded {camperRequests.Count} camper requests{Environment.NewLine}";
+
+                    List<ActivityDefinition> schedule = schedulerService.CreateSchedule(ScheduleId, camperRequests,
+                        activityDefinitions);
+                    // Store the schedule ID for the other pages.
+                    await localStorage.SetItemAsync(ScheduleIdKey, ScheduleId);
+                    List<Camper> unhappyCampers = schedule
+                        .Where(ad => ad.Name == SchedulerService.UnscheduledActivityName)
+                        .SelectMany(ad => ad.ScheduledBlocks.SelectMany(b => b.AssignedCampers))
+                        .Distinct().ToList();
+                    Output += $"{camperRequests.Count - unhappyCampers.Count} campers scheduled{Environment.NewLine}";
+
+                    if (unhappyCampers.Count > 0)
+                    {
+                        Output += $"{unhappyCampers.Count} campers could not be scheduled{Environment.NewLine}";
+                    }
+                }
+                catch (CsvHelperException e)
+                {
+                    KeyNotFoundException keyNotFoundException = e.InnerException as KeyNotFoundException;
+                    if (keyNotFoundException != null)
+                    {
+                        Output += $"{keyNotFoundException.Message}. Are you using the correct activity set?{Environment.NewLine}";
+                    }
+                    else
+                    {
+                        Output += $"{e.Message} while reading the camper requests. Yikes!{Environment.NewLine}";
+                    }
+                }
+            }
+        }
+    }
+}

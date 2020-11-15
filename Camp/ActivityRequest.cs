@@ -1,7 +1,6 @@
-﻿using Camp;
-using System;
+﻿using System;
 
-namespace ActivityScheduler
+namespace Camp
 {
     /// <summary>
     /// A camper activity request composed of an activity and the 

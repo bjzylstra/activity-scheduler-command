@@ -1,0 +1,53 @@
+﻿@inject IActivityDefinitionService activityDefinitionService
+
+
+<h4>Select an Activity Definition Set</h4>
+
+@if (_activitySets == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="col-6">
+        <div class="form-group">
+            <label for="activitySet">Activity Set</label>
+            <select id="activitySet" @bind="CurrentActivitySet">
+                <option value="">Select</option>
+                @foreach (var set in _activitySets)
+                    {
+                    <option value="@set">
+                        @set
+                    </option>
+                    }
+            </select>
+        </div>
+    </div>
+}
+
+
+@code {
+    private List<string> _activitySets;
+
+    private string _currentActivitySet;
+    [Parameter]
+    public string CurrentActivitySet { get => _currentActivitySet;
+        set
+        {
+            // Update only if changed or an infinite loop will occur
+            if (value != _currentActivitySet)
+            {
+                _currentActivitySet = value;
+                CurrentActivitySetChanged.InvokeAsync(value);
+            }
+        }
+    }
+
+    [Parameter]
+    public EventCallback<string> CurrentActivitySetChanged { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _activitySets = new List<string>(activityDefinitionService.GetActivitySetNames());
+    }
+}

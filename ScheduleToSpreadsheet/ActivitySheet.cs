@@ -67,7 +67,7 @@ namespace ScheduleToSpreadsheet
                     {
                         var camper = activityBlock.AssignedCampers[camperIndex - 1];
                         _worksheet.Column(column).Width = 30;
-                        _worksheet.SetValue(row, column, camper.ToString());
+                        _worksheet.SetValue(row, column, camper.FullName);
                         column++;
                     }
                     bottomActivityRow = row;

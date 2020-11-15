@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <DebugType>full</DebugType>
+    <Version>3.0.0</Version>
+    <ReleaseDirectory>..\$(MSBuildThisFileName)$(Version)</ReleaseDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="nlog.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Services\DefaultActivities.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Services\DefaultActivities.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blazored.LocalStorage" Version="2.1.1" />
+    <PackageReference Include="GridBlazor" Version="1.3.27" />
+    <PackageReference Include="GridMvcCore" Version="2.11.22" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.1" />
+    <PackageReference Include="Tewr.Blazor.FileReader" Version="1.3.0.20049" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Camp\Camp.csproj" />
+  </ItemGroup>
+
+  <Target Name="BuildRelease">
+    <MakeDir Directories="$(ReleaseDirectory)\publish" />
+    <Copy SourceFiles="launchChrome.bat;launchEdge.bat" DestinationFolder="$(ReleaseDirectory)" />
+    <Exec Command="dotnet publish ActivitySchedulerFrontEnd.csproj -o $(ReleaseDirectory)\publish" />
+    <ZipDirectory SourceDirectory="$(ReleaseDirectory)" DestinationFile="$(ReleaseDirectory).zip" />
+  </Target>
+
+</Project>

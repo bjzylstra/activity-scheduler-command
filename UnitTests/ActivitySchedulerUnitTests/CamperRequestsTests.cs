@@ -1,6 +1,7 @@
 using NUnit.Framework;
-using ActivityScheduler;
 using System;
+using Camp;
+using Microsoft.Extensions.Logging;
 
 namespace ActivitySchedulerUnitTests
 {
@@ -11,12 +12,20 @@ namespace ActivitySchedulerUnitTests
         private const String GoodFileLocation = @"..\..\..\Skills Test Data.csv";
         private const String NonExistentFileLocation = @"NoSuchDirectory\NoSuchFile.csv";
 
+        private ILogger _logger;
+
+        [SetUp]
+        public void SetupLogger()
+        {
+            _logger = NSubstitute.Substitute.For<ILogger>();
+        }
+ 
         [Test]
         public void ReadCamperRequests_fileNotFound_returnsNull()
         {
             // Act
             var camperRequests = CamperRequests.ReadCamperRequests(NonExistentFileLocation,
-                ActivityDefinitionTests.DefaultActivityDefinitions);
+                ActivityDefinitionTests.DefaultActivityDefinitions, _logger);
 
             // Assert
             Assert.That(camperRequests, Is.Null, "Return from ReadCamperRequests");
@@ -27,7 +36,7 @@ namespace ActivitySchedulerUnitTests
         {
             // Act
             var camperRequests = CamperRequests.ReadCamperRequests(BadContentFileLocation,
-                ActivityDefinitionTests.DefaultActivityDefinitions);
+                ActivityDefinitionTests.DefaultActivityDefinitions, _logger);
 
             // Assert
             Assert.That(camperRequests, Is.Null, "Return from ReadCamperRequests");
@@ -38,7 +47,7 @@ namespace ActivitySchedulerUnitTests
         {
             // Act
             var camperRequests = CamperRequests.ReadCamperRequests(GoodFileLocation,
-                ActivityDefinitionTests.DefaultActivityDefinitions);
+                ActivityDefinitionTests.DefaultActivityDefinitions, _logger);
 
             // Assert
             Assert.That(camperRequests, Is.Not.Null, "Return from ReadCamperRequests");
@@ -50,7 +59,7 @@ namespace ActivitySchedulerUnitTests
         {
             // Act
             var camperRequests = CamperRequests.ReadCamperRequests(GoodFileLocation,
-                ActivityDefinitionTests.IncompleteActivityDefinitions);
+                ActivityDefinitionTests.IncompleteActivityDefinitions, _logger);
 
             // Assert
             Assert.That(camperRequests, Is.Null, "Return from ReadCamperRequests");

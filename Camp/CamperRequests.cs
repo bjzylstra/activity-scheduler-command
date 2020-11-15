@@ -1,12 +1,13 @@
-﻿using Camp;
-using CsvHelper;
+﻿using CsvHelper;
 using CsvHelper.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
-namespace ActivityScheduler
+namespace Camp
 {
     /// <summary>
     /// Represents the activity and cabin placement requests for a camper.
@@ -135,49 +136,61 @@ namespace ActivityScheduler
         /// </summary>
         /// <param name="csvFilePath"></param>
         /// <param name="activityDefinitions">List of valid activity definitions</param>
+        /// <param name="logger">Logger</param>
         /// <returns></returns>
         public static List<CamperRequests> ReadCamperRequests(String csvFilePath, 
-            List<ActivityDefinition> activityDefinitions)
+            List<ActivityDefinition> activityDefinitions, ILogger logger)
         {
             try
             {
-                var inFileStream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read);
-                var streamReader = new StreamReader(inFileStream);
-                var csvReader = new CsvReader(streamReader, new Configuration
+                using (var inFileStream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read))
                 {
-                    HasHeaderRecord = true,
-                    HeaderValidated = null
-                });
-                csvReader.Configuration.RegisterClassMap(new CamperRequestsMap(activityDefinitions));
-                var camperRequestsEnumerator = csvReader.GetRecords<CamperRequests>();
-                List<CamperRequests> camperRequestsList = new List<CamperRequests>(camperRequestsEnumerator);
-                return camperRequestsList;
+                    return ReadCamperRequests(inFileStream, activityDefinitions);
+                }
             }
             catch (FileNotFoundException e)
             {
-                Console.Error.WriteLine("Could not open Camper CSV file {0}", e.FileName);
+                logger.LogError($"Could not open Camper CSV file {e.FileName}");
             }
             catch (CsvHelperException e)
             {
                 KeyNotFoundException keyNotFoundException = e.InnerException as KeyNotFoundException;
                 if (keyNotFoundException != null)
                 {
-                    Console.Error.WriteLine("Error parsing input file {0}: {1}", csvFilePath,
-                        keyNotFoundException.Message);
+                    logger.LogError($"Error parsing input file {csvFilePath}: {keyNotFoundException.Message}");
                 }
                 else
                 {
-                    Console.Error.WriteLine("Exception parsing input file {0}: {1}", csvFilePath,
-                        e.Message);
+                    logger.LogError($"Exception parsing input file {csvFilePath}: {e.Message}");
                 }
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine("Exception parsing input file {0}: {1}", csvFilePath,
-                    e.Message);
+                logger.LogError($"Exception parsing input file {csvFilePath}: {e.Message}");
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Read the camper requests from a CSV stream. The activities must be found
+        /// in the activity list to be valid.
+        /// </summary>
+        /// <param name="csvStream">Camper requests on a stream</param>
+        /// <param name="activityDefinitions">List of valid activity definitions</param>
+        /// <returns></returns>
+        public static List<CamperRequests> ReadCamperRequests(Stream csvStream, List<ActivityDefinition> activityDefinitions)
+        {
+            var streamReader = new StreamReader(csvStream);
+            var csvReader = new CsvReader(streamReader, new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true,
+                HeaderValidated = null
+            });
+            csvReader.Configuration.RegisterClassMap(new CamperRequestsMap(activityDefinitions));
+            var camperRequestsEnumerator = csvReader.GetRecords<CamperRequests>();
+            List<CamperRequests> camperRequestsList = new List<CamperRequests>(camperRequestsEnumerator);
+            return camperRequestsList;
         }
 
         /// <summary>

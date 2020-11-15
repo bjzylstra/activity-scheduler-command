@@ -1,0 +1,101 @@
+@page "/activities"
+
+@using System.IO;
+@inject IFileReaderService fileReaderService
+@inject IJSRuntime  JSRuntime
+@inject ILocalStorageService localStorage
+@inject IActivityDefinitionService activityDefinitionService
+
+<h2>Manage Activity Definitions</h2>
+
+<ActivitySetSelector @bind-CurrentActivitySet="ActivitySet" />
+<p>Button to create an empty activity set</p>
+<p>Button to copy the current activity set</p>
+<p>Button to delete the currently selected activity set</p>
+<p>Import into the current activity set</p>
+<p>Export the current activity set</p>
+
+<hr />
+<ActivityDefinitionsGrid ActivitySet=@ActivitySet />
+<hr />
+
+<p>
+    Read from Activity definition file -
+    <input type="file" @ref=_activityDefinitionFileElement accept=".xml" />
+</p>
+<button @onclick=ReadFile>Read file</button>
+<hr />
+<textarea style="max-width: 100%;" cols="60" rows="20">@_output</textarea>
+<hr />
+<p>
+    Write to Activity definition file -
+    <input @bind="_fileName" />
+</p>
+<button @onclick="DownloadFile">Download file</button>
+
+@code {
+    /// <summary>
+    /// Name of the cookie to record the activity set across pages.
+    /// </summary>
+    private const string ActivitySetKey = "activitySet";
+
+    /// <summary>
+    /// Track the activity set and update the cookie for persistence across pages.
+    /// </summary>
+    private string _activitySet;
+    public string ActivitySet
+    {
+        get => _activitySet;
+        set
+        {
+            if (value != _activitySet)
+            {
+                _activitySet = value;
+                // This cannot be async so fire and hope it gets there in time.
+                localStorage.SetItemAsync(ActivitySetKey, value);
+            }
+        }
+    }
+
+    ElementReference _activityDefinitionFileElement;
+    string _output { get; set; }
+    string _fileName;
+    List<ActivityDefinition> _activityDefinitions = new List<ActivityDefinition>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Activity set comes from cookie if present.
+        ActivitySet = await localStorage.GetItemAsync<string>(ActivitySetKey);
+        if (string.IsNullOrEmpty(ActivitySet))
+        {
+            ActivitySet = "DefaultActivities";
+        }
+        _fileName = $"{ActivitySet}.xml";
+
+        await base.OnInitializedAsync();
+    }
+
+    public async Task ReadFile()
+    {
+        _output = String.Empty;
+        foreach (var file in await fileReaderService.CreateReference(_activityDefinitionFileElement).EnumerateFilesAsync())
+        {
+            // Read into buffer and act (uses less memory)
+            using (Stream stream = await file.OpenReadAsync())
+            {
+                _activityDefinitions = await activityDefinitionService.ReadActivityDefinitionsAsync(
+                    stream);
+                _output += $"Found {_activityDefinitions.Count} activity definitions";
+            }
+        }
+    }
+
+    public async void DownloadFile()
+    {
+        // Blazor native does not currently support downloading a file to the client
+        // so use a Javascript function.
+        await JSRuntime.InvokeAsync<object>(
+            "FileSaveAs", _fileName,
+            activityDefinitionService.WriteActivityDefinitionsToString(_activityDefinitions));
+    }
+}
