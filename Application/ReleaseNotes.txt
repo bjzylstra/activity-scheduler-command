@@ -1,5 +1,8 @@
 ﻿Activity Schedule Command Line Utility
 
+3.0.0 - November 15, 2020
+- Added a Blazor based web front-end
+
 2.3.0 - August 2, 2019
 - ActivitiesToCamper puts the colliding name on the camper sheet to make for easier
  correcting.
