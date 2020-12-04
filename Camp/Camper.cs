@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -12,7 +13,28 @@ namespace Camp
     /// </summary>
     public class Camper
     {
-        public String LastName { get; set; }
+		public class CamperEqualityCompare : IEqualityComparer<Camper>
+		{
+			public bool Equals([AllowNull] Camper x, [AllowNull] Camper y)
+			{
+                // If the first names are not specified, matching last name is sufficient
+                // TODO: this is temporary while the cabin mate declaration is only last name
+                if (String.IsNullOrEmpty(x?.FirstName) || String.IsNullOrEmpty(y.FirstName))
+				{
+                    return String.Equals(x?.LastName, y?.LastName);
+				}
+                return String.Equals(x.FullName, y.FullName);
+			}
+
+			public int GetHashCode([DisallowNull] Camper obj)
+			{
+                // Hash just the last name so that a full name reference and a 
+                // last name only reference match. The equals then can figure it out.
+                // TODO: this is temporary while the cabin mate declaration is only last name
+                return String.GetHashCode(obj.LastName);
+			}
+		}
+		public String LastName { get; set; }
         public String FirstName { get; set; }
 
         public String FullName { get => String.Format("{0}, {1}", LastName, FirstName); }

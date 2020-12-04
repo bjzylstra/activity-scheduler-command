@@ -19,6 +19,7 @@ namespace Camp
         {
             private Dictionary<String, ActivityDefinition> _activityDefinitionByName;
             private Camper _lastReadCamper;
+            private Camper _lastCabinMate;
 
             /// <summary>
             /// Construct the mapper for camper requests in the CSV file
@@ -40,7 +41,16 @@ namespace Camp
                     return _lastReadCamper;
                 });
                 index += 2;
-                Map(m => m.CabinMate).Index(index++);
+                int mateIndex = index;
+                Map(m => m.CabinMate).ConvertUsing(row =>
+                {
+                    string cabinMateLastName = row.GetField(mateIndex);
+                    _lastCabinMate = String.IsNullOrEmpty(cabinMateLastName)
+                        ? null
+                        : new Camper { LastName = cabinMateLastName };
+                    return _lastCabinMate;
+                });
+                index++;
                 int activityIndex = index;
                 Map(m => m.ActivityRequests).ConvertUsing(row => {
                     return new List<ActivityRequest> {
@@ -79,7 +89,11 @@ namespace Camp
 
 
         public Camper Camper { get; set; }
-        public String CabinMate { get; set; }
+        /// <summary>
+        /// From the data, this appears to be only a last name. We may need better data
+        /// before trying to use this?
+        /// </summary>
+        public Camper CabinMate { get; set; }
         private List<ActivityRequest> _activityRequests;
         public List<ActivityRequest> ActivityRequests
         {
@@ -221,5 +235,51 @@ namespace Camp
 
             return compareValue;
         }
+
+        /// <summary>
+        /// From the list of camper requests
+        /// </summary>
+        /// <param name="camperRequestsList">List of camper requests</param>
+        /// <returns>Collection of camper groups. Each group contains the campers
+        /// that have common camper mate requests</returns>
+        public static List<HashSet<Camper>> GenerateCamperMateGroups(List<CamperRequests> camperRequestsList)
+		{
+            List<HashSet<Camper>> camperMateGroups = new List<HashSet<Camper>>();
+			foreach (CamperRequests camperRequest in camperRequestsList?.Where(cr => cr.CabinMate != null))
+			{
+                HashSet<Camper> camperGroup = camperMateGroups.FirstOrDefault(grp => grp.Contains(camperRequest.Camper));
+                HashSet<Camper> mateGroup = camperMateGroups.FirstOrDefault(grp => grp.Contains(camperRequest.CabinMate));
+                if (camperGroup == null)
+				{
+                    if (mateGroup == null)
+					{
+                        // Neither is in a group. Make a new group for them
+                        // and add the mate
+                        mateGroup = new HashSet<Camper>(new Camper.CamperEqualityCompare());
+                        camperMateGroups.Add(mateGroup);
+                        mateGroup.Add(camperRequest.CabinMate);
+					}
+                    // Camperis not in a group so add to the mate group
+                    mateGroup.Add(camperRequest.Camper);
+				}
+                else
+				{
+                    // Camper is in a group
+                    if (mateGroup == null)
+					{
+                        // Mate is not in a group so add the mate
+                        camperGroup.Add(camperRequest.CabinMate);
+					}
+                    else if (!ReferenceEquals(camperGroup, mateGroup))
+					{
+                        // If the groups are not the same group, combine them
+                        // and remove one from the list.
+                        camperGroup.UnionWith(mateGroup);
+                        camperMateGroups.Remove(mateGroup);
+                    }
+                }
+			}
+            return camperMateGroups;
+		}
     }
 }
