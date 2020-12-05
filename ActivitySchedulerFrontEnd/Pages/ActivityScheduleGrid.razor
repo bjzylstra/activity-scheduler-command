@@ -64,6 +64,24 @@ else
 
     public (string ActivityName, int TimeSlot, string CamperName) DragPayload { get; set; }
 
+    private Camper _selectedCamper;
+    private Camper[] _selectedCamperGroup;
+    public Camper[] SelectedCamperGroup => _selectedCamperGroup;
+    public Camper SelectedCamper => _selectedCamper;
+    public void SelectCamper(Camper camper)
+    {
+        _selectedCamper = camper;
+        _selectedCamperGroup = camper != null 
+            ? new[] { camper }
+            : null;
+        // Refresh the grid so all the cells get colored.
+        if (_component != null)
+        {
+            Task updateTask = _component.UpdateGrid();
+        }
+    }
+
+
     public async Task ReAssignDraggedCamperToBlockAsync(IActivityBlock block)
     {
         if (DragPayload.CamperName != null)

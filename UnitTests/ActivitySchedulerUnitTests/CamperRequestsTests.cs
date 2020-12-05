@@ -67,7 +67,6 @@ namespace ActivitySchedulerUnitTests
             Assert.That(camperRequests, Is.Null, "Return from ReadCamperRequests");
         }
 
-        // TODO: Add Camper Group tests
         [Test]
 		public void GenerateCamperMateGroups_ValidInput_GeneratesExpectedList()
 		{
