@@ -135,7 +135,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Act - Add a schedule
 			string scheduleId = "MySchedule";
 			List<ActivityDefinition> schedule = GenerateSchedule();
-			service.UpdateSchedule(scheduleId, schedule);
+			service.UpdateSchedule(scheduleId, schedule, null);
 
 			// Arrange - read the schedule back.
 			List<ActivityDefinition> retrievedSchedule = service.GetSchedule(scheduleId);
@@ -153,7 +153,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Act - Add a schedule
 			string scheduleId = "MySchedule";
 			List<ActivityDefinition> schedule = GenerateSchedule();
-			service.UpdateSchedule(scheduleId, schedule);
+			service.UpdateSchedule(scheduleId, schedule, null);
 
 			// Arrange - Create another scheduler service and read the schedule back.
 			SchedulerService freshService = new SchedulerService(_applicationName, _logger);
@@ -174,7 +174,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Act - Modify and update the schedule
 			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
 			schedule.RemoveAt(0);
-			service.UpdateSchedule(scheduleId, schedule);
+			service.UpdateSchedule(scheduleId, schedule, null);
 
 			// Arrange - read the schedule back.
 			List<ActivityDefinition> retrievedSchedule = service.GetSchedule(scheduleId);
@@ -194,7 +194,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Act - Modify and update the schedule
 			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
 			schedule.RemoveAt(0);
-			service.UpdateSchedule(scheduleId, schedule);
+			service.UpdateSchedule(scheduleId, schedule, null);
 
 			// Arrange - Create another scheduler service and read the schedule back.
 			SchedulerService freshService = new SchedulerService(_applicationName, _logger);
@@ -356,6 +356,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 				"Assigned campers on move target");
 		}
 
+		// TODO: Add camper group list tests.
+
 		/// <summary>
 		/// Create a set of schedule files with the provided IDS
 		/// </summary>
@@ -367,7 +369,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			ISchedulerService loaderScheduler = new SchedulerService(_applicationName, _logger);
 			foreach (string scheduleId in scheduleIds)
 			{
-				loaderScheduler.UpdateSchedule(scheduleId, schedule);
+				loaderScheduler.UpdateSchedule(scheduleId, schedule, null);
 			}
 		}
 

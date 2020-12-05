@@ -20,6 +20,7 @@ namespace ActivitySchedulerFrontEnd.Services
 		private readonly string _applicationName;
 		private readonly ILogger<SchedulerService> _logger;
 		private Dictionary<string,List<ActivityDefinition>> _schedulesById = new Dictionary<string,List<ActivityDefinition>>();
+		private Dictionary<string, List<HashSet<Camper>>> _camperGroupsByScheduleId = new Dictionary<string, List<HashSet<Camper>>>();
 		public const string ScheduleFileExtension = ".sch";
 
 		/// <summary>
@@ -30,7 +31,7 @@ namespace ActivitySchedulerFrontEnd.Services
 		{
 			_logger = logger;
 			_applicationName = Assembly.GetEntryAssembly().GetName().Name;
-			_schedulesById = LoadSchedulesFromPersistence(_applicationName);
+			(_schedulesById,_camperGroupsByScheduleId) = LoadSchedulesFromPersistence(_applicationName);
 		}
 
 		/// <summary>
@@ -42,7 +43,7 @@ namespace ActivitySchedulerFrontEnd.Services
 		{
 			_logger = logger;
 			_applicationName = folderName;
-			_schedulesById = LoadSchedulesFromPersistence(_applicationName);
+			(_schedulesById, _camperGroupsByScheduleId) = LoadSchedulesFromPersistence(_applicationName);
 		}
 
 		/// <summary>
@@ -51,9 +52,12 @@ namespace ActivitySchedulerFrontEnd.Services
 		/// </summary>
 		/// <param name="applicationName">Application name for local applications data folder</param>
 		/// <returns>Dictionary of schedules by schedule Id</returns>
-		private Dictionary<string, List<ActivityDefinition>> LoadSchedulesFromPersistence(string applicationName)
+		private (Dictionary<string, List<ActivityDefinition>> schedulesById, 
+			Dictionary<string, List<HashSet<Camper>>> camperGroupsByScheduleId) 
+			LoadSchedulesFromPersistence(string applicationName)
 		{
 			Dictionary<string, List<ActivityDefinition>> schedulesById = new Dictionary<string, List<ActivityDefinition>>();
+			Dictionary<string, List<HashSet<Camper>>> camperGroupsById = new Dictionary<string, List<HashSet<Camper>>>();
 			try
 			{
 				DirectoryInfo dataDirectoryInfo = new DirectoryInfo(
@@ -69,11 +73,13 @@ namespace ActivitySchedulerFrontEnd.Services
 				foreach (var scheduleFile in applicationDirectoryInfo.EnumerateFiles()
 					.Where(f => f.Extension.Equals(ScheduleFileExtension, StringComparison.OrdinalIgnoreCase)))
 				{
-					List<ActivityDefinition> schedule = LoadSchedule(scheduleFile.FullName);
+					(List<ActivityDefinition> schedule,
+						List<HashSet<Camper>> camperGroups) = LoadSchedule(scheduleFile.FullName);
 					if (schedule != null)
 					{
 						string scheduleId = scheduleFile.Name.Substring(0, scheduleFile.Name.Length - ScheduleFileExtension.Length);
 						schedulesById.Add(scheduleId, schedule);
+						camperGroupsById.Add(scheduleId, camperGroups);
 					}
 				}
 			}
@@ -81,7 +87,7 @@ namespace ActivitySchedulerFrontEnd.Services
 			{
 				_logger.LogError(e, "LoadSchedulesFromPersistence failed");
 			}
-			return schedulesById;
+			return (schedulesById,camperGroupsById);
 		}
 
 		/// <summary>
@@ -89,7 +95,8 @@ namespace ActivitySchedulerFrontEnd.Services
 		/// </summary>
 		/// <param name="scheduleFileLocation">Full path to the schedule file</param>
 		/// <returns>Schedule if load is successful, otherwise null</returns>
-		private List<ActivityDefinition> LoadSchedule(string scheduleFileLocation)
+		private (List<ActivityDefinition> schedule,
+			List<HashSet<Camper>> camperGroups) LoadSchedule(string scheduleFileLocation)
 		{
 			using (StreamReader scheduleFileReader = new StreamReader(scheduleFileLocation))
 			{
@@ -104,7 +111,7 @@ namespace ActivitySchedulerFrontEnd.Services
 						// Ran out of characters
 						_logger.LogError($"{scheduleFileLocation} specified definition length of {definitionLength} " +
 							$"but found only {charactersRead} characters after the lenght specifier.");
-						return null;
+						return (null,null);
 					}
 					List<ActivityDefinition> activityDefinitions = ActivityDefinition.ReadActivityDefinitionsFromString(
 						new string(buffer), _logger);
@@ -112,7 +119,7 @@ namespace ActivitySchedulerFrontEnd.Services
 					{
 						// Could not read the activity definitions
 						_logger.LogError($"{scheduleFileLocation} could not parse the activity definitions");
-						return null;
+						return (null, null);
 					}
 					List<ActivityDefinition> schedule = ActivityDefinition.ReadScheduleFromCsvString(
 						scheduleFileReader.ReadToEnd(), _logger);
@@ -120,8 +127,14 @@ namespace ActivitySchedulerFrontEnd.Services
 					{
 						// Could not read the schedule
 						_logger.LogError($"{scheduleFileLocation} could not parse the schedule csv");
-						return null;
+						return (null, null);
 					}
+					// TODO: this is going to change to read out camper groups. Fake data for now.
+					List<HashSet<Camper>> camperGroups = new List<HashSet<Camper>>
+					{
+						new HashSet<Camper>(new Camper.CamperEqualityCompare()) {new Camper { LastName="A"} }
+					};
+
 					// Merge the limits into the schedule.
 					bool mergeSuccessful = true;
 					foreach (ActivityDefinition scheduleActivity in schedule)
@@ -142,14 +155,15 @@ namespace ActivitySchedulerFrontEnd.Services
 					}
 					if (mergeSuccessful)
 					{
-						return schedule;
+						// TODO: Load the camper groups out of persistence
+						return (schedule,camperGroups);
 					}
 				}
 				else
 				{
 					_logger.LogError($"{scheduleFileLocation} is missing the definition length");
 				}
-				return null;
+				return (null, null);
 			}
 		}
 
@@ -192,12 +206,18 @@ namespace ActivitySchedulerFrontEnd.Services
 
 			// Generate the schedule ID from the date.
 			_schedulesById[scheduleId] = activityDefinitions;
-			UpdateSchedule(scheduleId, activityDefinitions);
+
+			// Generate the camper groups
+			List<HashSet<Camper>> camperGroups = CamperRequests.GenerateCamperMateGroups(camperRequests);
+			_camperGroupsByScheduleId[scheduleId] = camperGroups;
+
+			UpdateSchedule(scheduleId, activityDefinitions, camperGroups);
 
 			return activityDefinitions;
 		}
 
-		public void UpdateSchedule(string scheduleId, List<ActivityDefinition> schedule)
+		public void UpdateSchedule(string scheduleId, List<ActivityDefinition> schedule, 
+			List<HashSet<Camper>> camperGroups)
 		{
 			DirectoryInfo dataDirectoryInfo = new DirectoryInfo(
 				Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
@@ -214,11 +234,13 @@ namespace ActivitySchedulerFrontEnd.Services
 				scheduleFileWriter.WriteLine(definitions.Length);
 				scheduleFileWriter.Write(definitions);
 				scheduleFileWriter.Write(scheduleCsv);
+				// TODO: Add camper groups to the file. Can it be made backwards compatible?
+				// If not, it is time to add a version number to the file at the top.
 			}
 			// Generate a fresh copy of the schedule by reloading from persistence.
 			// This effectively performs a deep copy so that the client data is
 			// kept out of the service.
-			_schedulesById[scheduleId] = LoadSchedule(fileName);
+			(_schedulesById[scheduleId],_camperGroupsByScheduleId[scheduleId]) = LoadSchedule(fileName);
 		}
 
 		public void MoveCamperToBlock(string scheduleId, string camperName, int timeSlot, string newActivityName)
@@ -254,7 +276,7 @@ namespace ActivitySchedulerFrontEnd.Services
 				{
 					// Found the camper and the source block. Make the move.
 					camper.ReAssignBlock(targetActivity.ScheduledBlocks[timeSlot]);
-					UpdateSchedule(scheduleId, schedule);
+					UpdateSchedule(scheduleId, schedule, _camperGroupsByScheduleId[scheduleId]);
 					_logger.LogDebug($"-{context}: Camper re-assigned");
 					return;
 				}
@@ -308,9 +330,15 @@ namespace ActivitySchedulerFrontEnd.Services
 			return campers;
 		}
 
+		public List<HashSet<Camper>> GetCamperGroupsForScheduleId(string scheduleId)
+		{
+			return (_camperGroupsByScheduleId.TryGetValue(scheduleId, out var camperGroup))
+				? camperGroup
+				: new List<HashSet<Camper>>();
+		}
+
 		public ItemsDTO<Camper> GetCampersGridRows(string scheduleId, Action<IGridColumnCollection<Camper>> columns, QueryDictionary<StringValues> query)
 		{
-
 			var server = new GridServer<Camper>(
 				GetCampersForScheduleId(scheduleId),
 				new QueryCollection(query), true,
@@ -354,7 +382,9 @@ namespace ActivitySchedulerFrontEnd.Services
 		/// </summary>
 		/// <param name="scheduleId">Id for the schedule</param>
 		/// <param name="schedule">Schedule details</param>
-		void UpdateSchedule(string scheduleId, List<ActivityDefinition> schedule);
+		/// <param name="camperGroups">Camper groups associated with the schedule</param>
+		void UpdateSchedule(string scheduleId, List<ActivityDefinition> schedule,
+			List<HashSet<Camper>> camperGroups);
 
 		/// <summary>
 		/// Generate a schedule for the camper requests
@@ -410,5 +440,12 @@ namespace ActivitySchedulerFrontEnd.Services
 		ItemsDTO<Camper> GetCampersGridRows(string scheduleId,
 			Action<IGridColumnCollection<Camper>> columns,
 			QueryDictionary<StringValues> query);
+
+		/// <summary>
+		/// Get the camper groups for an activity schedule
+		/// </summary>
+		/// <param name="scheduleId">Id of schedule to load groups fro</param>
+		/// <returns>List of camper groups</returns>
+		List<HashSet<Camper>> GetCamperGroupsForScheduleId(string scheduleId);
 	}
 }
