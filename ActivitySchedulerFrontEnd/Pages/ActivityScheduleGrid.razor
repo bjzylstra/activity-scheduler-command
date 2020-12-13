@@ -71,10 +71,22 @@ else
     public void SelectCamper(Camper camper)
     {
         _selectedCamper = camper;
-        _selectedCamperGroup = camper != null 
-            // TODO: This will turn into a search for the group for the camper
-            ? schedulerService.GetCamperGroupsForScheduleId(ScheduleId).FirstOrDefault()
-            : null;
+        _selectedCamperGroup = null;
+        if (camper != null)
+        {
+            List<HashSet<Camper>> camperGroups = schedulerService.GetCamperGroupsForScheduleId(ScheduleId);
+            if (camperGroups != null)
+            {
+                foreach (HashSet<Camper> camperGroup in camperGroups)
+                {
+                    if (camperGroup.Contains(camper))
+                    {
+                        _selectedCamperGroup = camperGroup;
+                        break;
+                    }
+                }
+            }
+        }
         // Refresh the grid so all the cells get colored.
         if (_component != null)
         {

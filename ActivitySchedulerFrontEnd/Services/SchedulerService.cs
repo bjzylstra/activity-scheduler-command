@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 
 namespace ActivitySchedulerFrontEnd.Services
 {
@@ -102,66 +103,148 @@ namespace ActivitySchedulerFrontEnd.Services
 			{
 				// Read the length of the definitions section from the first line
 				// If anything goes wrong, log and ignore.
-				if (int.TryParse(scheduleFileReader.ReadLine(), out int definitionLength))
+				if (!int.TryParse(scheduleFileReader.ReadLine(), out int versionNumber))
 				{
-					char[] buffer = new char[definitionLength];
-					int charactersRead = scheduleFileReader.Read(buffer, 0, definitionLength);
-					if (charactersRead != definitionLength)
-					{
-						// Ran out of characters
-						_logger.LogError($"{scheduleFileLocation} specified definition length of {definitionLength} " +
-							$"but found only {charactersRead} characters after the lenght specifier.");
-						return (null,null);
-					}
-					List<ActivityDefinition> activityDefinitions = ActivityDefinition.ReadActivityDefinitionsFromString(
-						new string(buffer), _logger);
-					if (activityDefinitions == null || activityDefinitions.Count == 0)
-					{
-						// Could not read the activity definitions
-						_logger.LogError($"{scheduleFileLocation} could not parse the activity definitions");
-						return (null, null);
-					}
-					List<ActivityDefinition> schedule = ActivityDefinition.ReadScheduleFromCsvString(
-						scheduleFileReader.ReadToEnd(), _logger);
-					if (schedule == null || schedule.Count == 0)
-					{
-						// Could not read the schedule
-						_logger.LogError($"{scheduleFileLocation} could not parse the schedule csv");
-						return (null, null);
-					}
-					// TODO: this is going to change to read out camper groups. Fake data for now.
-					List<HashSet<Camper>> camperGroups = new List<HashSet<Camper>>
-					{
-						new HashSet<Camper>(new Camper.CamperEqualityCompare()) {new Camper { LastName="A"} }
-					};
-
-					// Merge the limits into the schedule.
-					bool mergeSuccessful = true;
-					foreach (ActivityDefinition scheduleActivity in schedule)
-					{
-						ActivityDefinition activityDefinition = activityDefinitions
-							.FirstOrDefault(ad => ad.Name.Equals(scheduleActivity.Name));
-						if (activityDefinition == null)
-						{
-							// Did not find the activity definition for a scheduled activity
-							mergeSuccessful = false;
-							_logger.LogError($"{scheduleFileLocation} did not contain a definition for" +
-								$"scheduled activity '{scheduleActivity.Name}'");
-							break;
-						}
-						scheduleActivity.MaximumCapacity = activityDefinition.MaximumCapacity;
-						scheduleActivity.MinimumCapacity = activityDefinition.MinimumCapacity;
-						scheduleActivity.OptimalCapacity = activityDefinition.OptimalCapacity;
-					}
-					if (mergeSuccessful)
-					{
-						// TODO: Load the camper groups out of persistence
-						return (schedule,camperGroups);
-					}
+					_logger.LogError($"{scheduleFileLocation} is missing the version field");
+					return (null, null);
+				}
+				int definitionLength = 0;
+				int scheduleLength = 0;
+				int camperGroupLength = 0;
+				// Prior to version numbers, the first line was the definition length.
+				if (versionNumber > 0)
+				{
+					definitionLength = versionNumber;
+					versionNumber = 0;
 				}
 				else
 				{
-					_logger.LogError($"{scheduleFileLocation} is missing the definition length");
+					// Version number is stored -ve to differentiate from the definition length
+					// in pre-versioned files (rev 1)
+					versionNumber = -versionNumber;
+					if (versionNumber == 1)
+					{
+						if (!int.TryParse(scheduleFileReader.ReadLine(), out definitionLength))
+						{
+							_logger.LogError($"{scheduleFileLocation} is missing the definition length field");
+							return (null, null);
+						}
+						if (!int.TryParse(scheduleFileReader.ReadLine(), out scheduleLength))
+						{
+							_logger.LogError($"{scheduleFileLocation} is missing the schedule length field");
+							return (null, null);
+						}
+						if (!int.TryParse(scheduleFileReader.ReadLine(), out camperGroupLength))
+						{
+							_logger.LogError($"{scheduleFileLocation} is missing the camper group length field");
+							return (null, null);
+						}
+					}
+					else
+					{
+						_logger.LogError($"{scheduleFileLocation} is unsupported version '{versionNumber}'");
+						return (null, null);
+					}
+				}
+
+				// Lengths of the sections should be read in now. Read in the sections.
+				char[] buffer = new char[definitionLength];
+				int charactersRead = scheduleFileReader.Read(buffer, 0, definitionLength);
+				if (charactersRead != definitionLength)
+				{
+					// Ran out of characters
+					_logger.LogError($"{scheduleFileLocation} specified definition length of {definitionLength} " +
+						$"but found only {charactersRead} characters remaining in the file.");
+					return (null,null);
+				}
+				List<ActivityDefinition> activityDefinitions = ActivityDefinition.ReadActivityDefinitionsFromString(
+					new string(buffer), _logger);
+				if (activityDefinitions == null || activityDefinitions.Count == 0)
+				{
+					// Could not read the activity definitions
+					_logger.LogError($"{scheduleFileLocation} could not parse the activity definitions");
+					return (null, null);
+				}
+
+				List<ActivityDefinition> schedule = null;
+				if (scheduleLength > 0)
+				{
+					buffer = new char[scheduleLength];
+					charactersRead = scheduleFileReader.Read(buffer, 0, scheduleLength);
+					if (charactersRead != scheduleLength)
+					{
+						// Ran out of characters
+						_logger.LogError($"{scheduleFileLocation} specified schedule length of {scheduleLength} " +
+							$"but found only {charactersRead} characters remaining in the file.");
+						return (null, null);
+					}
+					schedule = ActivityDefinition.ReadScheduleFromCsvString(
+						new string(buffer), _logger);
+				}
+				else
+				{
+					// Version 0 has no schedule length. Read to end of file.
+					schedule = ActivityDefinition.ReadScheduleFromCsvString(
+						scheduleFileReader.ReadToEnd(), _logger);
+				}
+				if (schedule == null || schedule.Count == 0)
+				{
+					// Could not read the schedule
+					_logger.LogError($"{scheduleFileLocation} could not parse the schedule csv");
+					return (null, null);
+				}
+
+				List<HashSet<Camper>> camperGroups = new List<HashSet<Camper>>();
+				if (camperGroupLength > 0)
+				{
+					buffer = new char[camperGroupLength];
+					charactersRead = scheduleFileReader.Read(buffer, 0, camperGroupLength);
+					if (charactersRead != camperGroupLength)
+					{
+						// Ran out of characters
+						_logger.LogError($"{scheduleFileLocation} specified camper group length of {camperGroupLength} " +
+							$"but found only {charactersRead} characters remaining in the file.");
+						return (null, null);
+					}
+					string camperGroupJson = new string(buffer);
+					try
+					{
+						JsonSerializerOptions options = new JsonSerializerOptions();
+						options.Converters.Add(new CamperJsonConverter());
+						camperGroups = JsonSerializer.Deserialize<List<HashSet<Camper>>>(camperGroupJson, options);
+						for (int i = 0; i < camperGroups.Count; i++)
+						{
+							// Need to put the right comparer on for by name matching to work.
+							camperGroups[i] = new HashSet<Camper>(camperGroups[i], new Camper.CamperEqualityCompare());
+						}
+					}
+					catch (JsonException e)
+					{
+						_logger.LogError(e, $"Failed to parse camper group JSON '{camperGroupJson}'");
+					}
+				}
+
+				// Merge the limits into the schedule.
+				bool mergeSuccessful = true;
+				foreach (ActivityDefinition scheduleActivity in schedule)
+				{
+					ActivityDefinition activityDefinition = activityDefinitions
+						.FirstOrDefault(ad => ad.Name.Equals(scheduleActivity.Name));
+					if (activityDefinition == null)
+					{
+						// Did not find the activity definition for a scheduled activity
+						mergeSuccessful = false;
+						_logger.LogError($"{scheduleFileLocation} did not contain a definition for" +
+							$"scheduled activity '{scheduleActivity.Name}'");
+						break;
+					}
+					scheduleActivity.MaximumCapacity = activityDefinition.MaximumCapacity;
+					scheduleActivity.MinimumCapacity = activityDefinition.MinimumCapacity;
+					scheduleActivity.OptimalCapacity = activityDefinition.OptimalCapacity;
+				}
+				if (mergeSuccessful)
+				{
+					return (schedule,camperGroups);
 				}
 				return (null, null);
 			}
@@ -231,11 +314,35 @@ namespace ActivitySchedulerFrontEnd.Services
 				scheduleFileWriter.BaseStream.SetLength(0);
 				string definitions = ActivityDefinition.WriteActivityDefinitionsToString(schedule, _logger);
 				string scheduleCsv = ActivityDefinition.WriteScheduleToCsvString(schedule, _logger);
+				string camperGroupsJson = String.Empty;
+				try
+				{
+					JsonSerializerOptions options = new JsonSerializerOptions
+					{
+						WriteIndented = true,
+						Converters =
+						{
+							new CamperJsonConverter()
+						}
+					};
+					camperGroupsJson = JsonSerializer.Serialize(camperGroups, options);
+				}
+				catch (JsonException e)
+				{
+					// Serialization failed. Just skip it.
+					_logger.LogError(e, $"Failed to serialize {camperGroups.Count} camper groups");
+					camperGroupsJson = String.Empty;
+				}
+
+				// Use negative version numbers to differentiate older files that don't use the version
+				int currentVersion = 1;
+				scheduleFileWriter.WriteLine(-currentVersion);
 				scheduleFileWriter.WriteLine(definitions.Length);
+				scheduleFileWriter.WriteLine(scheduleCsv.Length);
+				scheduleFileWriter.WriteLine(camperGroupsJson.Length);
 				scheduleFileWriter.Write(definitions);
 				scheduleFileWriter.Write(scheduleCsv);
-				// TODO: Add camper groups to the file. Can it be made backwards compatible?
-				// If not, it is time to add a version number to the file at the top.
+				scheduleFileWriter.Write(camperGroupsJson);
 			}
 			// Generate a fresh copy of the schedule by reloading from persistence.
 			// This effectively performs a deep copy so that the client data is
