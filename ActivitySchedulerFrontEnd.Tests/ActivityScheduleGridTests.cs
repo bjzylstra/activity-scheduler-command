@@ -196,7 +196,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Act - Start a drag on a camper activity cell
 			List<HtmlNode> camperActivityCells = component.FindAll("td")
 				.Where(node => node.Attributes.AttributesWithName("class")
-				.Any(a => a.Value.Equals("activity-camper-cell"))).ToList();
+				.Any(a => a.Value.Contains("activity-camper-cell"))).ToList();
 			Assert.That(camperActivityCells, Has.Count.EqualTo(camperRequests.Count() * 4),
 				"Number of camper activity cells");
 			camperActivityCells[0].TriggerEventAsync("ondragstart", new DragEventArgs());
@@ -231,7 +231,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 				_host.AddComponent<ActivityScheduleGrid>();
 			List<HtmlNode> camperActivityCells = component.FindAll("td")
 				.Where(node => node.Attributes.AttributesWithName("class")
-				.Any(a => a.Value.Equals("activity-camper-cell"))).ToList();
+				.Any(a => a.Value.Contains("activity-camper-cell"))).ToList();
 			Assert.That(camperActivityCells, Has.Count.EqualTo(camperRequests.Count() * 4),
 				"Number of camper activity cells");
 			// Gather up the activity block drop zones.
@@ -295,7 +295,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 				_host.AddComponent<ActivityScheduleGrid>();
 			List<HtmlNode> camperActivityCells = component.FindAll("td")
 				.Where(node => node.Attributes.AttributesWithName("class")
-				.Any(a => a.Value.Equals("activity-camper-cell"))).ToList();
+				.Any(a => a.Value.Contains("activity-camper-cell"))).ToList();
 			Assert.That(camperActivityCells, Has.Count.EqualTo(camperRequests.Count() * 4),
 				"Number of camper activity cells");
 			// Gather up the activity block drop zones.
@@ -339,5 +339,103 @@ namespace ActivitySchedulerFrontEnd.Tests
 				"Assigned campers on drop target");
 		}
 
+		[Test]
+		public async Task ActivityScheduleGrid_SelectCamperActivity_AllActivitiesForCamperHilited()
+		{
+			// Arrange - run schedule with successful data set
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			List<CamperRequests> camperRequests;
+			string scheduleId = "MySchedule";
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
+			}
+			RenderedComponent<ActivityScheduleGrid> component =
+				_host.AddComponent<ActivityScheduleGrid>();
+			List<HtmlNode> camperActivityCells = component.FindAll("td")
+				.Where(node => node.Attributes.AttributesWithName("class")
+				.Any(a => a.Value.Contains("activity-camper-cell"))).ToList();
+			Assert.That(camperActivityCells, Has.Count.EqualTo(camperRequests.Count() * 4),
+				"Number of camper activity cells");
+
+			// Act - Click on the block 0 for the next activity
+			HtmlNode clickTarget = camperActivityCells.First();
+			await clickTarget.ClickAsync();
+
+			// Assert - schedule has camper selected
+			Assert.That(component.Instance.SelectedCamper?.FullName,
+				Is.EqualTo(clickTarget.Attributes["title"].Value),
+				"Selected Camper Name");
+
+			// Verify that all activity cells for the camper are selected
+			List<HtmlNode> selectedCamperActivityCells = component.FindAll("td")
+				.Where(node => node.Attributes.AttributesWithName("class")
+				.Any(a => a.Value.Contains("selected-camper"))).ToList();
+			Assert.That(selectedCamperActivityCells, Has.Count.EqualTo(4),
+				"Selected activity cells");
+			Assert.That(selectedCamperActivityCells.Select(c => c.Attributes["title"].Value),
+				Has.All.EqualTo(component.Instance.SelectedCamper?.FullName),
+				"Selected cell camper names");
+		}
+
+		[Test]
+		public async Task ActivityScheduleGrid_SelectCamperActivity_AllActivitiesForCamperGroupHilited()
+		{
+			// Arrange - run schedule with successful data set
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			List<CamperRequests> camperRequests;
+			string scheduleId = "MySchedule";
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
+			}
+			// Find a camper in a camper group
+			List<HashSet<Camper>> camperGroups = _schedulerService.GetCamperGroupsForScheduleId(scheduleId);
+			HashSet<Camper> selectedCamperGroup = camperGroups.First();
+			// Pick a camper with a full name in the group
+			Camper selectedCamper = selectedCamperGroup.First(c => !string.IsNullOrEmpty(c.FirstName));
+
+			RenderedComponent<ActivityScheduleGrid> component =
+				_host.AddComponent<ActivityScheduleGrid>();
+			List<HtmlNode> camperActivityCells = component.FindAll("td")
+				.Where(node => node.Attributes.AttributesWithName("title")
+				.Any(a => a.Value.Equals(selectedCamper.FullName))).ToList();
+			Assert.That(camperActivityCells, Has.Count.EqualTo(4),
+				"Number of camper activity cells");
+
+			// Act - Click on the block 0 for the next activity
+			HtmlNode clickTarget = camperActivityCells.First();
+			await clickTarget.ClickAsync();
+
+			// Assert - schedule has camper selected
+			Assert.That(component.Instance.SelectedCamperGroup,
+				Is.EqualTo(selectedCamperGroup),
+				"Selected Camper Group");
+
+			// Verify that all activity cells for the camper group are selected
+			List<HtmlNode> selectedCamperGroupActivityCells = component.FindAll("td")
+				.Where(node => node.Attributes.AttributesWithName("class")
+				.Any(a => a.Value.Contains("selected-camper-group"))).ToList();
+			// The selected camper does not get selected-camper-group, only his peers
+			Assert.That(selectedCamperGroupActivityCells, Has.Count.EqualTo(4 * (selectedCamperGroup.Count - 1)),
+				"Selected activity cells");
+			// Check that each peer has 4 cells in the selected group set.
+			foreach (Camper camper in selectedCamperGroup.Where(c => c != selectedCamper))
+			{
+				Assert.That(selectedCamperGroupActivityCells.Count(c =>
+					c.Attributes["title"].Value.Split(',')[0].Equals(camper.LastName)),
+					Is.EqualTo(4), $"Activities for camper {camper.FullName}");
+			}
+		}
 	}
 }
