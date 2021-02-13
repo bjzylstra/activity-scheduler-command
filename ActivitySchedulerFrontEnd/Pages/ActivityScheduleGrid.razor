@@ -68,7 +68,7 @@ else
     private HashSet<Camper> _selectedCamperGroup;
     public HashSet<Camper> SelectedCamperGroup => _selectedCamperGroup;
     public Camper SelectedCamper => _selectedCamper;
-    public void SelectCamper(Camper camper)
+    public async Task SelectCamper(Camper camper)
     {
         _selectedCamper = camper;
         _selectedCamperGroup = null;
@@ -90,7 +90,7 @@ else
         // Refresh the grid so all the cells get colored.
         if (_component != null)
         {
-            Task updateTask = _component.UpdateGrid();
+            await _component.UpdateGrid();
         }
     }
 

@@ -93,13 +93,13 @@
         }
     }
 
-    private void HandleCamperClick(Camper camper)
+    private async Task HandleCamperClick(Camper camper)
     {
         // Set the selected camper list to this camper
         ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
         if (scheduleGrid != null)
         {
-            scheduleGrid.SelectCamper(camper);
+            await scheduleGrid.SelectCamper(camper);
         }
     }
 
