@@ -212,6 +212,10 @@ namespace ActivitySchedulerFrontEnd.Services
 						JsonSerializerOptions options = new JsonSerializerOptions();
 						options.Converters.Add(new CamperJsonConverter());
 						camperGroups = JsonSerializer.Deserialize<List<HashSet<Camper>>>(camperGroupJson, options);
+						if (camperGroups == null)
+						{
+							camperGroups = new List<HashSet<Camper>>();
+						}
 						for (int i = 0; i < camperGroups.Count; i++)
 						{
 							// Need to put the right comparer on for by name matching to work.
