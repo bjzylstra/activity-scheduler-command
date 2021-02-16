@@ -198,5 +198,90 @@ namespace ActivitySchedulerFrontEnd.Tests
 				Has.One.EqualTo(fullNames[camperIndex]), "Target activity camper list");
 		}
 
+		[Test]
+		public async Task CamperScheduleGrid_SelectCamper_CamperRowHilite()
+		{
+			// Arrange - run schedule with successful data set and load grid
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			List<ActivityDefinition> schedule;
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				string scheduleId = "MySchedule";
+				schedule = _schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
+			}
+			RenderedComponent<CamperScheduleGrid> component =
+				_host.AddComponent<CamperScheduleGrid>();
+
+			// Act - select a camper
+			Camper selectedCamper = schedule.First().ScheduledBlocks.First()
+				.AssignedCampers.First();
+			HtmlNode nameCell = component.FindAll("button")
+				.First(node => node.InnerText.Equals(selectedCamper.FullName));
+			await nameCell.ClickAsync();
+
+			// Assert - load the row and verify it has the selected-camper class
+			List<HtmlNode> selectedCamperRows = component.FindAll("tr")
+				.Where(node => node.Attributes.AttributesWithName("class")
+				.Any(a => a.Value.Contains("selected-camper"))).ToList();
+			Assert.That(selectedCamperRows, Has.Count.EqualTo(1), "Selected camper rows");
+			Assert.That(selectedCamperRows[0].Elements("td").First(n =>
+				n.Attributes.Any(a => a.Name.Equals("data-name") && a.Value.Equals("FullName"))).InnerText,
+				Is.EqualTo(selectedCamper.FullName), "Camper row name");
+		}
+
+		[Test]
+		public async Task CamperScheduleGrid_SelectCamper_CamperGroupRowsHilite()
+		{
+			// Arrange - run schedule with successful data set and load grid
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			List<ActivityDefinition> schedule;
+			string scheduleId = "MySchedule";
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				schedule = _schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
+			}
+			RenderedComponent<CamperScheduleGrid> component =
+				_host.AddComponent<CamperScheduleGrid>();
+
+			// Act - select a camper
+			// Find a camper in a camper group
+			List<HashSet<Camper>> camperGroups = _schedulerService.GetCamperGroupsForScheduleId(scheduleId);
+			HashSet<Camper> selectedCamperGroup = camperGroups.First();
+			// Pick a camper with a full name in the group
+			Camper selectedCamper = selectedCamperGroup.First(c => !string.IsNullOrEmpty(c.FirstName));
+			HtmlNode nameCell = component.FindAll("button")
+				.First(node => node.InnerText.Equals(selectedCamper.FullName));
+			await nameCell.ClickAsync();
+
+			// Assert - load the row and verify it has the selected-camper class
+			List<HtmlNode> selectedCamperGroupRows = component.FindAll("tr")
+				.Where(node => node.Attributes.AttributesWithName("class")
+				.Any(a => a.Value.Contains("selected-camper-group"))).ToList();
+			// The selected camper does not get selected-camper-group, only his peers
+			Assert.That(selectedCamperGroupRows, Has.Count.EqualTo(selectedCamperGroup.Count-1), 
+				"Selected camper group rows");
+			// Check that each peer has a row in the set. Need to strip it down to the last names 
+			// because the group has incomplete names
+			List<string> selectedCamperGroupLastNames = selectedCamperGroupRows.Select(g => 
+				g.Elements("td").First(n =>	n.Attributes.Any(a => 
+					a.Name.Equals("data-name") && a.Value.Equals("FullName")))
+				.InnerText.Split(',')[0]).ToList();
+			foreach (Camper camper in selectedCamperGroup.Where(c => c != selectedCamper))
+			{
+				Assert.That(selectedCamperGroupLastNames,
+					Has.One.EqualTo(camper.LastName), "Camper row name");
+			}
+		}
+
 	}
 }
