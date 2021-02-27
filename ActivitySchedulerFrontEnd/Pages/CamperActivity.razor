@@ -8,7 +8,7 @@
 }
 else
 {
-    <select id="@Id" @bind="CurrentActivityName">
+    <select id="@Id" @bind="CurrentActivityName" class="@SelectionClass">
         @foreach (var activityName in _activityNames)
         {
             <option value="@activityName">
@@ -82,5 +82,27 @@ else
         }
 
         base.OnParametersSet();
+    }
+
+    private string SelectionClass
+    {
+        get
+        {
+            string selectionClass = String.Empty;
+            Initializer initializer = Object as Initializer;
+            if (initializer != null &&
+                initializer.ScheduleGrid != null &&
+                initializer.ScheduleGrid.SelectedCamper != null)
+            {
+                IActivityBlock selectedCamperActivity = initializer.ScheduleGrid.SelectedCamper
+                    .ScheduledBlocks.First(b => b.TimeSlot == initializer.TimeSlot);
+                if (selectedCamperActivity.ActivityDefinition.Name == CurrentActivityName)
+                {
+                    selectionClass = "selected-camper-activity";
+                }
+            }
+
+            return selectionClass;
+        }
     }
 }

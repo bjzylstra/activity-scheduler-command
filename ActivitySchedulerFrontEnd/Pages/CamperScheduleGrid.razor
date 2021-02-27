@@ -67,6 +67,8 @@ else
     /// </summary>
     private HashSet<Camper> _selectedCamperGroup = null;
     private Camper _selectedCamper = null;
+    public HashSet<Camper> SelectedCamperGroup => _selectedCamperGroup;
+    public Camper SelectedCamper => _selectedCamper;
 
     protected override async Task OnInitializedAsync()
     {

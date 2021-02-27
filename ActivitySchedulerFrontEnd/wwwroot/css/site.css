@@ -219,3 +219,7 @@ app {
 .selected-camper-group {
     background-color: aqua;
 }
+
+.selected-camper-activity {
+    background-color: lightcoral
+}

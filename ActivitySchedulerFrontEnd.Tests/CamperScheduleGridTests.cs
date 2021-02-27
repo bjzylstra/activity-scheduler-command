@@ -263,7 +263,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 				.First(node => node.InnerText.Equals(selectedCamper.FullName));
 			await nameCell.ClickAsync();
 
-			// Assert - load the row and verify it has the selected-camper class
+			// Assert - load the row and verify it has the selected-camper-group class
 			List<HtmlNode> selectedCamperGroupRows = component.FindAll("tr")
 				.Where(node => node.Attributes.AttributesWithName("class")
 				.Any(a => a.Value.Contains("selected-camper-group"))).ToList();
@@ -281,6 +281,63 @@ namespace ActivitySchedulerFrontEnd.Tests
 				Assert.That(selectedCamperGroupLastNames,
 					Has.One.EqualTo(camper.LastName), "Camper row name");
 			}
+		}
+
+		[Test]
+		public async Task CamperScheduleGrid_SelectCamper_CamperActivitiesHilite()
+		{
+			// Arrange - run schedule with successful data set and load grid
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			List<ActivityDefinition> schedule;
+			string scheduleId = "MySchedule";
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				schedule = _schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
+			}
+			RenderedComponent<CamperScheduleGrid> component =
+				_host.AddComponent<CamperScheduleGrid>();
+
+			// Act - select a camper
+			Camper selectedCamper = schedule.First().ScheduledBlocks.First()
+				.AssignedCampers.First();
+			HtmlNode nameCell = component.FindAll("button")
+				.First(node => node.InnerText.Equals(selectedCamper.FullName));
+			await nameCell.ClickAsync();
+
+			// Assert - load all the activity cells
+			List<HtmlNode> activityCells = component.FindAll("select")
+				.Where(node => node.Id.Contains('-')).ToList();
+			// Only Activity cells with an activity matching the selected camper in that slot
+			// should have the selected-camper-activity
+			List<HtmlNode> selectedActivityCells = activityCells.Where(node => 
+				node.Attributes.AttributesWithName("class")
+					.Any(a => a.Value.Contains("selected-camper-activity"))).ToList();
+			Dictionary<int, string> selectedCamperActivities = selectedCamper.ScheduledBlocks
+				.ToDictionary(b => b.TimeSlot, b => b.ActivityDefinition.Name);
+			foreach (HtmlNode selectedActivityCell in selectedActivityCells)
+			{
+				int slotId = int.Parse(selectedActivityCell.Id.Split('-')[1]);
+				Assert.That(selectedActivityCell.Attributes["value"].Value,
+					Is.EqualTo(selectedCamperActivities[slotId]),
+					$"{selectedActivityCell.Id}");
+			}
+
+			List<HtmlNode> unselectedActivityCells = activityCells.Where(node =>
+				node.Attributes.AttributesWithName("class")
+					.All(a => !a.Value.Contains("selected-camper-activity"))).ToList();
+			foreach (HtmlNode unselectedActivityCell in unselectedActivityCells)
+			{
+				int slotId = int.Parse(unselectedActivityCell.Id.Split('-')[1]);
+				Assert.That(unselectedActivityCell.Attributes["value"].Value,
+					Is.Not.EqualTo(selectedCamperActivities[slotId]),
+					$"{unselectedActivityCell.Id}");
+			}
+
 		}
 
 	}
