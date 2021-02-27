@@ -110,39 +110,39 @@ namespace Camp
             }
         }
 
-		public ActivityDefinition AlternateActivity { get; set; }
+        public ActivityDefinition AlternateActivity { get; set; }
 
-		/// <summary>
-		/// True if the alternate activity has been scheduled
-		/// </summary>
-		public bool ScheduledAlternateActivity
-		{
-			get
-			{
-				return Camper.ScheduledBlocks.Any(sb => sb.ActivityDefinition == AlternateActivity);
-			}
-		}
+        /// <summary>
+        /// True if the alternate activity has been scheduled
+        /// </summary>
+        public bool ScheduledAlternateActivity
+        {
+            get
+            {
+                return Camper.ScheduledBlocks.Any(sb => sb.ActivityDefinition == AlternateActivity);
+            }
+        }
 
-		/// <summary>
-		/// Getter for the list of activities that have not been scheduled on this request.
-		/// Adjusts for an activity having been replaced by the alternate.
-		/// </summary>
-		public List<ActivityRequest> UnscheduledActivities
-		{
-			get
-			{
-				List<ActivityRequest> unscheduledActivities = ActivityRequests
-					.Where(ar => !Camper.ScheduledBlocks.Any(sb => sb.ActivityDefinition == ar.Activity))
-					.ToList();
-				if (ScheduledAlternateActivity)
-				{
-					// If the alternate got placed, it should have replaced the last request.
-					unscheduledActivities.Remove(unscheduledActivities.Last());
-				}
-				return unscheduledActivities;
+        /// <summary>
+        /// Getter for the list of activities that have not been scheduled on this request.
+        /// Adjusts for an activity having been replaced by the alternate.
+        /// </summary>
+        public List<ActivityRequest> UnscheduledActivities
+        {
+            get
+            {
+                List<ActivityRequest> unscheduledActivities = ActivityRequests
+                    .Where(ar => !Camper.ScheduledBlocks.Any(sb => sb.ActivityDefinition == ar.Activity))
+                    .ToList();
+                if (ScheduledAlternateActivity)
+                {
+                    // If the alternate got placed, it should have replaced the last request.
+                    unscheduledActivities.Remove(unscheduledActivities.Last());
+                }
+                return unscheduledActivities;
 
-			}
-		}
+            }
+        }
 
         /// <summary>
         /// Read the CamperRequests from a CSV file. The activities must be found
@@ -243,43 +243,43 @@ namespace Camp
         /// <returns>Collection of camper groups. Each group contains the campers
         /// that have common camper mate requests</returns>
         public static List<HashSet<Camper>> GenerateCamperMateGroups(List<CamperRequests> camperRequestsList)
-		{
+        {
             List<HashSet<Camper>> camperMateGroups = new List<HashSet<Camper>>();
-			foreach (CamperRequests camperRequest in camperRequestsList?.Where(cr => cr.CabinMate != null))
-			{
+            foreach (CamperRequests camperRequest in camperRequestsList?.Where(cr => cr.CabinMate != null))
+            {
                 HashSet<Camper> camperGroup = camperMateGroups.FirstOrDefault(grp => grp.Contains(camperRequest.Camper));
                 HashSet<Camper> mateGroup = camperMateGroups.FirstOrDefault(grp => grp.Contains(camperRequest.CabinMate));
                 if (camperGroup == null)
-				{
+                {
                     if (mateGroup == null)
-					{
+                    {
                         // Neither is in a group. Make a new group for them
                         // and add the mate
                         mateGroup = new HashSet<Camper>(new Camper.CamperEqualityCompare());
                         camperMateGroups.Add(mateGroup);
                         mateGroup.Add(camperRequest.CabinMate);
-					}
+                    }
                     // Camperis not in a group so add to the mate group
                     mateGroup.Add(camperRequest.Camper);
-				}
+                }
                 else
-				{
+                {
                     // Camper is in a group
                     if (mateGroup == null)
-					{
+                    {
                         // Mate is not in a group so add the mate
                         camperGroup.Add(camperRequest.CabinMate);
-					}
+                    }
                     else if (!ReferenceEquals(camperGroup, mateGroup))
-					{
+                    {
                         // If the groups are not the same group, combine them
                         // and remove one from the list.
                         camperGroup.UnionWith(mateGroup);
                         camperMateGroups.Remove(mateGroup);
                     }
                 }
-			}
+            }
             return camperMateGroups;
-		}
+        }
     }
 }
