@@ -143,19 +143,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			Assert.That(retrievedSchedule, Has.Count.EqualTo(scheduleData.activityDefinitions.Count), 
 				"Number of activities in retrieved schedule");
 			List<HashSet<Camper>> retrievedCamperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
-			Assert.That(retrievedCamperGroups, Has.Count.EqualTo(scheduleData.camperGroups.Count),
-				"Retrieved camper groups");
-			foreach (var camperGroup in scheduleData.camperGroups)
-			{
-				// Find the original camper group
-				var retrievedCamperGroup = retrievedCamperGroups.First(rcg => rcg.Contains(camperGroup.First()));
-				// Last name equivalency because groups only give last name
-				foreach (var camperLastName in camperGroup.Select(c => c.LastName))
-				{
-					Assert.That(retrievedCamperGroup.Select(c => c.LastName), Has.One.EqualTo(camperLastName), 
-						"Retrieved camper group");
-				}
-			}
+			AssertCamperGroupsAreEqual(retrievedCamperGroups, scheduleData.camperGroups);
 		}
 
 		[Test]
@@ -176,20 +164,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 			List<ActivityDefinition> retrievedSchedule = freshService.GetSchedule(scheduleId);
 			Assert.That(retrievedSchedule, Has.Count.EqualTo(scheduleData.activityDefinitions.Count),
 				"Number of activities in retrieved schedule");
-			List<HashSet<Camper>> retrievedCamperGroups = freshService.GetCamperGroupsForScheduleId(scheduleId);
-			Assert.That(retrievedCamperGroups, Has.Count.EqualTo(scheduleData.camperGroups.Count),
-				"Retrieved camper groups");
-			foreach (var camperGroup in scheduleData.camperGroups)
-			{
-				// Find the original camper group
-				var retrievedCamperGroup = retrievedCamperGroups.First(rcg => rcg.Contains(camperGroup.First()));
-				// Last name equivalency because groups only give last name
-				foreach (var camperLastName in camperGroup.Select(c => c.LastName))
-				{
-					Assert.That(retrievedCamperGroup.Select(c => c.LastName), Has.One.EqualTo(camperLastName),
-						"Retrieved camper group");
-				}
-			}
+			List<HashSet<Camper>> retrievedCamperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
+			AssertCamperGroupsAreEqual(retrievedCamperGroups, scheduleData.camperGroups);
 		}
 
 		[Test]
@@ -203,13 +179,16 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 			// Act - Modify and update the schedule
 			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
+			List<HashSet<Camper>> camperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
 			schedule.RemoveAt(0);
-			service.UpdateSchedule(scheduleId, schedule, null);
+			service.UpdateSchedule(scheduleId, schedule, camperGroups);
 
 			// Arrange - read the schedule back.
 			List<ActivityDefinition> retrievedSchedule = service.GetSchedule(scheduleId);
 			Assert.That(retrievedSchedule, Has.Count.EqualTo(schedule.Count),
 				"Number of activities in retrieved schedule");
+			List<HashSet<Camper>> retrievedCamperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
+			AssertCamperGroupsAreEqual(retrievedCamperGroups, camperGroups);
 		}
 
 		[Test]
@@ -223,14 +202,17 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 			// Act - Modify and update the schedule
 			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
+			List<HashSet<Camper>> camperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
 			schedule.RemoveAt(0);
-			service.UpdateSchedule(scheduleId, schedule, null);
+			service.UpdateSchedule(scheduleId, schedule, camperGroups);
 
 			// Arrange - Create another scheduler service and read the schedule back.
 			SchedulerService freshService = new SchedulerService(_applicationName, _logger);
 			List<ActivityDefinition> retrievedSchedule = freshService.GetSchedule(scheduleId);
 			Assert.That(retrievedSchedule, Has.Count.EqualTo(schedule.Count),
 				"Number of activities in retrieved schedule");
+			List<HashSet<Camper>> retrievedCamperGroups = freshService.GetCamperGroupsForScheduleId(scheduleId);
+			AssertCamperGroupsAreEqual(retrievedCamperGroups, camperGroups);
 		}
 
 		[Test]
@@ -422,5 +404,24 @@ namespace ActivitySchedulerFrontEnd.Tests
 				return (activityDefinitions,camperGroups);
 			}
 		}
+
+		private void AssertCamperGroupsAreEqual(List<HashSet<Camper>> actualCamperGroups,
+			List<HashSet<Camper>> expectedCamperGroups)
+		{
+			Assert.That(actualCamperGroups, Has.Count.EqualTo(expectedCamperGroups.Count),
+				"Retrieved camper groups");
+			foreach (var expectedCamperGroup in expectedCamperGroups)
+			{
+				// Find the original camper group
+				var actualCamperGroup = actualCamperGroups.First(rcg => rcg.Contains(expectedCamperGroup.First()));
+				// Last name equivalency because groups only give last name
+				foreach (var camperLastName in expectedCamperGroup.Select(c => c.LastName))
+				{
+					Assert.That(actualCamperGroup.Select(c => c.LastName), Has.One.EqualTo(camperLastName),
+						"Retrieved camper group");
+				}
+			}
+		}
+
 	}
 }
