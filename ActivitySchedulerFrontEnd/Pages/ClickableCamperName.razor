@@ -1,0 +1,23 @@
+﻿@using GridShared.Columns
+@implements ICustomGridComponent<Camper>
+
+<button @onclick="@(() => HandleCamperClick(Item))">@Item.FullName</button>
+
+@code {
+    [Parameter]
+    public Camper Item { get; set; }
+
+    [Parameter]
+    public object Object { get; set; }
+
+    private async Task HandleCamperClick(Camper camper)
+    {
+        // Set the selected camper list to this camper
+        CamperScheduleGrid scheduleGrid = Object as CamperScheduleGrid;
+        if (scheduleGrid != null)
+        {
+            await scheduleGrid.SelectCamper(camper);
+        }
+    }
+
+}

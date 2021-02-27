@@ -211,3 +211,15 @@ app {
 .no-drop {
     background-color: lightcoral;
 }
+
+.selected-camper {
+    background-color: cornflowerblue;
+}
+
+.selected-camper-group {
+    background-color: aqua;
+}
+
+.selected-camper-activity {
+    background-color: lightcoral
+}

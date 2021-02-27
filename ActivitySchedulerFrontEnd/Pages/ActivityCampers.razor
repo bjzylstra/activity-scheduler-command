@@ -4,13 +4,14 @@
 <table>
     <tr class="dropzone @dropClass" id="@Id"
         ondragover="event.preventDefault();"
-        @ondrop="HandleDrop"
-        @ondragenter="HandleDragEnter"
-        @ondragleave="HandleDragLeave">
+        @ondrop="HandleCamperDrop"
+        @ondragenter="HandleCamperDragEnter"
+        @ondragleave="HandleCamperDragLeave">
         @foreach (var camper in Item.AssignedCampers)
         {
-            <td class="activity-camper-cell" draggable="true" title="@camper.FullName"
-                @ondragstart="@(() => HandleDragStart(camper))">
+            <td class="activity-camper-cell @SelectionClass(camper)" draggable="true" title="@camper.FullName"
+                @ondragstart="@(() => HandleCamperDragStart(camper))"
+                @onclick="@(() => HandleCamperClick(camper))">
                 @camper.FullName
             </td>
         }
@@ -31,6 +32,23 @@
 
     private string dropClass;
 
+    private string SelectionClass(Camper camper)
+    {
+        {
+            string selectionClass = String.Empty;
+            ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
+            if (scheduleGrid != null)
+            {
+                selectionClass = scheduleGrid.SelectedCamper == camper
+                    ? "selected-camper"
+                    : scheduleGrid.SelectedCamperGroup?.Contains(camper) == true
+                    ? "selected-camper-group"
+                    : String.Empty;
+            }
+            return selectionClass;
+        }
+    }
+
     protected override void OnParametersSet()
     {
         // Sort the campers in the schedule
@@ -39,13 +57,49 @@
         base.OnParametersSet();
     }
 
-    private void HandleDragStart(Camper camper)
+    private void HandleCamperDragStart(Camper camper)
     {
         ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
         if (scheduleGrid != null)
         {
             scheduleGrid.DragPayload = (Item.ActivityDefinition.Name,
                 Item.TimeSlot, camper.FullName);
+        }
+    }
+
+    private void HandleCamperDragEnter()
+    {
+        dropClass = PayloadIsValid ? "can-drop" : "no-drop";
+    }
+
+    private void HandleCamperDragLeave()
+    {
+        dropClass = "";
+    }
+
+    private async Task HandleCamperDrop()
+    {
+        ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
+        if (PayloadIsValid)
+        {
+            // Received a camper. Add the camper to our activity block
+            // and remove the camper from the other activity block.
+            await scheduleGrid.ReAssignDraggedCamperToBlockAsync(Item);
+        }
+        else
+        {
+            // Cancel the drag
+            scheduleGrid.DragPayload = (null, 0, null);
+        }
+    }
+
+    private async Task HandleCamperClick(Camper camper)
+    {
+        // Set the selected camper list to this camper
+        ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
+        if (scheduleGrid != null)
+        {
+            await scheduleGrid.SelectCamper(camper);
         }
     }
 
@@ -62,29 +116,4 @@
         }
     }
 
-    private void HandleDragEnter()
-    {
-        dropClass = PayloadIsValid ? "can-drop" : "no-drop";
-    }
-
-    private void HandleDragLeave()
-    {
-        dropClass = "";
-    }
-
-    private async Task HandleDrop()
-    {
-        ActivityScheduleGrid scheduleGrid = Object as ActivityScheduleGrid;
-        if (PayloadIsValid)
-        {
-            // Received a camper. Add the camper to our activity block
-            // and remove the camper from the other activity block.
-            await scheduleGrid.ReAssignDraggedCamperToBlockAsync(Item);
-        }
-        else
-        {
-            // Cancel the drag
-            scheduleGrid.DragPayload = (null, 0, null);
-        }
-    }
 }

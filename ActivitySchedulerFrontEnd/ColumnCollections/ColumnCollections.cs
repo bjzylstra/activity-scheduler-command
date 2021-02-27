@@ -67,6 +67,7 @@ namespace ActivitySchedulerFrontEnd.ColumnCollections
             return c =>
             {
                 c.Add(camper => camper.FullName).Titled("Camper Name").SetWidth(30)
+                    .RenderComponentAs<ClickableCamperName>(scheduleGrid)
                     .Sortable(true);
 
                 c.Add().Titled("Block 1").SetWidth(20)

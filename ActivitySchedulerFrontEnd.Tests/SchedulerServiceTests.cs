@@ -134,13 +134,16 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 			// Act - Add a schedule
 			string scheduleId = "MySchedule";
-			List<ActivityDefinition> schedule = GenerateSchedule();
-			service.UpdateSchedule(scheduleId, schedule);
+			var scheduleData = GenerateSchedule();
+			service.UpdateSchedule(scheduleId, scheduleData.activityDefinitions, 
+				scheduleData.camperGroups);
 
 			// Arrange - read the schedule back.
 			List<ActivityDefinition> retrievedSchedule = service.GetSchedule(scheduleId);
-			Assert.That(retrievedSchedule, Has.Count.EqualTo(schedule.Count), 
+			Assert.That(retrievedSchedule, Has.Count.EqualTo(scheduleData.activityDefinitions.Count), 
 				"Number of activities in retrieved schedule");
+			List<HashSet<Camper>> retrievedCamperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
+			AssertCamperGroupsAreEqual(retrievedCamperGroups, scheduleData.camperGroups);
 		}
 
 		[Test]
@@ -152,14 +155,17 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 			// Act - Add a schedule
 			string scheduleId = "MySchedule";
-			List<ActivityDefinition> schedule = GenerateSchedule();
-			service.UpdateSchedule(scheduleId, schedule);
+			var scheduleData = GenerateSchedule();
+			service.UpdateSchedule(scheduleId, scheduleData.activityDefinitions, 
+				scheduleData.camperGroups);
 
 			// Arrange - Create another scheduler service and read the schedule back.
 			SchedulerService freshService = new SchedulerService(_applicationName, _logger);
 			List<ActivityDefinition> retrievedSchedule = freshService.GetSchedule(scheduleId);
-			Assert.That(retrievedSchedule, Has.Count.EqualTo(schedule.Count),
+			Assert.That(retrievedSchedule, Has.Count.EqualTo(scheduleData.activityDefinitions.Count),
 				"Number of activities in retrieved schedule");
+			List<HashSet<Camper>> retrievedCamperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
+			AssertCamperGroupsAreEqual(retrievedCamperGroups, scheduleData.camperGroups);
 		}
 
 		[Test]
@@ -173,13 +179,16 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 			// Act - Modify and update the schedule
 			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
+			List<HashSet<Camper>> camperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
 			schedule.RemoveAt(0);
-			service.UpdateSchedule(scheduleId, schedule);
+			service.UpdateSchedule(scheduleId, schedule, camperGroups);
 
 			// Arrange - read the schedule back.
 			List<ActivityDefinition> retrievedSchedule = service.GetSchedule(scheduleId);
 			Assert.That(retrievedSchedule, Has.Count.EqualTo(schedule.Count),
 				"Number of activities in retrieved schedule");
+			List<HashSet<Camper>> retrievedCamperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
+			AssertCamperGroupsAreEqual(retrievedCamperGroups, camperGroups);
 		}
 
 		[Test]
@@ -193,14 +202,17 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 			// Act - Modify and update the schedule
 			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
+			List<HashSet<Camper>> camperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
 			schedule.RemoveAt(0);
-			service.UpdateSchedule(scheduleId, schedule);
+			service.UpdateSchedule(scheduleId, schedule, camperGroups);
 
 			// Arrange - Create another scheduler service and read the schedule back.
 			SchedulerService freshService = new SchedulerService(_applicationName, _logger);
 			List<ActivityDefinition> retrievedSchedule = freshService.GetSchedule(scheduleId);
 			Assert.That(retrievedSchedule, Has.Count.EqualTo(schedule.Count),
 				"Number of activities in retrieved schedule");
+			List<HashSet<Camper>> retrievedCamperGroups = freshService.GetCamperGroupsForScheduleId(scheduleId);
+			AssertCamperGroupsAreEqual(retrievedCamperGroups, camperGroups);
 		}
 
 		[Test]
@@ -362,12 +374,13 @@ namespace ActivitySchedulerFrontEnd.Tests
 		/// <param name="scheduleIds">Schedule IDs to create files for</param>
 		private void LoadSchedulesIntoAppData(string[] scheduleIds)
 		{
-			List<ActivityDefinition> schedule = GenerateSchedule();
+			var scheduleData = GenerateSchedule();
 			DirectoryInfo applicationDirectoryInfo = ApplicationDirectoryInfo;
 			ISchedulerService loaderScheduler = new SchedulerService(_applicationName, _logger);
 			foreach (string scheduleId in scheduleIds)
 			{
-				loaderScheduler.UpdateSchedule(scheduleId, schedule);
+				loaderScheduler.UpdateSchedule(scheduleId, scheduleData.activityDefinitions, 
+					scheduleData.camperGroups);
 			}
 		}
 
@@ -375,7 +388,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 		/// Generate a schedule from the built-in test data for camper requests.
 		/// </summary>
 		/// <returns>A successful schedule from the built-in test data</returns>
-		private List<ActivityDefinition> GenerateSchedule()
+		private (List<ActivityDefinition> activityDefinitions, List<HashSet<Camper>> camperGroups) GenerateSchedule()
 		{
 			Assembly assembly = typeof(SchedulerServiceTests).Assembly;
 			using (Stream camperRequestFile = assembly.GetManifestResourceStream(
@@ -386,9 +399,29 @@ namespace ActivitySchedulerFrontEnd.Tests
 				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(camperRequestFile,
 					activityDefinitions);
 				Scheduler.ScheduleActivities(camperRequests, false, _logger);
+				List<HashSet<Camper>> camperGroups = CamperRequests.GenerateCamperMateGroups(camperRequests);
 				// Activity definitions now has the schedule
-				return activityDefinitions;
+				return (activityDefinitions,camperGroups);
 			}
 		}
+
+		private void AssertCamperGroupsAreEqual(List<HashSet<Camper>> actualCamperGroups,
+			List<HashSet<Camper>> expectedCamperGroups)
+		{
+			Assert.That(actualCamperGroups, Has.Count.EqualTo(expectedCamperGroups.Count),
+				"Retrieved camper groups");
+			foreach (var expectedCamperGroup in expectedCamperGroups)
+			{
+				// Find the original camper group
+				var actualCamperGroup = actualCamperGroups.First(rcg => rcg.Contains(expectedCamperGroup.First()));
+				// Last name equivalency because groups only give last name
+				foreach (var camperLastName in expectedCamperGroup.Select(c => c.LastName))
+				{
+					Assert.That(actualCamperGroup.Select(c => c.LastName), Has.One.EqualTo(camperLastName),
+						"Retrieved camper group");
+				}
+			}
+		}
+
 	}
 }

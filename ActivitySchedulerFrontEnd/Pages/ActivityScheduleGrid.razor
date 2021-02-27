@@ -64,6 +64,37 @@ else
 
     public (string ActivityName, int TimeSlot, string CamperName) DragPayload { get; set; }
 
+    private Camper _selectedCamper;
+    private HashSet<Camper> _selectedCamperGroup;
+    public HashSet<Camper> SelectedCamperGroup => _selectedCamperGroup;
+    public Camper SelectedCamper => _selectedCamper;
+    public async Task SelectCamper(Camper camper)
+    {
+        _selectedCamper = camper;
+        _selectedCamperGroup = null;
+        if (camper != null)
+        {
+            List<HashSet<Camper>> camperGroups = schedulerService.GetCamperGroupsForScheduleId(ScheduleId);
+            if (camperGroups != null)
+            {
+                foreach (HashSet<Camper> camperGroup in camperGroups)
+                {
+                    if (camperGroup.Contains(camper))
+                    {
+                        _selectedCamperGroup = camperGroup;
+                        break;
+                    }
+                }
+            }
+        }
+        // Refresh the grid so all the cells get colored.
+        if (_component != null)
+        {
+            await _component.UpdateGrid();
+        }
+    }
+
+
     public async Task ReAssignDraggedCamperToBlockAsync(IActivityBlock block)
     {
         if (DragPayload.CamperName != null)

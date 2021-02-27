@@ -62,6 +62,14 @@ else
         }
     }
 
+    /// <summary>
+    /// If a camper is selected, this is the group they are part of.
+    /// </summary>
+    private HashSet<Camper> _selectedCamperGroup = null;
+    private Camper _selectedCamper = null;
+    public HashSet<Camper> SelectedCamperGroup => _selectedCamperGroup;
+    public Camper SelectedCamper => _selectedCamper;
+
     protected override async Task OnInitializedAsync()
     {
         // Schedule set comes from cookie if present.
@@ -79,7 +87,7 @@ else
                 ScheduleId,
                 ColumnCollections.CamperScheduleColumns(this, ScheduleId), q), query, false, "activityScheduleGrid",
                 ColumnCollections.CamperScheduleColumns(this, ScheduleId))
-                .SetStriped(true);
+                .SetRowCssClasses(camper => GetCamperRowClass(camper));
             _grid = gridClient.Grid;
             // Set new items to grid
             _task = gridClient.UpdateGrid();
@@ -91,6 +99,18 @@ else
             // tell the underlying component to update
             await _component.UpdateGrid();
         }
+    }
+
+    /// <summary>
+    /// Highlight the camper row from the selection state
+    /// </summary>
+    /// <param name="camper">Camper for row to hightlight</param>
+    /// <returns>Class for highlighting</returns>
+    private string GetCamperRowClass(Camper camper)
+    {
+        return (camper == _selectedCamper) ? "selected-camper"
+            : _selectedCamperGroup != null && _selectedCamperGroup.Contains(camper) ? "selected-camper-group"
+            : string.Empty;
     }
 
     public async Task AssignActivityToCamperBlockAsync(string camperName, int timeSlot,
@@ -121,5 +141,31 @@ else
         await JSRuntime.InvokeAsync<object>(
             "FileSaveAs", camperScheduleFile,
             schedulerService.WriteCamperScheduleToCsv(ScheduleId));
+    }
+
+    public async Task SelectCamper(Camper camper)
+    {
+        _selectedCamper = camper;
+        _selectedCamperGroup = null;
+        if (camper != null)
+        {
+            List<HashSet<Camper>> camperGroups = schedulerService.GetCamperGroupsForScheduleId(ScheduleId);
+            if (camperGroups != null)
+            {
+                foreach (HashSet<Camper> camperGroup in camperGroups)
+                {
+                    if (camperGroup.Contains(camper))
+                    {
+                        _selectedCamperGroup = camperGroup;
+                        break;
+                    }
+                }
+            }
+        }
+        // Refresh the grid so all the cells get colored.
+        if (_component != null)
+        {
+            await _component.UpdateGrid();
+        }
     }
 }
