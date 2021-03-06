@@ -99,10 +99,11 @@
                     List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(memoryStream, activityDefinitions);
                     Output += $"Loaded {camperRequests.Count} camper requests{Environment.NewLine}";
 
-                    List<ActivityDefinition> schedule = schedulerService.CreateSchedule(ScheduleId, camperRequests,
-                        activityDefinitions);
+                    schedulerService.CreateSchedule(ScheduleId, camperRequests, activityDefinitions);
+
                     // Store the schedule ID for the other pages.
                     await localStorage.SetItemAsync(ScheduleIdKey, ScheduleId);
+                    List<ActivityDefinition> schedule = schedulerService.GetSchedule(ScheduleId);
                     List<Camper> unhappyCampers = schedule
                         .Where(ad => ad.Name == SchedulerService.UnscheduledActivityName)
                         .SelectMany(ad => ad.ScheduledBlocks.SelectMany(b => b.AssignedCampers))

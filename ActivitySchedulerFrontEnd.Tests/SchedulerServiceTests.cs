@@ -136,7 +136,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			string scheduleId = "MySchedule";
 			var scheduleData = GenerateSchedule();
 			service.UpdateSchedule(scheduleId, scheduleData.activityDefinitions, 
-				scheduleData.camperGroups);
+				scheduleData.camperGroups, scheduleData.camperPreferences);
 
 			// Arrange - read the schedule back.
 			List<ActivityDefinition> retrievedSchedule = service.GetSchedule(scheduleId);
@@ -157,7 +157,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			string scheduleId = "MySchedule";
 			var scheduleData = GenerateSchedule();
 			service.UpdateSchedule(scheduleId, scheduleData.activityDefinitions, 
-				scheduleData.camperGroups);
+				scheduleData.camperGroups, scheduleData.camperPreferences);
 
 			// Arrange - Create another scheduler service and read the schedule back.
 			SchedulerService freshService = new SchedulerService(_applicationName, _logger);
@@ -180,8 +180,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Act - Modify and update the schedule
 			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
 			List<HashSet<Camper>> camperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
+			Dictionary<Camper, List<ActivityDefinition>> camperPreferences =
+				service.GetCamperPreferencesForScheduleId(scheduleId);
 			schedule.RemoveAt(0);
-			service.UpdateSchedule(scheduleId, schedule, camperGroups);
+			service.UpdateSchedule(scheduleId, schedule, camperGroups, camperPreferences);
 
 			// Arrange - read the schedule back.
 			List<ActivityDefinition> retrievedSchedule = service.GetSchedule(scheduleId);
@@ -203,8 +205,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Act - Modify and update the schedule
 			List<ActivityDefinition> schedule = service.GetSchedule(scheduleId);
 			List<HashSet<Camper>> camperGroups = service.GetCamperGroupsForScheduleId(scheduleId);
+			Dictionary<Camper, List<ActivityDefinition>> camperPreferences =
+				service.GetCamperPreferencesForScheduleId(scheduleId);
 			schedule.RemoveAt(0);
-			service.UpdateSchedule(scheduleId, schedule, camperGroups);
+			service.UpdateSchedule(scheduleId, schedule, camperGroups, camperPreferences);
 
 			// Arrange - Create another scheduler service and read the schedule back.
 			SchedulerService freshService = new SchedulerService(_applicationName, _logger);
@@ -380,7 +384,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			foreach (string scheduleId in scheduleIds)
 			{
 				loaderScheduler.UpdateSchedule(scheduleId, scheduleData.activityDefinitions, 
-					scheduleData.camperGroups);
+					scheduleData.camperGroups, scheduleData.camperPreferences);
 			}
 		}
 
@@ -388,7 +392,9 @@ namespace ActivitySchedulerFrontEnd.Tests
 		/// Generate a schedule from the built-in test data for camper requests.
 		/// </summary>
 		/// <returns>A successful schedule from the built-in test data</returns>
-		private (List<ActivityDefinition> activityDefinitions, List<HashSet<Camper>> camperGroups) GenerateSchedule()
+		private (List<ActivityDefinition> activityDefinitions, 
+			List<HashSet<Camper>> camperGroups, 
+			Dictionary<Camper,List<ActivityDefinition>> camperPreferences) GenerateSchedule()
 		{
 			Assembly assembly = typeof(SchedulerServiceTests).Assembly;
 			using (Stream camperRequestFile = assembly.GetManifestResourceStream(
@@ -400,8 +406,10 @@ namespace ActivitySchedulerFrontEnd.Tests
 					activityDefinitions);
 				Scheduler.ScheduleActivities(camperRequests, false, _logger);
 				List<HashSet<Camper>> camperGroups = CamperRequests.GenerateCamperMateGroups(camperRequests);
+				Dictionary<Camper, List<ActivityDefinition>> camperPreferences = 
+					CamperRequests.GenerateCamperActivityPreferences(camperRequests);
 				// Activity definitions now has the schedule
-				return (activityDefinitions,camperGroups);
+				return (activityDefinitions,camperGroups,camperPreferences);
 			}
 		}
 

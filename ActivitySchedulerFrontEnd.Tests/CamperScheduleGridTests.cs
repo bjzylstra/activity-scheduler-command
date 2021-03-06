@@ -48,13 +48,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange - run schedule with successful data set
 			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
 				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
-			List<ActivityDefinition> schedule;
+			string scheduleId = "MySchedule";
 			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
 			{
 				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				string scheduleId = "MySchedule";
-				schedule = _schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
 				_localStorage.GetItemAsync<string>(Arg.Any<string>())
 					.Returns(Task.FromResult(scheduleId));
 			}
@@ -71,7 +70,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 			Assert.That(nameCells, Has.Count.EqualTo(numberOfCampers),
 				"Number of camper rows");
 
-			foreach(var activity in schedule.Take(numberOfActivitiesToVerify))
+			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
+			foreach (var activity in schedule.Take(numberOfActivitiesToVerify))
 			{
 				for (int timeSlot = 0; timeSlot < ActivityBlock.MaximumTimeSlots; timeSlot++)
 				{
@@ -102,13 +102,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange - run schedule with successful data set
 			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
 				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
-			List<ActivityDefinition> schedule;
+			string scheduleId = "MySchedule";
 			using (MemoryStream camperRequestStream = new MemoryStream(_overSubscribedCamperRequestsBuffer))
 			{
 				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				string scheduleId = "MySchedule";
-				schedule = _schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
 				_localStorage.GetItemAsync<string>(Arg.Any<string>())
 					.Returns(Task.FromResult(scheduleId));
 			}
@@ -125,6 +124,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			Assert.That(nameCells, Has.Count.EqualTo(numberOfCampers),
 				"Number of camper rows");
 
+			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
 			ActivityDefinition unscheduledActivity = schedule.First(ad => 
 				ad.Name.Equals(SchedulerService.UnscheduledActivityName));
 			foreach (var activity in schedule.Take(numberOfActivitiesToVerify).Append(unscheduledActivity))
@@ -158,13 +158,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange - run schedule with successful data set
 			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
 				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
-			List<ActivityDefinition> schedule;
 			string scheduleId = "MySchedule";
 			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
 			{
 				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				schedule = _schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
 				_localStorage.GetItemAsync<string>(Arg.Any<string>())
 					.Returns(Task.FromResult(scheduleId));
 			}
@@ -183,6 +182,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			List<HtmlAttribute> valueAttributes = camperSlotCells[0].Attributes
 				.AttributesWithName("value").ToList();
 			string originalActivityName = valueAttributes[0].Value;
+			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
 			string updatedActivityName = schedule[0].Name == originalActivityName
 				? schedule[1].Name : schedule[0].Name;
 			camperSlotCells[0].Change(updatedActivityName);
@@ -204,13 +204,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange - run schedule with successful data set and load grid
 			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
 				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
-			List<ActivityDefinition> schedule;
+			string scheduleId = "MySchedule";
 			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
 			{
 				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				string scheduleId = "MySchedule";
-				schedule = _schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
 				_localStorage.GetItemAsync<string>(Arg.Any<string>())
 					.Returns(Task.FromResult(scheduleId));
 			}
@@ -218,6 +217,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 				_host.AddComponent<CamperScheduleGrid>();
 
 			// Act - select a camper
+			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
 			Camper selectedCamper = schedule.First().ScheduledBlocks.First()
 				.AssignedCampers.First();
 			HtmlNode nameCell = component.FindAll("button")
@@ -240,13 +240,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange - run schedule with successful data set and load grid
 			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
 				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
-			List<ActivityDefinition> schedule;
 			string scheduleId = "MySchedule";
 			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
 			{
 				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				schedule = _schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
 				_localStorage.GetItemAsync<string>(Arg.Any<string>())
 					.Returns(Task.FromResult(scheduleId));
 			}
@@ -289,13 +288,12 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange - run schedule with successful data set and load grid
 			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
 				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
-			List<ActivityDefinition> schedule;
 			string scheduleId = "MySchedule";
 			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
 			{
 				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
 					camperRequestStream, activityDefinitions);
-				schedule = _schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
 				_localStorage.GetItemAsync<string>(Arg.Any<string>())
 					.Returns(Task.FromResult(scheduleId));
 			}
@@ -303,6 +301,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 				_host.AddComponent<CamperScheduleGrid>();
 
 			// Act - select a camper
+			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
 			Camper selectedCamper = schedule.First().ScheduledBlocks.First()
 				.AssignedCampers.First();
 			HtmlNode nameCell = component.FindAll("button")
