@@ -126,6 +126,82 @@ namespace ActivitySchedulerFrontEnd.Tests
 		}
 
 		[Test]
+		public void GetCamperGroupsForScheduleId_KnownId_ReturnsCamperGroups()
+		{
+			// Arrange - generate a schedule and save a couple of copies
+			string[] expectedScheduleIds = new[] { "Schedule1", "Another schedule", "2020.04.01" };
+			LoadSchedulesIntoAppData(expectedScheduleIds);
+			SchedulerService service = new SchedulerService(_applicationName, _logger);
+
+			// Act
+			string scheduleId = expectedScheduleIds.Last();
+			List<HashSet<Camper>> retrievedCamperGroups = 
+				service.GetCamperGroupsForScheduleId(scheduleId);
+
+			// Assert - a schedule was retrieved
+			Assert.That(retrievedCamperGroups, Is.Not.Null, "Retrieved camperGroups");
+			Assert.That(retrievedCamperGroups, Has.Count.GreaterThan(0),
+				"Camper groups in the retrieved schedule");
+		}
+
+		[Test]
+		public void GetCamperGroupsForScheduleId_UnknownId_ReturnsEmptyCamperGroupSet()
+		{
+			// Arrange - generate a schedule and save a couple of copies
+			string[] expectedScheduleIds = new[] { "Schedule1", "Another schedule", "2020.04.01" };
+			LoadSchedulesIntoAppData(expectedScheduleIds);
+			SchedulerService service = new SchedulerService(_applicationName, _logger);
+
+			// Act
+			string scheduleId = "NoSuchSchedule";
+			List<HashSet<Camper>> retrievedCamperGroups = 
+				service.GetCamperGroupsForScheduleId(scheduleId);
+
+			// Assert - a schedule was retrieved
+			Assert.That(retrievedCamperGroups, Is.Not.Null, "Retrieved camperGroups");
+			Assert.That(retrievedCamperGroups, Has.Count.EqualTo(0),
+				"Camper Groups in the retrieved schedule");
+		}
+
+		[Test]
+		public void GetCamperPreferencesForScheduleId_KnownId_ReturnsCamperPreferences()
+		{
+			// Arrange - generate a schedule and save a couple of copies
+			string[] expectedScheduleIds = new[] { "Schedule1", "Another schedule", "2020.04.01" };
+			LoadSchedulesIntoAppData(expectedScheduleIds);
+			SchedulerService service = new SchedulerService(_applicationName, _logger);
+
+			// Act
+			string scheduleId = expectedScheduleIds.Last();
+			Dictionary<Camper, List<ActivityDefinition>> retrievedCamperPreferences = 
+				service.GetCamperPreferencesForScheduleId(scheduleId);
+
+			// Assert - a schedule was retrieved
+			Assert.That(retrievedCamperPreferences, Is.Not.Null, "Retrieved camper preferences");
+			Assert.That(retrievedCamperPreferences, Has.Count.GreaterThan(0),
+				"Camper preferences in the retrieved schedule");
+		}
+
+		[Test]
+		public void GetCamperPreferencesForScheduleId_UnknownId_ReturnsEmptyCamperGroupSet()
+		{
+			// Arrange - generate a schedule and save a couple of copies
+			string[] expectedScheduleIds = new[] { "Schedule1", "Another schedule", "2020.04.01" };
+			LoadSchedulesIntoAppData(expectedScheduleIds);
+			SchedulerService service = new SchedulerService(_applicationName, _logger);
+
+			// Act
+			string scheduleId = "NoSuchSchedule";
+			Dictionary<Camper, List<ActivityDefinition>> retrievedCamperPreferences = 
+				service.GetCamperPreferencesForScheduleId(scheduleId);
+
+			// Assert - a schedule was retrieved
+			Assert.That(retrievedCamperPreferences, Is.Not.Null, "Retrieved camper preferences");
+			Assert.That(retrievedCamperPreferences, Has.Count.EqualTo(0),
+				"Camper preferences in the retrieved schedule");
+		}
+
+		[Test]
 		public void UpdateSchedule_NewSchedule_ServiceHasNewSchedule()
 		{
 			// Arrange - Start with an empty schedule set

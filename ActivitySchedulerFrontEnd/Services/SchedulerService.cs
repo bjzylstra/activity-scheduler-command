@@ -77,11 +77,15 @@ namespace ActivitySchedulerFrontEnd.Services
 				foreach (var scheduleFile in applicationDirectoryInfo.EnumerateFiles()
 					.Where(f => f.Extension.Equals(ScheduleFileExtension, StringComparison.OrdinalIgnoreCase)))
 				{
-					ScheduleDetails scheduleData = LoadScheduleData(scheduleFile.FullName);
-					if (scheduleData != null && scheduleData.Schedule != null)
+					try
 					{
+						ScheduleDetails scheduleData = LoadScheduleData(scheduleFile.FullName);
 						string scheduleId = scheduleFile.Name.Substring(0, scheduleFile.Name.Length - ScheduleFileExtension.Length);
 						detailsById.Add(scheduleId, scheduleData);
+					}
+					catch (PersistenceParseException e)
+					{
+						_logger.LogError(e, $"Failed to load schedule at {scheduleFile}");
 					}
 				}
 			}
@@ -105,12 +109,13 @@ namespace ActivitySchedulerFrontEnd.Services
 				// If anything goes wrong, log and ignore.
 				if (!int.TryParse(scheduleFileReader.ReadLine(), out int versionNumber))
 				{
-					_logger.LogError($"{scheduleFileLocation} is missing the version field");
-					return null;
+					throw new PersistenceParseException(scheduleFileLocation,
+						$"Missing the version field");
 				}
 				int definitionLength = 0;
 				int scheduleLength = 0;
 				int camperGroupLength = 0;
+				int camperPreferenceLength = 0;
 				// Prior to version numbers, the first line was the definition length.
 				if (versionNumber > 0)
 				{
@@ -122,62 +127,58 @@ namespace ActivitySchedulerFrontEnd.Services
 					// Version number is stored -ve to differentiate from the definition length
 					// in pre-versioned files (rev 1)
 					versionNumber = -versionNumber;
-					if (versionNumber == 1)
+					if (versionNumber > 2)
+					{
+						throw new PersistenceParseException(scheduleFileLocation,
+							$"Unsupported version '{versionNumber}'");
+					}
+
+					if (versionNumber >= 1)
 					{
 						if (!int.TryParse(scheduleFileReader.ReadLine(), out definitionLength))
 						{
-							_logger.LogError($"{scheduleFileLocation} is missing the definition length field");
-							return null;
+							throw new PersistenceParseException(scheduleFileLocation,
+								"Missing the definition length field");
 						}
-						if (!int.TryParse(scheduleFileReader.ReadLine(), out scheduleLength))
+						else if (!int.TryParse(scheduleFileReader.ReadLine(), out scheduleLength))
 						{
-							_logger.LogError($"{scheduleFileLocation} is missing the schedule length field");
-							return null;
+							throw new PersistenceParseException(scheduleFileLocation,
+								"Missing the schedule length field");
 						}
-						if (!int.TryParse(scheduleFileReader.ReadLine(), out camperGroupLength))
+						else if (!int.TryParse(scheduleFileReader.ReadLine(), out camperGroupLength))
 						{
-							_logger.LogError($"{scheduleFileLocation} is missing the camper group length field");
-							return null;
+							throw new PersistenceParseException(scheduleFileLocation,
+								"Missing the camper group length field");
 						}
 					}
-					else
+					// Version 2 added camper preferences
+					if (versionNumber >= 2)
 					{
-						_logger.LogError($"{scheduleFileLocation} is unsupported version '{versionNumber}'");
-						return null;
+						if (!int.TryParse(scheduleFileReader.ReadLine(), out camperPreferenceLength))
+						{
+							throw new PersistenceParseException(scheduleFileLocation,
+								"Missing the camper preference length field");
+						}
 					}
 				}
 
 				// Lengths of the sections should be read in now. Read in the sections.
-				char[] buffer = new char[definitionLength];
-				int charactersRead = scheduleFileReader.Read(buffer, 0, definitionLength);
-				if (charactersRead != definitionLength)
-				{
-					// Ran out of characters
-					_logger.LogError($"{scheduleFileLocation} specified definition length of {definitionLength} " +
-						$"but found only {charactersRead} characters remaining in the file.");
-					return null;
-				}
+				char[] buffer = ReadExpectedCharacters(scheduleFileReader, definitionLength,
+					scheduleFileLocation, "Activity Definitions");
 				List<ActivityDefinition> activityDefinitions = ActivityDefinition.ReadActivityDefinitionsFromString(
 					new string(buffer), _logger);
 				if (activityDefinitions == null || activityDefinitions.Count == 0)
 				{
 					// Could not read the activity definitions
-					_logger.LogError($"{scheduleFileLocation} could not parse the activity definitions");
-					return null;
+					throw new PersistenceParseException(scheduleFileLocation,
+						"Could not parse the activity definitions");
 				}
 
 				ScheduleDetails scheduleDetails = new ScheduleDetails();
 				if (scheduleLength > 0)
 				{
-					buffer = new char[scheduleLength];
-					charactersRead = scheduleFileReader.Read(buffer, 0, scheduleLength);
-					if (charactersRead != scheduleLength)
-					{
-						// Ran out of characters
-						_logger.LogError($"{scheduleFileLocation} specified schedule length of {scheduleLength} " +
-							$"but found only {charactersRead} characters remaining in the file.");
-						return null;
-					}
+					buffer = ReadExpectedCharacters(scheduleFileReader, scheduleLength,
+						scheduleFileLocation, "Schedule");
 					scheduleDetails.Schedule = ActivityDefinition.ReadScheduleFromCsvString(
 						new string(buffer), _logger);
 				}
@@ -190,49 +191,24 @@ namespace ActivitySchedulerFrontEnd.Services
 				if (scheduleDetails.Schedule == null || scheduleDetails.Schedule.Count == 0)
 				{
 					// Could not read the schedule
-					_logger.LogError($"{scheduleFileLocation} could not parse the schedule csv");
-					return null;
+					throw new PersistenceParseException(scheduleFileLocation,
+						"Could not parse the schedule");
 				}
 
 				if (camperGroupLength > 0)
 				{
-					buffer = new char[camperGroupLength];
-					charactersRead = scheduleFileReader.Read(buffer, 0, camperGroupLength);
-					if (charactersRead != camperGroupLength)
-					{
-						// Ran out of characters
-						_logger.LogError($"{scheduleFileLocation} specified camper group length of {camperGroupLength} " +
-							$"but found only {charactersRead} characters remaining in the file.");
-						return null;
-					}
-					string camperGroupJson = new string(buffer);
-					try
-					{
-						JsonSerializerOptions options = new JsonSerializerOptions();
-						options.Converters.Add(new CamperJsonConverter());
-
-						scheduleDetails.CamperGroups = JsonSerializer.Deserialize<List<HashSet<Camper>>>(camperGroupJson, options);
-						if (scheduleDetails.CamperGroups == null)
-						{
-							scheduleDetails.CamperGroups = new List<HashSet<Camper>>();
-						}
-						for (int i = 0; i < scheduleDetails.CamperGroups.Count; i++)
-						{
-							// Need to put the right comparer on for by name matching to work.
-							scheduleDetails.CamperGroups[i] = new HashSet<Camper>(scheduleDetails.CamperGroups[i], new Camper.CamperEqualityCompare());
-						}
-					}
-					catch (JsonException e)
-					{
-						_logger.LogError(e, $"Failed to parse camper group JSON '{camperGroupJson}'");
-					}
+					scheduleDetails.CamperGroups = ReadCamperGroups(
+						scheduleFileLocation, scheduleFileReader, camperGroupLength);
 				}
 
-				// TODO: Deserialize the camper preferences.
-				scheduleDetails.CamperActivityPreferences = new Dictionary<Camper, List<ActivityDefinition>>();
+				// Deserialize the camper preferences.
+				if (camperPreferenceLength > 0)
+				{
+					scheduleDetails.CamperActivityPreferences = ReadCamperPreferences(
+						scheduleFileLocation, scheduleFileReader, camperPreferenceLength);
+				}
 
 				// Merge the limits into the schedule.
-				bool mergeSuccessful = true;
 				foreach (ActivityDefinition scheduleActivity in scheduleDetails.Schedule)
 				{
 					ActivityDefinition activityDefinition = activityDefinitions
@@ -240,21 +216,87 @@ namespace ActivitySchedulerFrontEnd.Services
 					if (activityDefinition == null)
 					{
 						// Did not find the activity definition for a scheduled activity
-						mergeSuccessful = false;
-						_logger.LogError($"{scheduleFileLocation} did not contain a definition for" +
+						throw new PersistenceParseException(scheduleFileLocation,
+							$"Did not contain a definition for" +
 							$"scheduled activity '{scheduleActivity.Name}'");
-						break;
 					}
 					scheduleActivity.MaximumCapacity = activityDefinition.MaximumCapacity;
 					scheduleActivity.MinimumCapacity = activityDefinition.MinimumCapacity;
 					scheduleActivity.OptimalCapacity = activityDefinition.OptimalCapacity;
 				}
-				if (mergeSuccessful)
-				{
-					return scheduleDetails;
-				}
-				return null;
+				return scheduleDetails;
 			}
+		}
+
+		private Dictionary<Camper,List<ActivityDefinition>> ReadCamperPreferences(string scheduleFileLocation, StreamReader scheduleFileReader, int camperPreferenceLength)
+		{
+			char[] buffer = ReadExpectedCharacters(scheduleFileReader, camperPreferenceLength,
+				scheduleFileLocation, "Camper Activity Preferences");
+			string camperPreferencesJson = new string(buffer);
+			try
+			{
+				JsonSerializerOptions options = new JsonSerializerOptions();
+				options.Converters.Add(new CamperPreferencesJsonConverter());
+
+				Dictionary<Camper,List<ActivityDefinition>> camperPreferences
+					= JsonSerializer.Deserialize<Dictionary<Camper, List<ActivityDefinition>>>(
+						camperPreferencesJson, options);
+				if (camperPreferences == null)
+				{
+					camperPreferences = new Dictionary<Camper, List<ActivityDefinition>>();
+				}
+				return camperPreferences;
+			}
+			catch (JsonException e)
+			{
+				throw new PersistenceParseException(scheduleFileLocation,
+					$"Could not parse camper preferences JSON '{camperPreferencesJson}'",
+					e);
+			}
+		}
+
+		private List<HashSet<Camper>> ReadCamperGroups(string scheduleFileLocation, StreamReader scheduleFileReader, int camperGroupLength)
+		{
+			char [] buffer = ReadExpectedCharacters(scheduleFileReader, camperGroupLength,
+				scheduleFileLocation, "Camper Groups");
+			string camperGroupJson = new string(buffer);
+			try
+			{
+				JsonSerializerOptions options = new JsonSerializerOptions();
+				options.Converters.Add(new CamperJsonConverter());
+
+				List<HashSet<Camper>> camperGroups = JsonSerializer.Deserialize<List<HashSet<Camper>>>(camperGroupJson, options);
+				if (camperGroups == null)
+				{
+					camperGroups = new List<HashSet<Camper>>();
+				}
+				for (int i = 0; i < camperGroups.Count; i++)
+				{
+					// Need to put the right comparer on for by name matching to work.
+					camperGroups[i] = new HashSet<Camper>(camperGroups[i], new Camper.CamperEqualityCompare());
+				}
+				return camperGroups;
+			}
+			catch (JsonException e)
+			{
+				throw new PersistenceParseException(scheduleFileLocation,
+					$"Could not parse camper group JSON '{camperGroupJson}'",
+					e);
+			}
+		}
+
+		private char [] ReadExpectedCharacters(StreamReader streamReader, int numberOfCharacters,
+			string streamName, string sectionName)
+		{
+			char[] buffer = new char[numberOfCharacters];
+			int charactersRead = streamReader.Read(buffer, 0, numberOfCharacters);
+			if (charactersRead != numberOfCharacters)
+			{
+				throw new PersistenceParseException(streamName,
+					$"Specified {sectionName} length of {numberOfCharacters}" +
+					$"but found only {charactersRead} characters remaining in the file.");
+			}
+			return buffer;
 		}
 
 		public List<string> GetScheduleIds()
@@ -351,17 +393,38 @@ namespace ActivitySchedulerFrontEnd.Services
 					camperGroupsJson = String.Empty;
 				}
 
-				// TODO: Serialize the camper activity preferences.
+				// Serialize the camper activity preferences.
+				string camperPreferencesJson = String.Empty;
+				try
+				{
+					JsonSerializerOptions options = new JsonSerializerOptions
+					{
+						WriteIndented = true,
+						Converters =
+						{
+							new CamperPreferencesJsonConverter()
+						}
+					};
+					camperPreferencesJson = JsonSerializer.Serialize(camperActivityPreferences, options);
+				}
+				catch (JsonException e)
+				{
+					// Serialization failed. Just skip it.
+					_logger.LogError(e, $"Failed to serialize {camperActivityPreferences.Count} camper preferences");
+					camperPreferencesJson = String.Empty;
+				}
 
 				// Use negative version numbers to differentiate older files that don't use the version
-				int currentVersion = 1;
+				int currentVersion = 2;
 				scheduleFileWriter.WriteLine(-currentVersion);
 				scheduleFileWriter.WriteLine(definitions.Length);
 				scheduleFileWriter.WriteLine(scheduleCsv.Length);
 				scheduleFileWriter.WriteLine(camperGroupsJson.Length);
+				scheduleFileWriter.WriteLine(camperPreferencesJson.Length);
 				scheduleFileWriter.Write(definitions);
 				scheduleFileWriter.Write(scheduleCsv);
 				scheduleFileWriter.Write(camperGroupsJson);
+				scheduleFileWriter.Write(camperPreferencesJson);
 			}
 			// Generate a fresh copy of the schedule by reloading from persistence.
 			// This effectively performs a deep copy so that the client data is

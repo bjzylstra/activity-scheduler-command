@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -10,27 +9,74 @@ namespace Camp
     /// </summary>
     public class CamperJsonConverter : JsonConverter<Camper>
     {
+        private enum ReaderState
+        {
+            GetPropertyName,
+            GetFirstName,
+            GetLastName
+        }
+  
         public override Camper Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            string fullName = reader.GetString();
-            string[] nameParts = fullName.Split(',');
-            return new Camper
+            if (reader.TokenType != JsonTokenType.StartObject)
             {
-                FirstName = nameParts.Length > 1 ? nameParts[1] : String.Empty,
-                LastName = nameParts[0]
-            };
-        }
+                throw new JsonException("Missing start of object");
+            }
+            var camper = new Camper();
+			ReaderState readerState = ReaderState.GetPropertyName;
+			while (reader.Read())
+			{
+				switch (readerState)
+				{
+					case ReaderState.GetPropertyName:
+						if (reader.TokenType == JsonTokenType.EndObject)
+						{
+							return camper;
+						}
+						if (reader.TokenType == JsonTokenType.PropertyName)
+						{
+							string propertyName = reader.GetString();
+							switch (propertyName)
+							{
+								case nameof(camper.FirstName):
+									readerState = ReaderState.GetFirstName;
+									break;
+								case nameof(camper.LastName):
+									readerState = ReaderState.GetLastName;
+									break;
+								default:
+									throw new JsonException($"Unknown property: {propertyName}");
+							}
+						}
+						else
+						{
+							throw new JsonException("Expected property name");
+						}
+						break;
 
-        public override void Write(Utf8JsonWriter writer, Camper camper, JsonSerializerOptions options)
+					case ReaderState.GetFirstName:
+						camper.FirstName = reader.GetString();
+						readerState = ReaderState.GetPropertyName;
+						break;
+
+					case ReaderState.GetLastName:
+						camper.LastName = reader.GetString();
+						readerState = ReaderState.GetPropertyName;
+						break;
+				}
+			}
+			throw new JsonException();
+		}
+
+		public override void Write(Utf8JsonWriter writer, Camper camper, JsonSerializerOptions options)
         {
-            if (String.IsNullOrEmpty(camper.FirstName))
+            writer.WriteStartObject();
+            if (!String.IsNullOrEmpty(camper.FirstName))
             {
-                writer.WriteStringValue($"{camper.LastName}");
+                writer.WriteString(nameof(camper.FirstName), camper.FirstName);
             }
-            else
-            {
-                writer.WriteStringValue($"{camper.LastName},{camper.FirstName}");
-            }
+            writer.WriteString(nameof(camper.LastName), camper.LastName);
+            writer.WriteEndObject();
         }
     }
 }
