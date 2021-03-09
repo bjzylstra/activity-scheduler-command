@@ -17,6 +17,11 @@ namespace Camp
         {
             public bool Equals([AllowNull] Camper x, [AllowNull] Camper y)
             {
+                if (x == null || y == null)
+				{
+                    return x == y;
+				}
+
                 // If the first names are not specified, matching last name is sufficient
                 // TODO: this is temporary while the cabin mate declaration is only last name
                 if (String.IsNullOrEmpty(x?.FirstName) || String.IsNullOrEmpty(y.FirstName))

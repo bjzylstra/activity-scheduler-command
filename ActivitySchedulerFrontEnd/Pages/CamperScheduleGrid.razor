@@ -31,9 +31,9 @@ else
 }
 
 @code {
-    /// <summary>
-    /// Name of the cookie to record the schedule across pages.
-    /// </summary>
+        /// <summary>
+        /// Name of the cookie to record the schedule across pages.
+        /// </summary>
     private const string ScheduleIdKey = "scheduleId";
 
     private CGrid<Camper> _grid;
@@ -69,6 +69,7 @@ else
     private Camper _selectedCamper = null;
     public HashSet<Camper> SelectedCamperGroup => _selectedCamperGroup;
     public Camper SelectedCamper => _selectedCamper;
+    private Camper.CamperEqualityCompare _camperComparer = new Camper.CamperEqualityCompare();
 
     protected override async Task OnInitializedAsync()
     {
@@ -108,8 +109,8 @@ else
     /// <returns>Class for highlighting</returns>
     private string GetCamperRowClass(Camper camper)
     {
-        return (camper == _selectedCamper) ? "selected-camper"
-            : _selectedCamperGroup != null && _selectedCamperGroup.Contains(camper) 
+        return _camperComparer.Equals(camper, _selectedCamper) ? "selected-camper"
+            : _selectedCamperGroup != null && _selectedCamperGroup.Contains(camper)
             ? "selected-group"
             : string.Empty;
     }

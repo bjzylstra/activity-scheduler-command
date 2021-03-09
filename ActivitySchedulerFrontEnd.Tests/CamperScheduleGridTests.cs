@@ -1,4 +1,4 @@
-using ActivitySchedulerFrontEnd.Pages;
+﻿using ActivitySchedulerFrontEnd.Pages;
 using ActivitySchedulerFrontEnd.Services;
 using Blazored.LocalStorage;
 using Camp;
@@ -196,6 +196,55 @@ namespace ActivitySchedulerFrontEnd.Tests
 			Assert.That(updatedSchedule.First(ad => ad.Name.Equals(updatedActivityName))
 				.ScheduledBlocks[timeSlot].AssignedCampers.Select(c => c.FullName),
 				Has.One.EqualTo(fullNames[camperIndex]), "Target activity camper list");
+		}
+
+		[TestCase(0, 0)]
+		public async Task CamperScheduleGrid_ChangeCamperActivity_SelecedCamperStillSelected(int camperIndex, int timeSlot)
+		{
+			// Arrange - run schedule with successful data set
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			string scheduleId = "MySchedule";
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
+			}
+			// Select a camper
+			RenderedComponent<CamperScheduleGrid> component =
+				_host.AddComponent<CamperScheduleGrid>();
+			List<string> fullNames = component.FindAll("td")
+				.Where(node => node.Attributes.AttributesWithName("data-name")
+				.Any(a => a.Value.Equals("FullName")))
+				.Select(node => node.InnerText).ToList();
+			HtmlNode nameCell = component.FindAll("button")
+				.First(node => node.InnerText.Equals(fullNames[camperIndex]));
+			await nameCell.ClickAsync();
+
+			// Act - load the grid component and update a camper
+			string camperSlotId = $"{fullNames[camperIndex]}-{timeSlot}";
+			List<HtmlNode> camperSlotCells = component.FindAll("select")
+				.Where(node => node.Attributes.AttributesWithName("id")
+				.Any(a => a.Value.Equals(camperSlotId))).ToList();
+			List<HtmlAttribute> valueAttributes = camperSlotCells[0].Attributes
+				.AttributesWithName("value").ToList();
+			string originalActivityName = valueAttributes[0].Value;
+			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
+			string updatedActivityName = schedule[0].Name == originalActivityName
+				? schedule[1].Name : schedule[0].Name;
+			camperSlotCells[0].Change(updatedActivityName);
+
+			// Assert - camper is still selected
+			List<HtmlNode> selectedCamperRows = component.FindAll("tr")
+				.Where(node => node.Attributes.AttributesWithName("class")
+				.Any(a => a.Value.Contains("selected-camper"))).ToList();
+			Assert.That(selectedCamperRows, Has.Count.EqualTo(1), "Selected camper rows");
+			Assert.That(selectedCamperRows[0].Elements("td").First(n =>
+				n.Attributes.Any(a => a.Name.Equals("data-name") && a.Value.Equals("FullName"))).InnerText,
+				Is.EqualTo(fullNames[camperIndex]), "Camper row name");
 		}
 
 		[Test]
