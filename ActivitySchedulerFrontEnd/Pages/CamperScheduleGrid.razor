@@ -109,7 +109,8 @@ else
     private string GetCamperRowClass(Camper camper)
     {
         return (camper == _selectedCamper) ? "selected-camper"
-            : _selectedCamperGroup != null && _selectedCamperGroup.Contains(camper) ? "selected-camper-group"
+            : _selectedCamperGroup != null && _selectedCamperGroup.Contains(camper) 
+            ? "selected-group"
             : string.Empty;
     }
 

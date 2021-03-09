@@ -425,8 +425,8 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Verify that all activity cells for the camper group are selected
 			List<HtmlNode> selectedCamperGroupActivityCells = component.FindAll("td")
 				.Where(node => node.Attributes.AttributesWithName("class")
-				.Any(a => a.Value.Contains("selected-camper-group"))).ToList();
-			// The selected camper does not get selected-camper-group, only his peers
+				.Any(a => a.Value.Contains("selected-group"))).ToList();
+			// The selected camper does not get selected-group, only his peers
 			Assert.That(selectedCamperGroupActivityCells, Has.Count.EqualTo(4 * (selectedCamperGroup.Count - 1)),
 				"Selected activity cells");
 			// Check that each peer has 4 cells in the selected group set.

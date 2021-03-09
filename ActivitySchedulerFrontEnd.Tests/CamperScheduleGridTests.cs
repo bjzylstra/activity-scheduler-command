@@ -1,4 +1,4 @@
-﻿using ActivitySchedulerFrontEnd.Pages;
+using ActivitySchedulerFrontEnd.Pages;
 using ActivitySchedulerFrontEnd.Services;
 using Blazored.LocalStorage;
 using Camp;
@@ -262,11 +262,11 @@ namespace ActivitySchedulerFrontEnd.Tests
 				.First(node => node.InnerText.Equals(selectedCamper.FullName));
 			await nameCell.ClickAsync();
 
-			// Assert - load the row and verify it has the selected-camper-group class
+			// Assert - load the row and verify it has the selected-group class
 			List<HtmlNode> selectedCamperGroupRows = component.FindAll("tr")
 				.Where(node => node.Attributes.AttributesWithName("class")
-				.Any(a => a.Value.Contains("selected-camper-group"))).ToList();
-			// The selected camper does not get selected-camper-group, only his peers
+				.Any(a => a.Value.Contains("selected-group"))).ToList();
+			// The selected camper does not get selected-group, only his peers
 			Assert.That(selectedCamperGroupRows, Has.Count.EqualTo(selectedCamperGroup.Count-1), 
 				"Selected camper group rows");
 			// Check that each peer has a row in the set. Need to strip it down to the last names 
