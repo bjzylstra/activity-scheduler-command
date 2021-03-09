@@ -12,7 +12,7 @@ else
         @foreach (var activityName in _activityNames)
         {
             <option value="@activityName">
-                @activityName
+                @GetDecoratedActivityName(activityName)
             </option>
         }
     </select>
@@ -32,6 +32,8 @@ else
 
     [Parameter]
     public object Object { get; set; }
+
+    private List<string> _activityPreferences;
 
     private string Id
     {
@@ -59,7 +61,8 @@ else
                     // Setter cannot be async so fire and forget.
                     Task updateTask = initializer.ScheduleGrid
                         .AssignActivityToCamperBlockAsync(Item.FullName,
-                            initializer.TimeSlot, _currentActivityName);
+                            initializer.TimeSlot,
+                            GetUndecoratedActivityName(_currentActivityName));
                 }
             }
         }
@@ -79,30 +82,70 @@ else
             _currentActivityName = Item.ScheduledBlocks
                 .First(sb => sb.TimeSlot == initializer.TimeSlot)?
                 .ActivityDefinition.Name;
+            Dictionary<Camper,List<ActivityDefinition>> camperPreferences =
+                schedulerService.GetCamperPreferencesForScheduleId(
+                    initializer.ScheduleGrid.ScheduleId);
+            if (camperPreferences.TryGetValue(Item, out List<ActivityDefinition> activityPreferences))
+            {
+                _activityPreferences = activityPreferences.Select(ad => ad.Name)
+                    .ToList();
+                // Reverse the list so more prefered has a higher index.
+                _activityPreferences.Reverse();
+            }
+            else
+            {
+                _activityPreferences = new List<string>();
+            }
         }
 
         base.OnParametersSet();
+    }
+
+    private bool MatchesSelectedCamperActivity(string activityName)
+    {
+        bool matches = false;
+        Initializer initializer = Object as Initializer;
+        if (initializer != null &&
+            initializer.ScheduleGrid != null &&
+            initializer.ScheduleGrid.SelectedCamper != null)
+        {
+            IActivityBlock selectedCamperActivity = initializer.ScheduleGrid.SelectedCamper
+                .ScheduledBlocks.First(b => b.TimeSlot == initializer.TimeSlot);
+            if (selectedCamperActivity.ActivityDefinition.Name == activityName)
+            {
+                matches = true;
+            }
+        }
+
+        return matches;
     }
 
     private string SelectionClass
     {
         get
         {
-            string selectionClass = String.Empty;
-            Initializer initializer = Object as Initializer;
-            if (initializer != null &&
-                initializer.ScheduleGrid != null &&
-                initializer.ScheduleGrid.SelectedCamper != null)
-            {
-                IActivityBlock selectedCamperActivity = initializer.ScheduleGrid.SelectedCamper
-                    .ScheduledBlocks.First(b => b.TimeSlot == initializer.TimeSlot);
-                if (selectedCamperActivity.ActivityDefinition.Name == CurrentActivityName)
-                {
-                    selectionClass = "selected-camper-activity";
-                }
-            }
-
-            return selectionClass;
+            return MatchesSelectedCamperActivity(GetUndecoratedActivityName(CurrentActivityName))
+                ? "selected-camper-activity"
+                : String.Empty;
         }
+    }
+
+    private string GetUndecoratedActivityName(string decoratedActivityName)
+    {
+        return decoratedActivityName.Trim('*','<',' ');
+    }
+
+    private string GetDecoratedActivityName(string activityName)
+    {
+        int preferenceIndex = _activityPreferences.FindIndex(p => p.Equals(activityName));
+        string decoratedActivityName = preferenceIndex > -1
+            ? new string('*', preferenceIndex + 1) + " " + activityName
+            : activityName;
+        if (MatchesSelectedCamperActivity(activityName))
+        {
+            decoratedActivityName += " <";
+        }
+
+        return decoratedActivityName;
     }
 }

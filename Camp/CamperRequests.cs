@@ -293,7 +293,8 @@ namespace Camp
 			return camperRequestsList.ToDictionary(cr => cr.Camper, cr => 
 				cr.ActivityRequests.OrderBy(ar => ar.Rank)
 					.Select(ar => ar.Activity).Append(cr.AlternateActivity)
-					.Where(a => a != null).ToList());
+					.Where(a => a != null).ToList(),
+					new Camper.CamperEqualityCompare());
 		}
 	}
 }

@@ -28,7 +28,8 @@ namespace Camp
 			CamperJsonConverter camperConverter = new CamperJsonConverter();
 			ActivityDefinitionJsonConverter activityConverter = new ActivityDefinitionJsonConverter();
 
-			var preferences = new Dictionary<Camper, List<ActivityDefinition>>();
+			var preferences = new Dictionary<Camper, List<ActivityDefinition>>(
+				new Camper.CamperEqualityCompare());
 			Camper lastReadCamper = null;
 			List<ActivityDefinition> lastReadPreferences = new List<ActivityDefinition>();
 			ReaderState readerState = ReaderState.GetStartTuple;
