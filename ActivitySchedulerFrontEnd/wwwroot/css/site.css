@@ -191,8 +191,16 @@ app {
     background-color: red;
     font-weight: bold;
 }
+.capacity-at-maximum {
+    background-color: orange;
+    font-weight: normal
+}
 .capacity-under {
     background-color: red;
+    font-weight: normal
+}
+.capacity-at-minimum {
+    background-color: orange;
     font-weight: normal
 }
 

@@ -11,7 +11,7 @@ else
     <select id="@Id" @bind="CurrentActivityName" class="@SelectionClass">
         @foreach (var activityName in _activityNames)
         {
-            <option value="@activityName">
+            <option value="@activityName" class="@GetCapacityClass(activityName)">
                 @GetDecoratedActivityName(activityName)
             </option>
         }
@@ -67,6 +67,8 @@ else
             }
         }
     }
+    private List<ActivityDefinition> _activityDefinitions;
+    private int _slotId;
 
     protected override void OnParametersSet()
     {
@@ -96,6 +98,8 @@ else
             {
                 _activityPreferences = new List<string>();
             }
+            _activityDefinitions = schedulerService.GetSchedule(initializer.ScheduleGrid.ScheduleId);
+            _slotId = initializer.TimeSlot;
         }
 
         base.OnParametersSet();
@@ -145,7 +149,20 @@ else
         {
             decoratedActivityName += " <";
         }
-
         return decoratedActivityName;
+    }
+
+    private string GetCapacityClass(string activityName)
+    {
+        ActivityDefinition activityDefinition = _activityDefinitions
+            .First(ad => ad.Name.Equals(activityName));
+        int currentCount = activityDefinition.ScheduledBlocks[_slotId].AssignedCampers.Count;
+
+        return (currentCount > activityDefinition.MaximumCapacity) ? "capacity-over"
+            : (currentCount == activityDefinition.MaximumCapacity) ? "capacity-at-maximum"
+            : (currentCount > activityDefinition.OptimalCapacity) ? "capacity-warning"
+            : (currentCount == activityDefinition.MinimumCapacity) ? "capacity-at-minimum"
+            : (currentCount < activityDefinition.MinimumCapacity) ? "capacity-under"
+            : string.Empty;
     }
 }
