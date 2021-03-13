@@ -388,5 +388,52 @@ namespace ActivitySchedulerFrontEnd.Tests
 
 		}
 
+		[Test]
+		public void CamperScheduleGrid_ValidSchedule_ActivityDropDownShowsPreferences()
+		{
+			// Arrange - run schedule with successful data set and load grid
+			List<ActivityDefinition> activityDefinitions = new List<ActivityDefinition>(
+				_activityDefinitionService.GetActivityDefinition(DefaultSetName));
+			string scheduleId = "MySchedule";
+			using (MemoryStream camperRequestStream = new MemoryStream(_validCamperRequestsBuffer))
+			{
+				List<CamperRequests> camperRequests = CamperRequests.ReadCamperRequests(
+					camperRequestStream, activityDefinitions);
+				_schedulerService.CreateSchedule(scheduleId, camperRequests, activityDefinitions);
+				_localStorage.GetItemAsync<string>(Arg.Any<string>())
+					.Returns(Task.FromResult(scheduleId));
+			}
+
+			// Act - just render it.
+			RenderedComponent<CamperScheduleGrid> component =
+				_host.AddComponent<CamperScheduleGrid>();
+
+			// Assert - Grab an activity cell for a camper and verify its
+			// option text is annotated to match the preferences.
+			List<ActivityDefinition> schedule = _schedulerService.GetSchedule(scheduleId);
+			Dictionary<Camper, List<ActivityDefinition>> preferences = _schedulerService.GetCamperPreferencesForScheduleId(scheduleId);
+			// Do a bunch of campers
+			foreach (Camper camper in schedule.First().ScheduledBlocks.First().AssignedCampers)
+			{
+				int expectedStars = preferences[camper].Count;
+				foreach (var preference in preferences[camper])
+				{
+					foreach (HtmlNode camperActivityCell in component.FindAll("select")
+						.Where(node => node.Id.Contains($"{camper.FullName}")))
+					{
+						// Find the text node for the prefered activity
+						HtmlNode textNode = camperActivityCell.Descendants("#text")
+							.First(n => n.InnerText.Contains(preference.Name));
+						// Verify it has the expected number of stars
+						string preferenceAnnotation = new string('*', expectedStars) + ' ';
+						Assert.That(textNode.InnerText.Trim(),
+							Contains.Substring(preferenceAnnotation),
+							$"Preference {expectedStars}");
+					}
+					expectedStars--;
+				}
+			}
+		}
+
 	}
 }
