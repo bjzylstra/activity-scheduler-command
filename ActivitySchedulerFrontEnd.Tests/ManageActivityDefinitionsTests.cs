@@ -50,7 +50,9 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange / Act
 			_localStorage.ClearReceivedCalls();
 			_localStorage.GetItemAsync<string>(Arg.Any<string>())
-				.Returns(Task.FromResult(string.Empty));
+				.Returns(new ValueTask<string>(Task.FromResult(string.Empty)));
+			_localStorage.GetItemAsync<string>(Arg.Any<string>())
+				.Returns(new ValueTask<string>(Task.FromResult(string.Empty)));
 			RenderedComponent<ManageActivityDefinitions> component = 
 				_host.AddComponent<ManageActivityDefinitions>();
 
@@ -59,7 +61,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			Assert.That(component.Instance.ActivitySet, Is.EqualTo(DefaultSetName),
 				"ActivitySet initial value");
 			// Verify activity grid has correct number of rows.
-			HtmlAgilityPack.HtmlNode gridCountSpan = component.FindAll("span")
+			HtmlAgilityPack.HtmlNode gridCountSpan = component.FindAll("div")
 				.FirstOrDefault(s => s.Attributes
 				.Any(a => a.Value.Equals("grid-itemscount-caption", 
 				StringComparison.OrdinalIgnoreCase)));
@@ -80,7 +82,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange / Act
 			string activitySetName = _expectedActivitySets.Keys.Skip(1).First();
 			_localStorage.GetItemAsync<string>(Arg.Any<string>())
-				.Returns(Task.FromResult(activitySetName));
+				.Returns(new ValueTask<string>(Task.FromResult(activitySetName)));
 			RenderedComponent<ManageActivityDefinitions> component =
 				_host.AddComponent<ManageActivityDefinitions>();
 
@@ -89,7 +91,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			Assert.That(component.Instance.ActivitySet, Is.EqualTo(activitySetName),
 				"ActivitySet initial value");
 			// Verify activity grid has correct number of rows.
-			HtmlAgilityPack.HtmlNode gridCountSpan = component.FindAll("span")
+			HtmlAgilityPack.HtmlNode gridCountSpan = component.FindAll("div")
 				.FirstOrDefault(s => s.Attributes
 				.Any(a => a.Value.Equals("grid-itemscount-caption",
 				StringComparison.OrdinalIgnoreCase)));
@@ -116,7 +118,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			Assert.That(component.Instance.ActivitySet, Is.EqualTo(activitySetName),
 				"ActivitySet selected value");
 			// Verify activity grid has correct number of rows.
-			HtmlAgilityPack.HtmlNode gridCountSpan = component.FindAll("span")
+			HtmlAgilityPack.HtmlNode gridCountSpan = component.FindAll("div")
 				.FirstOrDefault(s => s.Attributes
 				.Any(a => a.Value.Equals("grid-itemscount-caption",
 				StringComparison.OrdinalIgnoreCase)));

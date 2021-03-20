@@ -52,7 +52,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange / Act
 			_localStorage.ClearReceivedCalls();
 			_localStorage.GetItemAsync<string>(Arg.Any<string>())
-				.Returns(Task.FromResult(string.Empty));
+				.Returns(new ValueTask<string>(Task.FromResult(string.Empty)));
 			RenderedComponent<RunScheduler> component =
 				_host.AddComponent<RunScheduler>();
 
@@ -74,7 +74,7 @@ namespace ActivitySchedulerFrontEnd.Tests
 			// Arrange / Act
 			string activitySetName = "testy";
 			_localStorage.GetItemAsync<string>(Arg.Any<string>())
-				.Returns(Task.FromResult(activitySetName));
+				.Returns(new ValueTask<string>(Task.FromResult(activitySetName)));
 			RenderedComponent<RunScheduler> component =
 				_host.AddComponent<RunScheduler>();
 
