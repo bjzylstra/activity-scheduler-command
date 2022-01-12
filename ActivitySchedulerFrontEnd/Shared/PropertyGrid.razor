@@ -1,0 +1,63 @@
+﻿@inject IPropertyService propertyService
+@using GridShared
+
+@if (_task != null && _task.IsCompleted)
+{
+    <GridComponent @ref="_component" T="PropertyService.Property" Grid="@_grid"></GridComponent>
+}
+else
+{
+<p><em>Loading...</em></p>
+}
+
+@code {
+    private CGrid<PropertyService.Property> _grid;
+    private Task _task;
+    private GridComponent<PropertyService.Property> _component;
+    private string _propertySetId;
+
+    [Parameter]
+    public string PropertySetId
+    {
+        get => _propertySetId;
+        set
+        {
+            // Update only if changed
+            if (value != _propertySetId)
+            {
+                _propertySetId = value;
+                if (_component != null)
+                {
+                    Task updateTask = _component.UpdateGrid();
+                }
+            }
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Action<IGridColumnCollection<PropertyService.Property>> columns = c =>
+        {
+            c.Add(p => p.Name);
+            c.Add(p => p.Value);
+        };
+
+        var query = new QueryDictionary<StringValues>();
+        if (_component == null)
+        {
+            IGridClient<PropertyService.Property> gridClient = new GridClient<PropertyService.Property>(q =>
+                propertyService.GetPropertyRows(PropertySetId, columns, q),
+                query, false, "propertyGrid", columns);
+            _grid = gridClient.Grid;
+            // Set new items to grid
+            _task = gridClient.UpdateGrid();
+            await _task;
+        }
+        else
+        {
+            // Parameter on an existing grid has changed -
+            // tell the underlying component to update
+            await _component.UpdateGrid();
+        }
+    }
+}

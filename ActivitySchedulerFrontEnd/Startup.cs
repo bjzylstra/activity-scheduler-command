@@ -28,8 +28,10 @@ namespace ActivitySchedulerFrontEnd
 			{
 				o.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10MB
 			});
-			services.AddScoped<IActivityDefinitionService, ActivityDefinitionService>();
-			services.AddScoped<ISchedulerService, SchedulerService>();
+			services.AddSingleton<IActivityDefinitionService, ActivityDefinitionService>();
+			services.AddSingleton<ISchedulerService, SchedulerService>();
+			services.AddSingleton<IPropertyService, PropertyService>();
+
 			services.AddFileReaderService(options => options.InitializeOnFirstCall = true);
 			services.AddBlazoredLocalStorage();
 		}

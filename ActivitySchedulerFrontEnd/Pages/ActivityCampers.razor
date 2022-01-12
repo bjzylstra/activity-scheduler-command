@@ -1,4 +1,4 @@
-﻿@using GridShared.Columns
+@using GridShared.Columns
 @implements ICustomGridComponent<IActivityBlock>
 
 <table>
@@ -11,7 +11,9 @@
         {
             <td class="activity-camper-cell @SelectionClass(camper)" draggable="true" title="@camper.FullName"
                 @ondragstart="@(() => HandleCamperDragStart(camper))"
-                @onclick="@(() => HandleCamperClick(camper))">
+                @onclick="@(() => HandleCamperClick(camper))"
+                @onmouseover="() => HandleMouseOver(camper)"
+                @onmouseout="() => HandleMouseOut(camper)">
                 @camper.FullName
             </td>
         }
@@ -101,6 +103,14 @@
         {
             await scheduleGrid.SelectCamper(camper);
         }
+    }
+
+    private void HandleMouseOver(Camper camper)
+    {
+    }
+
+    private void HandleMouseOut(Camper camper)
+    {
     }
 
     private bool PayloadIsValid
